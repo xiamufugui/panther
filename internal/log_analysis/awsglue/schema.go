@@ -331,8 +331,10 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 	var structType string
 	switch t.Kind() { // NOTE: not all possible nestings have been implemented
 	case reflect.Slice:
-
 		sliceOfType := t.Elem()
+		if sliceOfType.Kind() == reflect.Ptr {
+			sliceOfType = sliceOfType.Elem()
+		}
 		switch sliceOfType.Kind() {
 		case reflect.Struct:
 			structType, nestedFieldNames = inferStruct(sliceOfType, customMappingsTable)
