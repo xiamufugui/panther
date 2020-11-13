@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
 )
 
 // These objects are used to read timestamps and ensure a consistent JSON output for timestamps.
@@ -53,13 +54,13 @@ func init() {
 	typUnixMillis := reflect.TypeOf(UnixMillisecond{})
 	typLacework := reflect.TypeOf(LaceworkTimestamp{})
 	// Add glue table mappings
-	awsglue.MustRegisterMapping(typANSICwithTZ, awsglue.GlueTimestampType)
-	awsglue.MustRegisterMapping(typFluentd, awsglue.GlueTimestampType)
-	awsglue.MustRegisterMapping(typRFC3339, awsglue.GlueTimestampType)
-	awsglue.MustRegisterMapping(typSuricata, awsglue.GlueTimestampType)
-	awsglue.MustRegisterMapping(typUnixFloat, awsglue.GlueTimestampType)
-	awsglue.MustRegisterMapping(typUnixMillis, awsglue.GlueTimestampType)
-	awsglue.MustRegisterMapping(typLacework, awsglue.GlueTimestampType)
+	glueschema.MustRegisterMapping(typANSICwithTZ, glueschema.TypeTimestamp)
+	glueschema.MustRegisterMapping(typFluentd, glueschema.TypeTimestamp)
+	glueschema.MustRegisterMapping(typRFC3339, glueschema.TypeTimestamp)
+	glueschema.MustRegisterMapping(typSuricata, glueschema.TypeTimestamp)
+	glueschema.MustRegisterMapping(typUnixFloat, glueschema.TypeTimestamp)
+	glueschema.MustRegisterMapping(typUnixMillis, glueschema.TypeTimestamp)
+	glueschema.MustRegisterMapping(typLacework, glueschema.TypeTimestamp)
 }
 
 // use these functions to parse all incoming dates to ensure UTC consistency

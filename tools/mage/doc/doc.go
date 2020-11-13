@@ -22,12 +22,12 @@ import (
 	"bytes"
 	"fmt"
 	"html"
-	"math"
 	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/tools/mage/deploy"
 	"github.com/panther-labs/panther/tools/mage/logger"
@@ -159,7 +159,10 @@ func (category *logCategory) generateDocFile(outDir string) {
 		docsBuffer.WriteString(`<table>` + "\n")
 		docsBuffer.WriteString("<tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>\n") // nolint
 
-		columns, _ := awsglue.InferJSONColumns(table.EventStruct(), awsglue.GlueMappings...) // get the Glue schema
+		columns, err := glueschema.InferColumns(table.EventStruct())
+		if err != nil {
+			panic(err)
+		}
 		for _, column := range columns {
 			colName := column.Name
 			if column.Required {
@@ -183,9 +186,9 @@ func logDocs() error {
 	log.Debug("generating documentation on supported logs")
 
 	// allow large comment descriptions in the docs (by default they are clipped)
-	awsglue.MaxCommentLength = math.MaxInt32
+	glueschema.TruncateComments = false
 	defer func() {
-		awsglue.MaxCommentLength = awsglue.DefaultMaxCommentLength
+		glueschema.TruncateComments = true
 	}()
 
 	logs, err := findSupportedLogs()
@@ -227,7 +230,7 @@ func formatColumnName(name string) string {
 }
 
 func formatType(logType string, col awsglue.Column) string {
-	return "<code>" + prettyPrintType(logType, col.Name, col.Type, "") + "</code>"
+	return "<code>" + prettyPrintType(logType, col.Name, string(col.Type), "") + "</code>"
 }
 
 const (
@@ -307,8 +310,7 @@ func getTypeFields(complexType, colType string) (subFields []string) {
 	// split fields into subFields around top level commas in type definition
 	startSubfieldIndex := 0
 	insideBracketCount := 0 // when non-zero we are inside a complex type
-	var index int
-	for index = range fields {
+	for index := 0; 0 <= index && index < len(fields); index++ {
 		if fields[index] == ',' && insideBracketCount == 0 {
 			subFields = append(subFields, fields[startSubfieldIndex:index])
 			startSubfieldIndex = index + 1 // next

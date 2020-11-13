@@ -28,6 +28,7 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/pkg/awsathena"
 )
@@ -169,7 +170,7 @@ func newPantherViewColumns(tables []*awsglue.GlueTableMetadata, extraColumns []a
 }
 func (pvc *pantherViewColumns) inferViewColumns(table *awsglue.GlueTableMetadata, extraColumns []awsglue.Column) {
 	// NOTE: in the future when we tag columns for views, the mapping  would be resolved here
-	columns, _ := awsglue.InferJSONColumns(table.EventStruct(), awsglue.GlueMappings...)
+	columns, _ := glueschema.InferColumns(table.EventStruct())
 	columns = append(columns, extraColumns...)
 	var selectColumns []string
 	for _, col := range columns {

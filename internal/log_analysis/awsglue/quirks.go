@@ -19,33 +19,14 @@ package awsglue
  */
 
 import (
-	"strings"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
 
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/renamefields"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
 )
-
-// TODO: [awsglue] Add more mappings of invalid Athena field name characters here
-// NOTE: The mapping should be easy to remember (so no ASCII code etc) and complex enough
-// to avoid possible conflicts with other fields.
-var fieldNameReplacer = strings.NewReplacer(
-	"@", "_at_sign_",
-	",", "_comma_",
-	"`", "_backtick_",
-	"'", "_apostrophe_",
-	".", "_",
-)
-
-func RewriteFieldName(name string) string {
-	result := fieldNameReplacer.Replace(name)
-	if result == name {
-		return name
-	}
-	return strings.Trim(result, "_")
-}
 
 const (
 	// We want our output JSON timestamps to be: YYYY-MM-DD HH:MM:SS.fffffffff
@@ -73,7 +54,7 @@ func (*timestampEncoder) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
 }
 
 func RegisterExtensions(api jsoniter.API) jsoniter.API {
-	api.RegisterExtension(renamefields.New(RewriteFieldName))
+	api.RegisterExtension(renamefields.New(glueschema.ColumnName))
 	// Force all timestamps to be awsglue format and UTC.
 	api.RegisterExtension(tcodec.OverrideEncoders(NewTimestampEncoder()))
 	return api

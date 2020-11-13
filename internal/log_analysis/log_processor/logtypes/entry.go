@@ -27,6 +27,7 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
@@ -271,7 +272,7 @@ func checkGlue(schema interface{}) (err error) {
 			}
 		}
 	}()
-	cols, _ := awsglue.InferJSONColumns(schema, awsglue.GlueMappings...)
+	cols, _, _ := glueschema.InferColumnsWithMappings(schema)
 	if len(cols) == 0 {
 		err = errors.New("empty columns")
 	}
