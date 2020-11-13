@@ -144,7 +144,6 @@ func (category *logCategory) generateDocFile(outDir string) {
 	// use html table to get needed control
 	for _, logType := range category.LogTypes {
 		entry := registry.Lookup(logType)
-		table := entry.GlueTableMeta()
 		entryDesc := entry.Describe()
 		desc := entryDesc.Description
 		if entryDesc.ReferenceURL != "-" {
@@ -159,7 +158,7 @@ func (category *logCategory) generateDocFile(outDir string) {
 		docsBuffer.WriteString(`<table>` + "\n")
 		docsBuffer.WriteString("<tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>\n") // nolint
 
-		columns, err := glueschema.InferColumns(table.EventStruct())
+		columns, err := glueschema.InferColumns(entry.Schema())
 		if err != nil {
 			panic(err)
 		}
@@ -204,9 +203,8 @@ func logDocs() error {
 func findSupportedLogs() (*supportedLogs, error) {
 	result := supportedLogs{Categories: make(map[string]*logCategory)}
 
-	tables := registry.AvailableTables()
-	for _, table := range tables {
-		logType := table.LogType()
+	entries := registry.AvailableLogTypes()
+	for _, logType := range entries {
 		categoryType := strings.Split(logType, ".")
 		if len(categoryType) != 2 {
 			return nil, fmt.Errorf("unexpected logType format: %s", logType)

@@ -31,7 +31,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/athenaviews"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/pkg/stringset"
 )
 
@@ -92,7 +91,7 @@ func HandleCreateTablesMessage(ctx context.Context, msg *CreateTablesMessage) er
 		if entry == nil {
 			return errors.Errorf("unresolved log type %q", logType)
 		}
-		meta := entry.GlueTableMeta()
+		meta := gluetables.LogTypeTableMeta(entry)
 		// NOTE: This function updates all logtype-related tables, not only the processed log tables
 		if _, err := gluetables.CreateOrUpdateGlueTables(glueClient, config.ProcessedDataBucket, meta); err != nil {
 			return errors.Wrapf(err, "failed to update tables for log type %q", logType)
@@ -111,7 +110,7 @@ func HandleCreateTablesMessage(ctx context.Context, msg *CreateTablesMessage) er
 	if err != nil {
 		return err
 	}
-	deployedLogTables, err := logtypes.ResolveTables(ctx, logtypesResolver, deployedLogTypes...)
+	deployedLogTables, err := gluetables.ResolveTables(ctx, logtypesResolver, deployedLogTypes...)
 	if err != nil {
 		return err
 	}

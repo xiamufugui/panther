@@ -23,8 +23,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
@@ -57,11 +55,6 @@ func TestRegistry(t *testing.T) {
 		ReferenceURL: "-",
 	}, api.Describe())
 	require.Equal(t, T{}, api.Schema())
-	require.Equal(
-		t,
-		awsglue.NewGlueTableMetadata(models.LogData, "Foo.Bar", "Foo.Bar logs", awsglue.GlueTableHourly, T{}),
-		api.GlueTableMeta(),
-	)
 
 	// Ensure invalid schemas don't pass
 	configEmpty := Config{}

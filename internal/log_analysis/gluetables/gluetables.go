@@ -26,8 +26,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
 
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	cloudsecglue "github.com/panther-labs/panther/internal/compliance/awsglue"
 	loganalysisglue "github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 )
 
 // DeployedLogTypes scans glue API to filter log types with deployed tables
@@ -106,4 +108,26 @@ func CreateOrUpdateGlueTables(glueClient glueiface.GlueAPI, bucket string,
 		RuleTable:      ruleTable,
 		RuleErrorTable: ruleErrorTable,
 	}, nil
+}
+
+// ResolveTables is a helper to resolve all glue table metadata for all log types
+func ResolveTables(ctx context.Context, resolver logtypes.Resolver, logTypes ...string) ([]*loganalysisglue.GlueTableMetadata, error) {
+	tables := make([]*loganalysisglue.GlueTableMetadata, len(logTypes))
+	for i, logType := range logTypes {
+		entry, err := resolver.Resolve(ctx, logType)
+		if err != nil {
+			return nil, err
+		}
+		if entry == nil {
+			return nil, errors.Errorf("unresolved log type %q", logType)
+		}
+		tables[i] = LogTypeTableMeta(entry)
+	}
+	return tables, nil
+}
+
+func LogTypeTableMeta(entry logtypes.Entry) *loganalysisglue.GlueTableMetadata {
+	desc := entry.Describe()
+	schema := entry.Schema()
+	return loganalysisglue.NewGlueTableMetadata(models.LogData, desc.Name, desc.Description, loganalysisglue.GlueTableHourly, schema)
 }

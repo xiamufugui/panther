@@ -25,8 +25,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -38,7 +36,6 @@ type Entry interface {
 	Describe() Desc
 	NewParser(params interface{}) (parsers.Interface, error)
 	Schema() interface{}
-	GlueTableMeta() *awsglue.GlueTableMetadata
 	String() string
 	// Entry should be usable as an EntryBuilder that returns itself with no error
 	EntryBuilder
@@ -180,18 +177,16 @@ func (c Config) BuildEntry() (Entry, error) {
 }
 
 type entry struct {
-	desc          Desc
-	schema        interface{}
-	newParser     parsers.FactoryFunc
-	glueTableMeta *awsglue.GlueTableMetadata
+	desc      Desc
+	schema    interface{}
+	newParser parsers.FactoryFunc
 }
 
 func newEntry(desc Desc, schema interface{}, fac parsers.Factory) *entry {
 	return &entry{
-		desc:          desc,
-		schema:        schema,
-		newParser:     fac.NewParser,
-		glueTableMeta: awsglue.NewGlueTableMetadata(models.LogData, desc.Name, desc.Description, awsglue.GlueTableHourly, schema),
+		desc:      desc,
+		schema:    schema,
+		newParser: fac.NewParser,
 	}
 }
 
@@ -228,11 +223,6 @@ func (e *entry) String() string {
 
 func (e *entry) Schema() interface{} {
 	return e.schema
-}
-
-// GlueTableMeta returns the glue table metadata for this entry
-func (e *entry) GlueTableMeta() *awsglue.GlueTableMetadata {
-	return e.glueTableMeta
 }
 
 // Parser returns a new parsers.Interface instance for this log type

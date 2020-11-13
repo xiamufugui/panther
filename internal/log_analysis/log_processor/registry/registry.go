@@ -21,7 +21,6 @@ package registry
 import (
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
@@ -69,16 +68,6 @@ func Lookup(name string) logtypes.Entry {
 func AvailableLogTypes() (logTypes []string) {
 	for _, e := range LogTypes().Entries() {
 		logTypes = append(logTypes, e.String())
-	}
-	return
-}
-
-// AvailableTables returns a slice containing the Glue tables for all available log types
-func AvailableTables() (tables []*awsglue.GlueTableMetadata) {
-	entries := LogTypes().Entries()
-	tables = make([]*awsglue.GlueTableMetadata, len(entries))
-	for i, entry := range entries {
-		tables[i] = entry.GlueTableMeta()
 	}
 	return
 }
