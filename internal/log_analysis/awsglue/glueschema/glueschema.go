@@ -31,8 +31,10 @@ import (
 	"github.com/panther-labs/panther/pkg/stringset"
 )
 
+// Type is a string representing a type in Glue schema
 type Type string
 
+// Scalar types
 const (
 	TypeString    Type = "string"
 	TypeBool      Type = "boolean"
@@ -45,6 +47,7 @@ const (
 	TypeFloat     Type = "float"
 )
 
+// MaxCommentLength is the maximum size of column comments allowed by Glue
 const MaxCommentLength = 255
 
 // TruncateComments is a flag used to allow mage to disable comment truncation during mage:doc
@@ -77,36 +80,6 @@ func StructOf(cols []Column) Type {
 	return Type(typ.String())
 }
 
-func CaseSensitiveMappings(names map[string][]string) map[string]string {
-	out := make(map[string]string, len(names))
-	for caseInsensitiveName, caseSensitiveNames := range names {
-		sort.Strings(caseSensitiveNames)
-		for i, caseSensitiveName := range caseSensitiveNames {
-			var mapping string
-			// We need to make sure adding a suffix won't conflict with existing key names
-			for suffix := i; ; suffix++ {
-				mapping = caseInsensitiveName
-				if suffix > 0 {
-					mapping += strconv.Itoa(suffix)
-				}
-				_, exists := out[mapping]
-				if !exists {
-					break
-				}
-			}
-			out[mapping] = caseSensitiveName
-		}
-	}
-	return out
-}
-
-type Column struct {
-	Name     string
-	Type     Type // this is the Glue type
-	Comment  string
-	Required bool
-}
-
 func InferColumns(schema interface{}) ([]Column, error) {
 	if schema == nil {
 		return nil, errors.New("nil schema value")
@@ -118,12 +91,12 @@ func InferColumnsWithMappings(schema interface{}) ([]Column, map[string]string, 
 	if schema == nil {
 		return nil, nil, errors.New("nil schema value")
 	}
-	names := map[string][]string{}
+	names := collisions{}
 	columns, err := inferTypeColumns(reflect.TypeOf(schema), names)
 	if err != nil {
 		return nil, nil, err
 	}
-	mappings := CaseSensitiveMappings(names)
+	mappings := names.caseSensitiveMappings()
 	return columns, mappings, nil
 }
 
@@ -135,14 +108,14 @@ func inferTypeColumns(typ reflect.Type, names map[string][]string) ([]Column, er
 	return cols, nil
 }
 
-func inferStructColumns(typ reflect.Type, path []string, names map[string][]string) ([]Column, error) {
+func inferStructColumns(typ reflect.Type, path []string, names collisions) ([]Column, error) {
 	for typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
 	}
 	if typ.Kind() != reflect.Struct {
 		return nil, errors.Errorf("non struct type %v at %q", typ, strings.Join(path, ","))
 	}
-	fields := flatStructFieldsJSON(nil, typ)
+	fields := appendStructFieldsJSON(nil, typ)
 	columns := make([]Column, 0, len(fields))
 	uniqueNames := make(map[string]string, len(fields))
 	for i := range fields {
@@ -156,8 +129,7 @@ func inferStructColumns(typ reflect.Type, path []string, names map[string][]stri
 			continue
 		}
 		if _, duplicate := uniqueNames[col.Name]; duplicate {
-			// We do not want stack in a recursive function
-			return nil, fmt.Errorf("duplicate column name at %q", strings.Join(fieldPath, "."))
+			return nil, newSchemaError(path, "duplicate column name")
 		}
 		uniqueNames[col.Name] = col.Name
 		columns = append(columns, col)
@@ -165,7 +137,7 @@ func inferStructColumns(typ reflect.Type, path []string, names map[string][]stri
 	return columns, nil
 }
 
-func flatStructFieldsJSON(fields []reflect.StructField, typ reflect.Type) []reflect.StructField {
+func appendStructFieldsJSON(fields []reflect.StructField, typ reflect.Type) []reflect.StructField {
 	for typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
 	}
@@ -176,7 +148,7 @@ func flatStructFieldsJSON(fields []reflect.StructField, typ reflect.Type) []refl
 		field := typ.Field(i)
 		if field.Anonymous {
 			// Possible embedded struct, extend the fields
-			fields = flatStructFieldsJSON(fields, field.Type)
+			fields = appendStructFieldsJSON(fields, field.Type)
 			continue
 		}
 		// Unexported field
@@ -188,7 +160,7 @@ func flatStructFieldsJSON(fields []reflect.StructField, typ reflect.Type) []refl
 	return fields
 }
 
-func inferColumn(col *Column, field *reflect.StructField, path []string, names map[string][]string) error {
+func inferColumn(col *Column, field *reflect.StructField, path []string, names collisions) error {
 	colName, err := fieldColumnName(field)
 	if err != nil {
 		// We do not want stack in a recursive function
@@ -200,7 +172,7 @@ func inferColumn(col *Column, field *reflect.StructField, path []string, names m
 	}
 
 	// We register a unique field name
-	observeColumnName(names, colName)
+	names.observeColumnName(colName)
 
 	colType, err := inferColumnType(field.Type, path, names)
 	if err != nil {
@@ -214,14 +186,6 @@ func inferColumn(col *Column, field *reflect.StructField, path []string, names m
 		Comment:  fieldComment(field),
 	}
 	return nil
-}
-
-func observeColumnName(m map[string][]string, name string) {
-	if m == nil {
-		return
-	}
-	key := strings.ToLower(name)
-	m[key] = stringset.Append(m[key], name)
 }
 
 func fieldComment(field *reflect.StructField) string {
@@ -251,25 +215,18 @@ func fieldColumnName(field *reflect.StructField) (string, error) {
 	return ColumnName(name), nil
 }
 
+// isFieldRequired checks whether a field is required or not.
 func isFieldRequired(field *reflect.StructField) bool {
-	tag, ok := field.Tag.Lookup("validate")
-	if !ok {
+	tag, hasValidate := field.Tag.Lookup("validate")
+	if !hasValidate {
+		// If the field does not have a 'validate' tag, it is not required
 		return false
 	}
-	opts := strings.Split(tag, ",")
-	isRequired := false
-	for _, opt := range opts {
-		switch opt {
-		case "required":
-			isRequired = true
-		case "omitempty":
-			return false
-		}
-	}
-	return isRequired
+	// Otherwise, if the 'validate' tag contains 'omitempty' it is not a required field.
+	return !strings.Contains(tag, "omitempty")
 }
 
-func inferColumnType(typ reflect.Type, path []string, names map[string][]string) (Type, error) {
+func inferColumnType(typ reflect.Type, path []string, names collisions) (Type, error) {
 	for typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
 	}
@@ -284,7 +241,9 @@ func inferColumnType(typ reflect.Type, path []string, names map[string][]string)
 		}
 		return StructOf(cols), nil
 	case reflect.Slice:
-		elem, err := inferColumnType(typ.Elem(), append(path, "[]"), names)
+		// Distinguish array element in path
+		path = append(path, "[]")
+		elem, err := inferColumnType(typ.Elem(), path, names)
 		if err != nil {
 			return "", err
 		}
@@ -296,8 +255,11 @@ func inferColumnType(typ reflect.Type, path []string, names map[string][]string)
 		}
 		// Make sure we fail if map key is something exotic
 		if key != TypeString {
-			return "", fmt.Errorf("invalid map key %q at %q", key, strings.Join(path, "."))
+			// We do not want stack for errors
+			return "", newSchemaError(path, "invalid map key %q")
 		}
+		// Distinguish map values in path
+		path = append(path, "[]")
 		val, err := inferColumnType(typ.Elem(), path, names)
 		if err != nil {
 			return "", err
@@ -307,7 +269,7 @@ func inferColumnType(typ reflect.Type, path []string, names map[string][]string)
 		if glueType := inferScalarType(typ); glueType != "" {
 			return glueType, nil
 		}
-		return "", errors.Errorf("unsupported type %s at %q", typ.String(), strings.Join(path, "."))
+		return "", newSchemaError(path, "unsupported type %s", typ)
 	}
 }
 
@@ -344,4 +306,51 @@ func inferScalarType(typ reflect.Type) Type {
 	default:
 		return ""
 	}
+}
+
+// newSchemaError formats errors without a stack trace for use in recursive functions.
+//
+// Normally we use errors.Errorf from the 'github.com/pkg/errors' module.
+// Those errors include a stack trace. When used in recursive functions, those stack traces
+// can be very long and provide no useful info about the error.
+// We make sure to always include the path to the error so we relay that information
+func newSchemaError(path []string, format string, args ...interface{}) error {
+	err := fmt.Errorf(format, args...)
+	return errors.WithMessagef(err, "schema error at %q", strings.Join(path, ""))
+}
+
+// collisions observe column names across a schema and provide case sensitive mappings
+type collisions map[string][]string
+
+// observeColumnName adds name to the collisions
+func (c collisions) observeColumnName(name string) {
+	if c == nil {
+		return
+	}
+	key := strings.ToLower(name)
+	// append distinct names
+	c[key] = stringset.Append(c[key], name)
+}
+
+func (c collisions) caseSensitiveMappings() map[string]string {
+	out := make(map[string]string, len(c))
+	for caseInsensitiveName, caseSensitiveNames := range c {
+		sort.Strings(caseSensitiveNames)
+		for i, caseSensitiveName := range caseSensitiveNames {
+			var mapping string
+			// We need to make sure adding a suffix won't conflict with existing key names
+			for suffix := i; ; suffix++ {
+				mapping = caseInsensitiveName
+				if suffix > 0 {
+					mapping += strconv.Itoa(suffix)
+				}
+				_, exists := out[mapping]
+				if !exists {
+					break
+				}
+			}
+			out[mapping] = caseSensitiveName
+		}
+	}
+	return out
 }

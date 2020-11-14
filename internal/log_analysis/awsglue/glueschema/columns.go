@@ -20,8 +20,26 @@ package glueschema
 
 import "strings"
 
+// Column is a table column in AWS Glue.
+// We are using a separate struct from glue.Column to be able to mark the column as required
+type Column struct {
+	// Name is the name of the colunm
+	Name string
+	// Type is the glue schema type for the column.
+	Type Type // this is the Glue type
+	// Comment is used to set the comment in the glue column and also to set the
+	// field description in generated documentation.
+	Comment string
+	// Required marks the column as required.
+	// This information is used in documentation to mark fields as required.
+	// It does not affect Glue schema in some way and this should be removed once
+	// doc generation evolves to not use []glueschema.Column as input.
+	Required bool
+}
+
+// ColumnName normalizes names to be used for Glue table columns
 func ColumnName(name string) string {
-	result := fieldNameReplacer.Replace(name)
+	result := columnNamesReplacer.Replace(name)
 	if result == name {
 		return name
 	}
@@ -31,7 +49,7 @@ func ColumnName(name string) string {
 // TODO: [glueschema] Add more mappings of invalid Athena field name characters here
 // NOTE: The mapping should be easy to remember (so no ASCII code etc) and complex enough
 // to avoid possible conflicts with other fields.
-var fieldNameReplacer = strings.NewReplacer(
+var columnNamesReplacer = strings.NewReplacer(
 	"@", "_at_sign_",
 	",", "_comma_",
 	"`", "_backtick_",
