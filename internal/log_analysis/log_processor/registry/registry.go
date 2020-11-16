@@ -48,7 +48,7 @@ func LogTypes() logtypes.Group {
 
 // AvailableLogTypes returns all available log types in the default registry
 func AvailableLogTypes() (logTypes []string) {
-	for _, e := range LogTypes().Entries() {
+	for _, e := range availableLogTypes.Entries() {
 		logTypes = append(logTypes, e.String())
 	}
 	return
