@@ -19,10 +19,7 @@ package registry
  */
 
 import (
-	"github.com/pkg/errors"
-
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
 // Generates an init() function that populates the registry with all log types exported by
@@ -40,28 +37,13 @@ var (
 func NativeLogTypesResolver() logtypes.Resolver {
 	return logtypes.LocalResolver(nativeLogTypes)
 }
+func NativeLogTypes() logtypes.Group {
+	return nativeLogTypes
+}
 
 // LogTypes exposes all available log types as a read-only group.
 func LogTypes() logtypes.Group {
 	return availableLogTypes
-}
-
-// Register adds a group to the registry of available log types
-func Register(group logtypes.Group) error {
-	return availableLogTypes.Register(group)
-}
-
-func Del(logType string) bool {
-	if nativeLogTypes.Find(logType) != nil {
-		panic(`tried to remove native log type`)
-	}
-	return availableLogTypes.Del(logType)
-}
-
-// Lookup finds a log type entry or panics
-// Panics if the name is not registered
-func Lookup(name string) logtypes.Entry {
-	return logtypes.MustFind(LogTypes(), name)
 }
 
 // AvailableLogTypes returns all available log types in the default registry
@@ -70,20 +52,4 @@ func AvailableLogTypes() (logTypes []string) {
 		logTypes = append(logTypes, e.String())
 	}
 	return
-}
-
-// AvailableParsers returns log parsers for all native log types with nil parameters.
-// Panics if a parser factory in the default registry fails with nil params.
-func AvailableParsers() map[string]parsers.Interface {
-	entries := LogTypes().Entries()
-	available := make(map[string]parsers.Interface, len(entries))
-	for _, entry := range entries {
-		logType := entry.String()
-		parser, err := entry.NewParser(nil)
-		if err != nil {
-			panic(errors.Errorf("failed to create %q parser with nil params", logType))
-		}
-		available[logType] = parser
-	}
-	return available
 }

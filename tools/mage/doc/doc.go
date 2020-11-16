@@ -20,6 +20,7 @@ package doc
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"html"
 	"path/filepath"
@@ -143,7 +144,13 @@ func (category *logCategory) generateDocFile(outDir string) {
 
 	// use html table to get needed control
 	for _, logType := range category.LogTypes {
-		entry := registry.Lookup(logType)
+		entry, err := registry.NativeLogTypesResolver().Resolve(context.Background(), logType)
+		if err != nil {
+			panic(err)
+		}
+		if entry == nil {
+			panic("unresolved log type " + logType)
+		}
 		entryDesc := entry.Describe()
 		desc := entryDesc.Description
 		if entryDesc.ReferenceURL != "-" {
@@ -203,8 +210,8 @@ func logDocs() error {
 func findSupportedLogs() (*supportedLogs, error) {
 	result := supportedLogs{Categories: make(map[string]*logCategory)}
 
-	entries := registry.AvailableLogTypes()
-	for _, logType := range entries {
+	for _, entry := range registry.NativeLogTypes().Entries() {
+		logType := entry.String()
 		categoryType := strings.Split(logType, ".")
 		if len(categoryType) != 2 {
 			return nil, fmt.Errorf("unexpected logType format: %s", logType)
