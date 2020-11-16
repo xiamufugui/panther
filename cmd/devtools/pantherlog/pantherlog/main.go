@@ -29,15 +29,16 @@ package main
 import (
 	"bufio"
 	"flag"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
 
+	"github.com/pkg/errors"
+
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/classification"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
 

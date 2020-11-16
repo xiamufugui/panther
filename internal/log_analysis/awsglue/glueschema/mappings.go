@@ -19,33 +19,20 @@ package glueschema
  */
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"reflect"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
-
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 )
 
 var defaultMappings = map[reflect.Type]Type{
 	reflect.TypeOf(time.Time{}):           TypeTimestamp,
 	reflect.TypeOf(big.Int{}):             TypeBigInt,
+	reflect.TypeOf(json.RawMessage{}):     TypeString,
 	reflect.TypeOf(jsoniter.RawMessage{}): TypeString,
-	reflect.TypeOf(null.Float64{}):        TypeDouble,
-	reflect.TypeOf(null.Float32{}):        TypeFloat,
-	reflect.TypeOf(null.Int64{}):          TypeBigInt,
-	reflect.TypeOf(null.Int32{}):          TypeInt,
-	reflect.TypeOf(null.Int16{}):          TypeSmallInt,
-	reflect.TypeOf(null.Int8{}):           TypeTinyInt,
-	reflect.TypeOf(null.Uint64{}):         TypeBigInt,
-	reflect.TypeOf(null.Uint32{}):         TypeBigInt,
-	reflect.TypeOf(null.Uint16{}):         TypeInt,
-	reflect.TypeOf(null.Uint8{}):          TypeSmallInt,
-	reflect.TypeOf(null.String{}):         TypeString,
-	reflect.TypeOf(null.NonEmpty{}):       TypeString,
-	reflect.TypeOf(null.Bool{}):           TypeBool,
 }
 
 func MustRegisterMapping(from reflect.Type, to Type) {

@@ -256,7 +256,7 @@ func inferColumnType(typ reflect.Type, path []string, names collisions) (Type, e
 		// Make sure we fail if map key is something exotic
 		if key != TypeString {
 			// We do not want stack for errors
-			return "", newSchemaError(path, "invalid map key %q")
+			return "", newSchemaError(path, "invalid map key %q", key)
 		}
 		// Distinguish map values in path
 		path = append(path, "[]")

@@ -1,4 +1,4 @@
-package glueschema
+package glueschema_test
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	. "github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
