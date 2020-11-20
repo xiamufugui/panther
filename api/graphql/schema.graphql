@@ -1072,6 +1072,7 @@ enum AlertStatusesEnum {
 enum AlertTypesEnum {
   RULE
   RULE_ERROR
+  POLICY
 }
 
 enum SortDirEnum {

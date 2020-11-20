@@ -168,6 +168,7 @@ export type AlertSummary = Alert & {
 export enum AlertTypesEnum {
   Rule = 'RULE',
   RuleError = 'RULE_ERROR',
+  Policy = 'POLICY',
 }
 
 export type AsanaConfig = {

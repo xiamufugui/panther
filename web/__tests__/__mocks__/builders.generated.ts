@@ -292,7 +292,7 @@ export const buildAlertSummary = (overrides: Partial<AlertSummary> = {}): AlertS
       'deliveryResponses' in overrides ? overrides.deliveryResponses : [buildDeliveryResponse()],
     eventsMatched: 'eventsMatched' in overrides ? overrides.eventsMatched : 670,
     ruleId: 'ruleId' in overrides ? overrides.ruleId : '6eb9c948-5a13-4955-bd91-b98801b55bed',
-    type: 'type' in overrides ? overrides.type : AlertTypesEnum.Rule,
+    type: 'type' in overrides ? overrides.type : AlertTypesEnum.RuleError,
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Medium,
     status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Triaged,
     title: 'title' in overrides ? overrides.title : 'indexing',
