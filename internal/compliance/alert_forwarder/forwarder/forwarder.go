@@ -19,42 +19,146 @@ package forwarder
  */
 
 import (
-	"os"
+	"crypto/md5"
+	"encoding/hex"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	jsoniter "github.com/json-iterator/go"
-	"go.uber.org/zap"
-
 	"github.com/panther-labs/panther/api/lambda/delivery/models"
+	alertModel "github.com/panther-labs/panther/internal/log_analysis/alert_forwarder/forwarder"
+	"github.com/panther-labs/panther/pkg/metrics"
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
-var (
-	alertQueueURL                 = os.Getenv("ALERTING_QUEUE_URL")
-	awsSession                    = session.Must(session.NewSession())
-	sqsClient     sqsiface.SQSAPI = sqs.New(awsSession)
-)
+const defaultTimePartition = "defaultPartition"
 
-// Handle forwards an alert to the alert delivery SQS queue
-func Handle(event *models.Alert) error {
-	zap.L().Info("received alert", zap.String("policyId", event.AnalysisID))
+type Handler struct {
+	SqsClient        sqsiface.SQSAPI
+	DdbClient        dynamodbiface.DynamoDBAPI
+	AlertTable       string
+	AlertingQueueURL string
+	MetricsLogger    metrics.Logger
+}
 
-	msgBody, err := jsoniter.Marshal(event)
-	if err != nil {
+func (h *Handler) Do(alert models.Alert) error {
+	// Creates an ID and sets it in the alert
+	alert.AlertID = GenerateAlertID(alert)
+
+	// Persist to DDB
+	if err := h.storeNewAlert(alert); err != nil {
+		return errors.Wrap(err, "failed to store new alert (policy) in DDB")
+	}
+
+	// Send to Dispatch queue
+	if err := h.sendAlertNotification(alert); err != nil {
 		return err
 	}
-	input := &sqs.SendMessageInput{
-		QueueUrl:    aws.String(alertQueueURL),
-		MessageBody: aws.String(string(msgBody)),
+
+	// Log stats
+	if alert.Type == models.PolicyType {
+		h.logStats(alert)
 	}
-	_, err = sqsClient.SendMessage(input)
-	if err != nil {
-		zap.L().Warn("failed to send message to remediation", zap.Error(err))
-		return err
-	}
-	zap.L().Info("successfully triggered alert action")
 
 	return nil
+}
+
+func getAlertTypeForLog(alert models.Alert) string {
+	alertType := ""
+	switch alert.Type {
+	case models.PolicyType:
+		alertType = "Policy"
+	case models.RuleType:
+		alertType = "Rule"
+	case models.RuleErrorType:
+		alertType = "Rule_Error"
+	default:
+		zap.L().Error("Invalid Alert type")
+	}
+	return alertType
+}
+
+func (h *Handler) logStats(alert models.Alert) {
+	h.MetricsLogger.Log(
+		[]metrics.Dimension{
+			{Name: "Severity", Value: alert.Severity},
+			{Name: "AnalysisType", Value: getAlertTypeForLog(alert)},
+			{Name: "AnalysisID", Value: alert.AnalysisID},
+		},
+		metrics.Metric{
+			Name:  "AlertsCreated",
+			Value: 1,
+			Unit:  metrics.UnitCount,
+		},
+	)
+}
+
+func (h *Handler) storeNewAlert(alert models.Alert) error {
+	// Here we re-use the same field names for alerts that were
+	// generated from rules.
+	dynamoAlert := &alertModel.Alert{
+		ID:                  *alert.AlertID,
+		TimePartition:       defaultTimePartition,
+		Severity:            alert.Severity,
+		RuleDisplayName:     alert.AnalysisName,
+		Title:               aws.StringValue(alert.Title),
+		FirstEventMatchTime: alert.CreatedAt,
+		AlertDedupEvent: alertModel.AlertDedupEvent{
+			RuleID: alert.AnalysisID,
+			// RuleVersion: *alert.Version, //FIXME: we need to grab the policy that triggered this alert
+			// DeduplicationString: alert.DeduplicationString, // Policies don't have this
+			CreationTime: alert.CreatedAt,
+			UpdateTime:   alert.CreatedAt,
+			EventCount:   1,
+			LogTypes:     alert.LogTypes,
+			Type:         alert.Type,
+		},
+	}
+
+	marshaledAlert, err := dynamodbattribute.MarshalMap(dynamoAlert)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal alert")
+	}
+	putItemRequest := &dynamodb.PutItemInput{
+		Item:      marshaledAlert,
+		TableName: &h.AlertTable,
+	}
+	_, err = h.DdbClient.PutItem(putItemRequest)
+	if err != nil {
+		return errors.Wrap(err, "failed to store alert")
+	}
+
+	return nil
+}
+
+func (h *Handler) sendAlertNotification(alert models.Alert) error {
+	msgBody, err := jsoniter.MarshalToString(alert)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal alert notification")
+	}
+
+	input := &sqs.SendMessageInput{
+		QueueUrl:    &h.AlertingQueueURL,
+		MessageBody: &msgBody,
+	}
+	_, err = h.SqsClient.SendMessage(input)
+	if err != nil {
+		return errors.Wrap(err, "failed to send notification")
+	}
+	return nil
+}
+
+// Generates an ID from the policyID (policy name) and the current timestamp.
+// We do not have control over any dedup strings so we use a timestamp for
+// differentiation.
+func GenerateAlertID(alert models.Alert) *string {
+	key := alert.AnalysisID + ":" + alert.CreatedAt.String()
+	keyHash := md5.Sum([]byte(key)) // nolint(gosec)
+	encoded := hex.EncodeToString(keyHash[:])
+	return &encoded
 }
