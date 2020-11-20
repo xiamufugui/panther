@@ -17,7 +17,7 @@
  */
 
 import GenericItemCard from 'Components/GenericItemCard';
-import { Flex, Icon, Link, Text, Box } from 'pouncejs';
+import { Flex, Icon, Link, Text, Box, BadgeProps } from 'pouncejs';
 import { AlertTypesEnum } from 'Generated/schema';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/badges/SeverityBadge';
@@ -37,6 +37,22 @@ interface AlertCardProps {
   hideRuleButton?: boolean;
   selectionEnabled?: boolean;
 }
+
+const ALERT_TYPE_COLOR_MAP: {
+  [key in AlertCardProps['alert']['type']]: BadgeProps['color'];
+} = {
+  [AlertTypesEnum.Rule]: 'teal-500' as const,
+  [AlertTypesEnum.RuleError]: 'red-300' as const,
+  [AlertTypesEnum.Policy]: 'teal-400' as const,
+};
+
+const ALERT_TYPE_DISPLAY_NAME: {
+  [key in AlertCardProps['alert']['type']]: string;
+} = {
+  [AlertTypesEnum.Rule]: 'Rule Match' as const,
+  [AlertTypesEnum.RuleError]: 'Rule Error' as const,
+  [AlertTypesEnum.Policy]: 'Policy Fail' as const,
+};
 
 const AlertCard: React.FC<AlertCardProps> = ({
   alert,
@@ -76,12 +92,8 @@ const AlertCard: React.FC<AlertCardProps> = ({
         <GenericItemCard.ValuesGroup>
           <GenericItemCard.Value
             value={
-              <Text
-                fontSize="small"
-                as="span"
-                color={alert.type === AlertTypesEnum.Rule ? 'red-300' : 'teal-500'}
-              >
-                {alert.type === AlertTypesEnum.Rule ? 'Rule Match' : 'Rule Error'}
+              <Text fontSize="small" as="span" color={ALERT_TYPE_COLOR_MAP[alert.type]}>
+                {ALERT_TYPE_DISPLAY_NAME[alert.type]}
               </Text>
             }
           />
