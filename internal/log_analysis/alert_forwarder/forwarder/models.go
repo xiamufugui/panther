@@ -65,6 +65,7 @@ type Alert struct {
 	AlertDedupEvent
 	ResourceTypes []string `dynamodbav:"resourceTypes,stringset"`
 	ResourceID    string   `dynamodbav:"resourceId,string"`
+	SourceID      string   `dynamodbav:"sourceId,string"`
 }
 
 func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (event *AlertDedupEvent, err error) {

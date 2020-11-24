@@ -146,6 +146,9 @@ type Alert struct {
 	// ResourceID is the ID of the failing resource in the policy.
 	ResourceID string `json:"resourceId,omitempty"`
 
+	// SourceID is the ID of the source integration for the policy that failed.
+	SourceID string `json:"sourceId,omitempty"`
+
 	// AnalysisDescription is the description of the rule that triggered the alert.
 	AnalysisDescription *string `json:"analysisDescription,omitempty"`
 

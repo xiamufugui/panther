@@ -105,6 +105,7 @@ type AlertItem struct {
 	LogTypes      []string  `json:"logTypes"`
 	ResourceTypes []string  `json:"resourceTypes"`
 	ResourceID    string    `json:"resourceId"`
+	SourceID      string    `json:"sourceId"`
 	// LastUpdatedBy - stores the UserID of the last person who modified the Alert
 	LastUpdatedBy string `json:"lastUpdatedBy"`
 	// LastUpdatedByTime - stores the timestamp of the last person who modified the Alert

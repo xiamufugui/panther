@@ -111,6 +111,7 @@ func (h *Handler) storeNewAlert(alert models.Alert) error {
 		FirstEventMatchTime: alert.CreatedAt,
 		ResourceTypes:       alert.ResourceTypes,
 		ResourceID:          alert.ResourceID,
+		SourceID:            alert.SourceID,
 		AlertDedupEvent: alertModel.AlertDedupEvent{
 			RuleID: alert.AnalysisID,
 			// RuleVersion: *alert.Version, //FIXME: we need to grab the policy that triggered this alert

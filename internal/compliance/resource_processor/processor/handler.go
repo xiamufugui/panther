@@ -234,6 +234,7 @@ func (r *batchResults) analyze(resources resourceMap, policies policyMap) error 
 			complianceNotification := &alertmodels.ComplianceNotification{
 				OutputIds:       policy.OutputIDs,
 				ResourceID:      resource.ID,
+				SourceID:        resource.IntegrationID,
 				PolicyID:        policy.ID,
 				PolicyVersionID: policy.VersionID,
 				Timestamp:       time.Now(),

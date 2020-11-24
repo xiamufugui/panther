@@ -28,6 +28,9 @@ type ComplianceNotification struct {
 	// OutputIds contains a list of destinations to send an alert to
 	OutputIds []string `json:"outputIds"`
 
+	// SourceID is the id of the source integration
+	SourceID string `json:"sourceId" validate:"required,min=1"`
+
 	// PolicyID is the id of the policy that triggered
 	PolicyID string `json:"policyId" validate:"required,min=1"`
 

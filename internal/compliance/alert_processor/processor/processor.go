@@ -216,6 +216,7 @@ func getAlertConfigPolicy(event *models.ComplianceNotification) (*alertmodel.Ale
 			AnalysisName:        &policy.DisplayName,
 			ResourceTypes:       policy.ResourceTypes,
 			ResourceID:          event.ResourceID,
+			SourceID:            event.SourceID,
 			CreatedAt:           event.Timestamp,
 			OutputIds:           event.OutputIds,
 			Runbook:             &policy.Runbook,

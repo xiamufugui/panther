@@ -271,6 +271,7 @@ export const buildAlertDetails = (overrides: Partial<AlertDetails> = {}): AlertD
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Books'],
     resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['Solutions'],
     resourceId: 'resourceId' in overrides ? overrides.resourceId : 'Pants',
+    sourceId: 'sourceId' in overrides ? overrides.sourceId : 'Michigan',
     lastUpdatedBy:
       'lastUpdatedBy' in overrides
         ? overrides.lastUpdatedBy
@@ -301,6 +302,7 @@ export const buildAlertSummary = (overrides: Partial<AlertSummary> = {}): AlertS
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Costa Rica'],
     resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['Ball'],
     resourceId: 'resourceId' in overrides ? overrides.resourceId : 'Fantastic',
+    sourceId: 'sourceId' in overrides ? overrides.sourceId : 'sensor',
     lastUpdatedBy:
       'lastUpdatedBy' in overrides
         ? overrides.lastUpdatedBy

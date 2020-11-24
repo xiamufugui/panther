@@ -97,10 +97,6 @@ const AlertCard: React.FC<AlertCardProps> = ({
     }
   }, [alert]);
 
-  const alertLabel = React.useMemo(() => {
-    return alert.type === AlertTypesEnum.Policy ? 'Policy' : 'Rule';
-  }, [alert]);
-
   return (
     <GenericItemCard>
       <Flex align="start" pr={2}>
@@ -128,7 +124,7 @@ const AlertCard: React.FC<AlertCardProps> = ({
         <GenericItemCard.ValuesGroup>
           {!hideRuleButton && (
             <GenericItemCard.Value
-              label={alertLabel}
+              label={alertDetails.label}
               value={
                 <Flex spacing={2}>
                   <Text display="inline-flex" alignItems="center" as="span">
