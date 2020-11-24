@@ -20,10 +20,10 @@ import { Box, Flex, Heading, Card } from 'pouncejs';
 import React from 'react';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import { AlertTypesEnum } from 'Generated/schema';
-import BulletedType from 'Components/BulletedType';
 import UpdateAlertDropdown from 'Components/dropdowns/UpdateAlertDropdown';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 import { AlertDetails } from 'Pages/AlertDetails';
+import BulletedLogType from 'Components/BulletedLogType';
 
 interface AlertDetailsBannerProps {
   alert: AlertDetails['alert'];
@@ -80,7 +80,7 @@ const AlertDetailsBanner: React.FC<AlertDetailsBannerProps> = ({ alert }) => {
           <Box id="alert-log-types" as="dl">
             <Flex align="center" spacing={6}>
               {alert.logTypes.map(logType => (
-                <BulletedType key={logType} type={logType} />
+                <BulletedLogType key={logType} logType={logType} />
               ))}
             </Flex>
           </Box>

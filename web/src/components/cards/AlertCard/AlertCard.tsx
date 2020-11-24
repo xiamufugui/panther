@@ -17,14 +17,14 @@
  */
 
 import GenericItemCard from 'Components/GenericItemCard';
-import { Flex, Icon, Link, Text, Box, BadgeProps } from 'pouncejs';
+import { Flex, Icon, Link, Text, Box } from 'pouncejs';
 import { AlertTypesEnum } from 'Generated/schema';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import React from 'react';
 import urls from 'Source/urls';
 import RelatedDestinations from 'Components/RelatedDestinations';
-import BulletedTypeList from 'Components/BulletedTypeList';
+import BulletedLogTypeList from 'Components/BulletedLogTypeList';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 import { formatDatetime } from 'Helpers/utils';
 import useAlertDestinations from 'Hooks/useAlertDestinations';
@@ -38,14 +38,6 @@ interface AlertCardProps {
   selectionEnabled?: boolean;
 }
 
-const ALERT_TYPE_COLOR_MAP: {
-  [key in AlertCardProps['alert']['type']]: BadgeProps['color'];
-} = {
-  [AlertTypesEnum.Rule]: 'teal-500' as const,
-  [AlertTypesEnum.RuleError]: 'red-300' as const,
-  [AlertTypesEnum.Policy]: 'teal-200' as const,
-};
-
 const AlertCard: React.FC<AlertCardProps> = ({
   alert,
   hideRuleButton = false,
@@ -55,47 +47,6 @@ const AlertCard: React.FC<AlertCardProps> = ({
   const { allDestinationDeliveredSuccessfully, loading } = useAlertDestinationsDeliverySuccess({
     alert,
   });
-
-  const alertDetails = React.useMemo(() => {
-    switch (alert.type) {
-      case AlertTypesEnum.Rule:
-        return {
-          displayName: 'Rule Match',
-          typesLabel: 'Log Types',
-          label: 'Rule',
-          ariaLabel: `Link to rule ${alert.ruleId}`,
-          detailsLink: urls.logAnalysis.alerts.details(alert.alertId),
-          detectionLink: urls.logAnalysis.rules.details(alert.ruleId),
-        };
-      case AlertTypesEnum.RuleError:
-        return {
-          displayName: 'Rule Error',
-          typesLabel: 'Log Types',
-          label: 'Rule',
-          ariaLabel: `Link to rule ${alert.ruleId}`,
-          detailsLink: urls.logAnalysis.alerts.details(alert.alertId),
-          detectionLink: urls.logAnalysis.rules.details(alert.ruleId),
-        };
-      case AlertTypesEnum.Policy:
-        return {
-          displayName: 'Policy Fail',
-          typesLabel: 'Resource Types',
-          label: 'Policy',
-          ariaLabel: `Link to policy ${alert.alertId}`,
-          detailsLink: urls.logAnalysis.alerts.details(alert.alertId),
-          detectionLink: urls.compliance.policies.details(alert.ruleId),
-        };
-      default:
-        return {
-          displayName: '',
-          typesLabel: '',
-          label: '',
-          ariaLabel: '',
-          detailsLink: '#',
-          detectionLink: '#',
-        };
-    }
-  }, [alert]);
 
   return (
     <GenericItemCard>
@@ -109,7 +60,11 @@ const AlertCard: React.FC<AlertCardProps> = ({
       <GenericItemCard.Body>
         <GenericItemCard.Header>
           <GenericItemCard.Heading>
-            <Link as={RRLink} aria-label="Link to Alert" to={alertDetails.detailsLink}>
+            <Link
+              as={RRLink}
+              aria-label="Link to Alert"
+              to={urls.logAnalysis.alerts.details(alert.alertId)}
+            >
               {alert.title}
             </Link>
           </GenericItemCard.Heading>
@@ -118,21 +73,25 @@ const AlertCard: React.FC<AlertCardProps> = ({
             date={formatDatetime(alert.creationTime)}
           />
         </GenericItemCard.Header>
-        <Text fontSize="small" as="span" color={ALERT_TYPE_COLOR_MAP[alert.type]}>
-          {alertDetails.displayName}
+        <Text
+          fontSize="small"
+          as="span"
+          color={alert.type === AlertTypesEnum.Rule ? 'red-300' : 'teal-500'}
+        >
+          {alert.type === AlertTypesEnum.Rule ? 'Rule Match' : 'Rule Error'}
         </Text>
         <GenericItemCard.ValuesGroup>
           {!hideRuleButton && (
             <GenericItemCard.Value
-              label={alertDetails.label}
+              label="Rule"
               value={
                 <Flex spacing={2}>
                   <Text display="inline-flex" alignItems="center" as="span">
                     {alert.ruleId}
                   </Text>
                   <GenericItemCard.Link
-                    aria-label={alertDetails.ariaLabel}
-                    to={alertDetails.detectionLink}
+                    aria-label={`Link to rule ${alert.ruleId}`}
+                    to={urls.logAnalysis.rules.details(alert.ruleId)}
                   />
                 </Flex>
               }
@@ -145,10 +104,8 @@ const AlertCard: React.FC<AlertCardProps> = ({
             }
           />
           <GenericItemCard.Value
-            label={alertDetails.typesLabel}
-            value={
-              <BulletedTypeList types={[...alert.logTypes, ...alert.resourceTypes]} limit={2} />
-            }
+            label="Log Types"
+            value={<BulletedLogTypeList logTypes={alert.logTypes} limit={2} />}
           />
           <GenericItemCard.Value
             label="Events"
@@ -174,7 +131,7 @@ const AlertCard: React.FC<AlertCardProps> = ({
             <Text>
               There was an issue with the delivery of this alert to a selected destination.
             </Text>
-            <RRLink to={alertDetails.detailsLink}>
+            <RRLink to={urls.logAnalysis.alerts.details(alert.alertId)}>
               <Text textDecoration="underline">See details</Text>
             </RRLink>
           </Flex>

@@ -17,17 +17,13 @@
  */
 
 import React from 'react';
-import { render, fireEvent } from 'test-utils';
-import BulletedTypeList from './BulletedTypeList';
+import { render } from 'test-utils';
+import BulletedLogType from './BulletedLogType';
 
-describe('BulletedTypeList', () => {
-  it('matches snapshots', () => {
-    const { container, getByText } = render(
-      <BulletedTypeList types={['a', 'b', 'c', 'd']} limit={2} />
-    );
-    expect(container).toMatchSnapshot();
+describe('BulletedLogType', () => {
+  it('renders the same color for the same log type', () => {
+    const { container } = render(<BulletedLogType logType="AWS.EC2" />);
 
-    fireEvent.mouseEnter(getByText('+2'));
     expect(container).toMatchSnapshot();
   });
 });

@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`BulletedTypeList matches snapshots 1`] = `
+exports[`BulletedLogTypeList matches snapshots 1`] = `
 .panther-8 {
   display: -webkit-box;
   display: -webkit-flex;
@@ -127,7 +127,7 @@ exports[`BulletedTypeList matches snapshots 1`] = `
 </div>
 `;
 
-exports[`BulletedTypeList matches snapshots 2`] = `
+exports[`BulletedLogTypeList matches snapshots 2`] = `
 .panther-8 {
   display: -webkit-box;
   display: -webkit-flex;

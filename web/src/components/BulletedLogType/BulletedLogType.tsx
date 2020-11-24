@@ -17,25 +17,28 @@
  */
 
 import React from 'react';
-import { Flex } from 'pouncejs';
-import LimitItemDisplay from 'Components/LimitItemDisplay/LimitItemDisplay';
-import BulletedType from 'Components/BulletedType';
+import { Box, Flex } from 'pouncejs';
+import { stringToPaleColor } from 'Helpers/colors';
 
-interface BulletedTypeListProps {
-  types: string[];
-  limit?: number;
+interface BulletedLogTypeProps {
+  logType: string;
 }
 
-const BulletedTypeList: React.FC<BulletedTypeListProps> = ({ types, limit = 1000 }) => {
+const BulletedLogType: React.FC<BulletedLogTypeProps> = ({ logType }) => {
   return (
-    <Flex align="center" spacing={2} flexWrap="wrap">
-      <LimitItemDisplay limit={limit}>
-        {types.map((type, i) => (
-          <BulletedType key={i} type={type} />
-        ))}
-      </LimitItemDisplay>
+    <Flex spacing={2} align="center">
+      <Box
+        as="span"
+        width={12}
+        height={12}
+        backgroundColor={stringToPaleColor(logType) as any}
+        borderRadius="circle"
+      />
+      <Box as="span" fontSize="small" fontWeight="normal" lineHeight="typical">
+        {logType}
+      </Box>
     </Flex>
   );
 };
 
-export default BulletedTypeList;
+export default BulletedLogType;
