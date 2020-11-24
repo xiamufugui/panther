@@ -194,6 +194,7 @@ type AlertSummary struct {
 	LogTypes          []string            `json:"logTypes" validate:"required"`
 	ResourceTypes     []string            `json:"resourceTypes" validate:"required"`
 	ResourceID        string              `json:"resourceId" validate:"required"`
+	SourceID          string              `json:"sourceId" validate:"required"`
 	CreationTime      *time.Time          `json:"creationTime" validate:"required"`
 	UpdateTime        *time.Time          `json:"updateTime" validate:"required"`
 	EventsMatched     *int                `json:"eventsMatched" validate:"required"`

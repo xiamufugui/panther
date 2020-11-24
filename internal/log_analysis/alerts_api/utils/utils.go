@@ -63,6 +63,7 @@ func AlertItemToSummary(item *table.AlertItem) *models.AlertSummary {
 		LogTypes:          item.LogTypes,
 		ResourceTypes:     item.ResourceTypes,
 		ResourceID:        item.ResourceID,
+		SourceID:          item.SourceID,
 		LastUpdatedBy:     item.LastUpdatedBy,
 		LastUpdatedByTime: item.LastUpdatedByTime,
 		UpdateTime:        &item.UpdateTime,
