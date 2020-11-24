@@ -30,8 +30,10 @@ import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import invert from 'lodash/invert';
 import useUrlParams from 'Hooks/useUrlParams';
 import { useListDestinations } from 'Source/graphql/queries';
+import { AlertTypesEnum } from 'Generated/schema';
 import { useAlertDetails } from './graphql/alertDetails.generated';
 import { useRuleTeaser } from './graphql/ruleTeaser.generated';
+import { usePolicyTeaser } from './graphql/policyTeaser.generated';
 import AlertDetailsBanner from './AlertDetailsBanner';
 import AlertDetailsInfo from './AlertDetailsInfo';
 
@@ -70,7 +72,16 @@ const AlertDetailsPage = () => {
   });
 
   const { data: ruleData, loading: ruleLoading } = useRuleTeaser({
-    skip: !alertData,
+    skip: !alertData || alertData.alert?.type === AlertTypesEnum.Policy,
+    variables: {
+      input: {
+        id: alertData?.alert?.ruleId,
+      },
+    },
+  });
+
+  const { data: policyData, loading: policyLoading } = usePolicyTeaser({
+    skip: !alertData || alertData.alert?.type !== AlertTypesEnum.Policy,
     variables: {
       input: {
         id: alertData?.alert?.ruleId,
@@ -107,6 +118,7 @@ const AlertDetailsPage = () => {
   if (
     (alertLoading && !alertData) ||
     (ruleLoading && !ruleData) ||
+    (policyLoading && !policyData) ||
     (destinationLoading && !destinationData)
   ) {
     return <Skeleton />;
@@ -131,6 +143,8 @@ const AlertDetailsPage = () => {
     return <Page404 />;
   }
 
+  const isRuleType = alertData.alert.type !== AlertTypesEnum.Policy;
+
   return (
     <Box as="article">
       <Flex direction="column" spacing={6} my={6}>
@@ -141,25 +155,43 @@ const AlertDetailsPage = () => {
             onChange={index => updateUrlParams({ section: tabIndexToSection[index] })}
           >
             <Box px={2}>
-              <TabList>
-                <BorderedTab>Details</BorderedTab>
-                <BorderedTab>Events ({alertData.alert.eventsMatched})</BorderedTab>
-              </TabList>
+              {isRuleType && (
+                <TabList>
+                  <BorderedTab>Details</BorderedTab>
+                  <BorderedTab>Events ({alertData.alert.eventsMatched})</BorderedTab>
+                </TabList>
+              )}
+              {!isRuleType && (
+                <TabList>
+                  <BorderedTab>Details</BorderedTab>
+                </TabList>
+              )}
             </Box>
             <BorderTabDivider />
             <Box p={6}>
-              <TabPanels>
-                <TabPanel data-testid="alert-details-tabpanel">
-                  <ErrorBoundary>
-                    <AlertDetailsInfo alert={alertData.alert} rule={ruleData?.rule} />
-                  </ErrorBoundary>
-                </TabPanel>
-                <TabPanel lazy data-testid="alert-events-tabpanel">
-                  <ErrorBoundary>
-                    <AlertEvents alert={alertData.alert} fetchMore={fetchMoreEvents} />
-                  </ErrorBoundary>
-                </TabPanel>
-              </TabPanels>
+              {isRuleType && (
+                <TabPanels>
+                  <TabPanel data-testid="alert-details-tabpanel">
+                    <ErrorBoundary>
+                      <AlertDetailsInfo alert={alertData.alert} rule={ruleData?.rule} />
+                    </ErrorBoundary>
+                  </TabPanel>
+                  <TabPanel lazy data-testid="alert-events-tabpanel">
+                    <ErrorBoundary>
+                      <AlertEvents alert={alertData.alert} fetchMore={fetchMoreEvents} />
+                    </ErrorBoundary>
+                  </TabPanel>
+                </TabPanels>
+              )}
+              {!isRuleType && (
+                <TabPanels>
+                  <TabPanel data-testid="alert-details-tabpanel">
+                    <ErrorBoundary>
+                      <AlertDetailsInfo alert={alertData.alert} policy={policyData?.policy} />
+                    </ErrorBoundary>
+                  </TabPanel>
+                </TabPanels>
+              )}
             </Box>
           </Tabs>
         </Card>

@@ -140,6 +140,12 @@ type Alert struct {
 	// LogTypes is the set of logs that could trigger the alert.
 	LogTypes []string `json:"logTypes,omitempty"`
 
+	// ResourceTypes is the set of resources that could trigger the alert.
+	ResourceTypes []string `json:"resourceTypes,omitempty"`
+
+	// ResourceID is the ID of the failing resource in the policy.
+	ResourceID string `json:"resourceId,omitempty"`
+
 	// AnalysisDescription is the description of the rule that triggered the alert.
 	AnalysisDescription *string `json:"analysisDescription,omitempty"`
 

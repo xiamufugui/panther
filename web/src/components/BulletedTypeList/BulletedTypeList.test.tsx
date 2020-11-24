@@ -18,12 +18,12 @@
 
 import React from 'react';
 import { render, fireEvent } from 'test-utils';
-import BulletedLogTypeList from './BulletedLogTypeList';
+import BulletedTypeList from './BulletedTypeList';
 
-describe('BulletedLogTypeList', () => {
+describe('BulletedTypeList', () => {
   it('matches snapshots', () => {
     const { container, getByText } = render(
-      <BulletedLogTypeList logTypes={['a', 'b', 'c', 'd']} limit={2} />
+      <BulletedTypeList types={['a', 'b', 'c', 'd']} limit={2} />
     );
     expect(container).toMatchSnapshot();
 

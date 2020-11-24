@@ -12,6 +12,8 @@ fragment AlertSummaryFull on AlertSummary {
   eventsMatched
   updateTime
   logTypes
+  resourceTypes
+  resourceId
   lastUpdatedBy
   lastUpdatedByTime
 }

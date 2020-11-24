@@ -34,6 +34,8 @@ export type AlertSummaryFull = Pick<
   | 'eventsMatched'
   | 'updateTime'
   | 'logTypes'
+  | 'resourceTypes'
+  | 'resourceId'
   | 'lastUpdatedBy'
   | 'lastUpdatedByTime'
 > & { deliveryResponses: Array<Types.Maybe<DeliveryResponseFull>> };
@@ -53,6 +55,8 @@ export const AlertSummaryFull = gql`
     eventsMatched
     updateTime
     logTypes
+    resourceTypes
+    resourceId
     lastUpdatedBy
     lastUpdatedByTime
   }

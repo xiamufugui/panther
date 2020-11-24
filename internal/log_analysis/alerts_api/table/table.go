@@ -39,6 +39,8 @@ const (
 	EventCountKey        = "eventCount"
 	StatusKey            = "status"
 	LogTypesKey          = "logTypes"
+	ResourceTypesKey     = "resourceTypes"
+	ResourceIDKey        = "resourceId"
 	DeliveryResponsesKey = "deliveryResponses"
 	LastUpdatedByKey     = "lastUpdatedBy"
 	LastUpdatedByTimeKey = "lastUpdatedByTime"
@@ -96,11 +98,13 @@ type AlertItem struct {
 	CreationTime        time.Time                  `json:"creationTime"`
 	DeliveryResponses   []*models.DeliveryResponse `json:"deliveryResponses"`
 	// UpdateTime - stores the timestamp from an update from a dedup event
-	UpdateTime time.Time `json:"updateTime"`
-	Severity   string    `json:"severity"`
-	Status     string    `json:"status"`
-	EventCount int       `json:"eventCount"`
-	LogTypes   []string  `json:"logTypes"`
+	UpdateTime    time.Time `json:"updateTime"`
+	Severity      string    `json:"severity"`
+	Status        string    `json:"status"`
+	EventCount    int       `json:"eventCount"`
+	LogTypes      []string  `json:"logTypes"`
+	ResourceTypes []string  `json:"resourceTypes"`
+	ResourceID    string    `json:"resouceId"`
 	// LastUpdatedBy - stores the UserID of the last person who modified the Alert
 	LastUpdatedBy string `json:"lastUpdatedBy"`
 	// LastUpdatedByTime - stores the timestamp of the last person who modified the Alert

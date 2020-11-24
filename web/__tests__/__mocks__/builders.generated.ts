@@ -269,6 +269,8 @@ export const buildAlertDetails = (overrides: Partial<AlertDetails> = {}): AlertD
     title: 'title' in overrides ? overrides.title : 'Steel',
     type: 'type' in overrides ? overrides.type : AlertTypesEnum.Rule,
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Books'],
+    resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['Solutions'],
+    resourceId: 'resourceId' in overrides ? overrides.resourceId : 'Pants',
     lastUpdatedBy:
       'lastUpdatedBy' in overrides
         ? overrides.lastUpdatedBy
@@ -297,6 +299,8 @@ export const buildAlertSummary = (overrides: Partial<AlertSummary> = {}): AlertS
     status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Triaged,
     title: 'title' in overrides ? overrides.title : 'indexing',
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Costa Rica'],
+    resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['Ball'],
+    resourceId: 'resourceId' in overrides ? overrides.resourceId : 'Fantastic',
     lastUpdatedBy:
       'lastUpdatedBy' in overrides
         ? overrides.lastUpdatedBy

@@ -16,8 +16,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './AlertDetails';
-export * from './AlertDetails';
-export * from './graphql/alertDetails.generated';
-export * from './graphql/ruleTeaser.generated';
-export * from './graphql/policyTeaser.generated';
+import React from 'react';
+import { Flex } from 'pouncejs';
+import LimitItemDisplay from 'Components/LimitItemDisplay/LimitItemDisplay';
+import BulletedType from 'Components/BulletedType';
+
+interface BulletedTypeListProps {
+  types: string[];
+  limit?: number;
+}
+
+const BulletedTypeList: React.FC<BulletedTypeListProps> = ({ types, limit = 1000 }) => {
+  return (
+    <Flex align="center" spacing={2} flexWrap="wrap">
+      <LimitItemDisplay limit={limit}>
+        {types.map((type, i) => (
+          <BulletedType key={i} type={type} />
+        ))}
+      </LimitItemDisplay>
+    </Flex>
+  );
+};
+
+export default BulletedTypeList;

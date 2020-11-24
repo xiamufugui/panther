@@ -192,6 +192,8 @@ type AlertSummary struct {
 	DedupString       *string             `json:"dedupString,omitempty"`
 	DeliveryResponses []*DeliveryResponse `json:"deliveryResponses" validate:"required"`
 	LogTypes          []string            `json:"logTypes" validate:"required"`
+	ResourceTypes     []string            `json:"resourceTypes" validate:"required"`
+	ResourceID        string              `json:"resourceId" validate:"required"`
 	CreationTime      *time.Time          `json:"creationTime" validate:"required"`
 	UpdateTime        *time.Time          `json:"updateTime" validate:"required"`
 	EventsMatched     *int                `json:"eventsMatched" validate:"required"`

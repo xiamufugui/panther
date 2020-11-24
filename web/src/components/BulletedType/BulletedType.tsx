@@ -20,25 +20,25 @@ import React from 'react';
 import { Box, Flex } from 'pouncejs';
 import { stringToPaleColor } from 'Helpers/colors';
 
-interface BulletedLogTypeProps {
-  logType: string;
+interface BulletedTypeProps {
+  type: string;
 }
 
-const BulletedLogType: React.FC<BulletedLogTypeProps> = ({ logType }) => {
+const BulletedType: React.FC<BulletedTypeProps> = ({ type }) => {
   return (
     <Flex spacing={2} align="center">
       <Box
         as="span"
         width={12}
         height={12}
-        backgroundColor={stringToPaleColor(logType) as any}
+        backgroundColor={stringToPaleColor(type) as any}
         borderRadius="circle"
       />
       <Box as="span" fontSize="small" fontWeight="normal" lineHeight="typical">
-        {logType}
+        {type}
       </Box>
     </Flex>
   );
 };
 
-export default BulletedLogType;
+export default BulletedType;

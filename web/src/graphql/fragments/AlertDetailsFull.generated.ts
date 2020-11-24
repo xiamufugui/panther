@@ -37,6 +37,8 @@ export type AlertDetailsFull = Pick<
   | 'severity'
   | 'status'
   | 'logTypes'
+  | 'resourceTypes'
+  | 'resourceId'
   | 'lastUpdatedBy'
   | 'lastUpdatedByTime'
 > & { deliveryResponses: Array<Types.Maybe<DeliveryResponseFull>> };
@@ -59,6 +61,8 @@ export const AlertDetailsFull = gql`
     severity
     status
     logTypes
+    resourceTypes
+    resourceId
     lastUpdatedBy
     lastUpdatedByTime
   }

@@ -22,14 +22,15 @@ import Linkify from 'Components/Linkify';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import { formatDatetime, formatNumber, minutesToString } from 'Helpers/utils';
-import { AlertDetails, RuleTeaser } from 'Pages/AlertDetails';
+import { AlertDetails, RuleTeaser, PolicyTeaser } from 'Pages/AlertDetails';
 import AlertDeliverySection from 'Pages/AlertDetails/AlertDetailsInfo/AlertDeliverySection';
 import RelatedDestinations from 'Components/RelatedDestinations';
 import useAlertDestinations from 'Hooks/useAlertDestinations';
 
 interface AlertDetailsInfoProps {
   alert: AlertDetails['alert'];
-  rule: RuleTeaser['rule'];
+  rule?: RuleTeaser['rule'];
+  policy?: PolicyTeaser['policy'];
 }
 
 const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {

@@ -16,4 +16,42 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './BulletedLogTypeList';
+import * as Types from '../../../__generated__/schema';
+
+import { GraphQLError } from 'graphql';
+import gql from 'graphql-tag';
+
+export type PolicyBasic = Pick<
+  Types.PolicyDetails,
+  | 'id'
+  | 'description'
+  | 'displayName'
+  | 'resourceTypes'
+  | 'complianceStatus'
+  | 'outputIds'
+  | 'runbook'
+  | 'reference'
+  | 'severity'
+  | 'tags'
+  | 'createdAt'
+  | 'lastModified'
+  | 'enabled'
+>;
+
+export const PolicyBasic = gql`
+  fragment PolicyBasic on PolicyDetails {
+    id
+    description
+    displayName
+    resourceTypes
+    complianceStatus
+    outputIds
+    runbook
+    reference
+    severity
+    tags
+    createdAt
+    lastModified
+    enabled
+  }
+`;

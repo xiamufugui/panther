@@ -46,6 +46,10 @@ const urls = {
       details: (id: ResourceDetails['id']) => `${urls.compliance.resources.list()}${urlEncode(id)}/`, // prettier-ignore
       edit: (id: ResourceDetails['id']) => `${urls.compliance.resources.details(id)}edit/`,
     },
+    // alerts: {
+    //   list: () => `${urls.compliance.home()}alerts/`,
+    //   details: (id: AlertDetails['alertId']) => `${urls.compliance.alerts.list()}${urlEncode(id)}/` // prettier-ignore
+    // },
     sources: {
       list: () => `${urls.compliance.home()}sources/`,
       create: () => `${urls.compliance.sources.list()}new/`,

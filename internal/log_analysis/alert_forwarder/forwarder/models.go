@@ -63,6 +63,8 @@ type Alert struct {
 	Title               string    `dynamodbav:"title,string"` // The alert title. It will be the Python-generated title or a default one if
 	// no Python-generated title is available.
 	AlertDedupEvent
+	ResourceTypes []string `dynamodbav:"resourceTypes,stringset"`
+	ResourceID    string   `dynamodbav:"resourceId,string"`
 }
 
 func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (event *AlertDedupEvent, err error) {

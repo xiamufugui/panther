@@ -19,7 +19,7 @@ package forwarder
  */
 
 import (
-	"crypto/md5"
+	"crypto/md5" // nolint: gosec
 	"encoding/hex"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -109,6 +109,8 @@ func (h *Handler) storeNewAlert(alert models.Alert) error {
 		RuleDisplayName:     alert.AnalysisName,
 		Title:               aws.StringValue(alert.Title),
 		FirstEventMatchTime: alert.CreatedAt,
+		ResourceTypes:       alert.ResourceTypes,
+		ResourceID:          alert.ResourceID,
 		AlertDedupEvent: alertModel.AlertDedupEvent{
 			RuleID: alert.AnalysisID,
 			// RuleVersion: *alert.Version, //FIXME: we need to grab the policy that triggered this alert
