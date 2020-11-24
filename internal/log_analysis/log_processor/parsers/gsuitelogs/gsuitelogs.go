@@ -1,4 +1,4 @@
-package genericapi
+package gsuitelogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,25 +19,21 @@ package genericapi
  */
 
 import (
-	"errors"
-	"strings"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
-// HTMLCharacterSet is the same set of characters replaced by the built-in html.EscapeString.
-const HTMLCharacterSet = `'<>&"`
+const TypeReports = `GSuite.Reports`
 
-// ErrContainsHTML defines a standard error message if a field contains HTML characters.
-var ErrContainsHTML = func() error {
-	var chars []string
-	for _, x := range HTMLCharacterSet {
-		chars = append(chars, string(x))
-	}
-	return errors.New("cannot contain any of: " + strings.Join(chars, " "))
-}()
-
-// ContainsHTML is true if the string contains any of HTMLCharacterSet
-//
-// Such strings should be rejected for user-defined names and labels to prevent injection attacks.
-func ContainsHTML(s string) bool {
-	return strings.ContainsAny(s, HTMLCharacterSet)
+func LogTypes() logtypes.Group {
+	return logTypes
 }
+
+// nolint: lll
+var logTypes = logtypes.Must("GSuite", logtypes.Config{
+	Name:         TypeReports,
+	Description:  `Contains the activity events for a specific account and application such as the Admin console application or the Google Drive application.`,
+	ReferenceURL: `https://developers.google.com/admin-sdk/reports/v1/reference/activities/list#response`,
+	Schema:       Reports{},
+	NewParser:    parsers.AdapterFactory(&ReportsParser{}),
+})
