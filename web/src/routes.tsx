@@ -118,12 +118,6 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   path={urls.compliance.resources.details(':id')}
                   component={ResourceDetailsPage}
                 />
-                {/* <Route exact path={urls.compliance.alerts.list()} component={ListAlertsPage} />
-                <Route
-                  exact
-                  path={urls.compliance.alerts.details(':id')}
-                  component={AlertDetailsPage}
-                /> */}
                 <Route
                   exact
                   path={urls.compliance.sources.list()}
