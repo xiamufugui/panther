@@ -42,7 +42,7 @@ var (
 		{Name: "Severity", Value: "INFO"},
 		{Name: "AnalysisType", Value: "Policy"},
 		{Name: "AnalysisID", Value: "Test.Policy"}}
-	timeNow = time.Unix(1581379785, 0) // Set a static time
+	timeNow = time.Unix(1581379785, 0).UTC() // Set a static time
 )
 
 func genSampleAlert() models.Alert {
@@ -67,7 +67,7 @@ func genSampleAlert() models.Alert {
 func TestGenerateAlertID(t *testing.T) {
 	alert := genSampleAlert()
 	alertID := GenerateAlertID(alert)
-	assert.Equal(t, *alertID, "14385b7633e698ede7e036dc010c1fb6")
+	assert.Equal(t, *alertID, "26df596024d2e81140de028387d517da")
 }
 
 func TestHandleStoreAndSendNotification(t *testing.T) {
@@ -101,7 +101,7 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 
 	// Then, simulate sending to DDB
 	expectedDynamoAlert := &alertModel.Alert{
-		ID:                  "14385b7633e698ede7e036dc010c1fb6",
+		ID:                  "26df596024d2e81140de028387d517da",
 		TimePartition:       "defaultPartition",
 		Severity:            "INFO",
 		Title:               aws.StringValue(expectedAlert.Title),
