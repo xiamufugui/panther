@@ -115,6 +115,7 @@ func (h *Handler) storeNewAlert(alert models.Alert) error {
 		ResourceID:          alert.ResourceID,
 		// Reuse part of the struct that was intended for Rules
 		AlertDedupEvent: alertModel.AlertDedupEvent{
+			RuleID:       alert.AnalysisID, // Not used, but needed to meet the `ruleId-creationTime-index` constraint
 			CreationTime: alert.CreatedAt,
 			UpdateTime:   alert.CreatedAt,
 			Type:         alert.Type,
