@@ -113,6 +113,7 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 		ResourceID:          expectedAlert.ResourceID,
 		// Reuse part of the struct that was intended for Rules
 		AlertDedupEvent: alertModel.AlertDedupEvent{
+			RuleID:       expectedAlert.AnalysisID, // Required for DDB GSI constraint
 			CreationTime: expectedAlert.CreatedAt,
 			UpdateTime:   expectedAlert.CreatedAt,
 			Type:         expectedAlert.Type,
