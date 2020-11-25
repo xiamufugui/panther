@@ -202,9 +202,6 @@ type AlertSummary implements Alert {
   status: AlertStatusesEnum!
   title: String!
   logTypes: [String!]! # From alerts triggered by rules
-  resourceTypes: [String!]! # From alerts triggered by policies
-  resourceId: String # From alerts triggered by policies
-  sourceId: String # From alerts triggered by policies
   lastUpdatedBy: ID # gets mapped to a User in the frontend
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
   updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event

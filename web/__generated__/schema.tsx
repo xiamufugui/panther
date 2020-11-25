@@ -172,9 +172,6 @@ export type AlertSummary = Alert & {
   status: AlertStatusesEnum;
   title: Scalars['String'];
   logTypes: Array<Scalars['String']>;
-  resourceTypes: Array<Scalars['String']>;
-  resourceId: Scalars['String'];
-  sourceId?: Maybe<Scalars['String']>;
   lastUpdatedBy?: Maybe<Scalars['ID']>;
   lastUpdatedByTime?: Maybe<Scalars['AWSDateTime']>;
   updateTime: Scalars['AWSDateTime'];
@@ -182,6 +179,8 @@ export type AlertSummary = Alert & {
   policyDisplayName: Scalars['String'];
   policyIntegrationId: Scalars['String'];
   policyVersion: Scalars['String'];
+  resourceTypes: Array<Scalars['String']>;
+  resourceId: Scalars['String'];
 };
 
 export enum AlertTypesEnum {
@@ -1913,9 +1912,6 @@ export type AlertSummaryResolvers<
   status?: Resolver<ResolversTypes['AlertStatusesEnum'], ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   logTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  resourceTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  resourceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  sourceId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   lastUpdatedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   lastUpdatedByTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   updateTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
@@ -1923,6 +1919,8 @@ export type AlertSummaryResolvers<
   policyDisplayName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   policyIntegrationId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   policyVersion?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  resourceTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  resourceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
