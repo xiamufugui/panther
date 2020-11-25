@@ -113,6 +113,7 @@ func (h *Handler) storeNewAlert(alert models.Alert) error {
 		PolicyIntegrationID: alert.AnalysisIntegrationID,
 		ResourceTypes:       alert.ResourceTypes,
 		ResourceID:          alert.ResourceID,
+		// Reuse part of the struct that was intended for Rules
 		AlertDedupEvent: alertModel.AlertDedupEvent{
 			CreationTime: alert.CreatedAt,
 			UpdateTime:   alert.CreatedAt,

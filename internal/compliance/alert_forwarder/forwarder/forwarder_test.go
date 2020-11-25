@@ -111,6 +111,7 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 		PolicyIntegrationID: expectedAlert.AnalysisIntegrationID,
 		ResourceTypes:       expectedAlert.ResourceTypes,
 		ResourceID:          expectedAlert.ResourceID,
+		// Reuse part of the struct that was intended for Rules
 		AlertDedupEvent: alertModel.AlertDedupEvent{
 			CreationTime: expectedAlert.CreatedAt,
 			UpdateTime:   expectedAlert.CreatedAt,
