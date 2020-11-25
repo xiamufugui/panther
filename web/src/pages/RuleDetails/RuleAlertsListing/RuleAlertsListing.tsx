@@ -127,7 +127,7 @@ const RuleAlertsListing: React.FC<Required<Pick<ListAlertsInput, 'type' | 'ruleI
       >
         <img alt="Empty Box Illustration" src={EmptyBoxImg} width="auto" height={200} />
         <Heading size="small" color="navyblue-100">
-          {type === AlertTypesEnum.Rule ? 'No rule matches found' : 'No rule errors found'}
+          {type.includes(AlertTypesEnum.Rule) ? 'No rule matches found' : 'No rule errors found'}
         </Heading>
       </Flex>
     );

@@ -20,7 +20,7 @@ import React from 'react';
 import { Alert, Box, Card, Flex, Text } from 'pouncejs';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
-import { ListAlertsInput } from 'Generated/schema';
+import { AlertTypesEnum, ListAlertsInput } from 'Generated/schema';
 import useInfiniteScroll from 'Hooks/useInfiniteScroll';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import TablePlaceholder from 'Components/TablePlaceholder';
@@ -47,6 +47,7 @@ const ListAlerts = () => {
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
+        type: [AlertTypesEnum.Rule],
         ...requestParams,
         pageSize: DEFAULT_LARGE_PAGE_SIZE,
       },
@@ -66,6 +67,7 @@ const ListAlerts = () => {
       fetchMore({
         variables: {
           input: {
+            type: [AlertTypesEnum.Rule],
             ...requestParams,
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
             exclusiveStartKey: lastEvaluatedKey,

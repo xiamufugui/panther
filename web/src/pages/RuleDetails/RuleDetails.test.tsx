@@ -135,7 +135,7 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             ruleId: '123',
-            type: AlertTypesEnum.RuleError,
+            type: [AlertTypesEnum.RuleError],
             pageSize: DEFAULT_SMALL_PAGE_SIZE,
           },
         },
@@ -157,7 +157,7 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             ruleId: '123',
-            type: AlertTypesEnum.Rule,
+            type: [AlertTypesEnum.Rule],
             pageSize: DEFAULT_SMALL_PAGE_SIZE,
           },
         },
@@ -260,7 +260,7 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             ruleId: '123',
-            type: AlertTypesEnum.Rule,
+            type: [AlertTypesEnum.Rule],
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
           },
         },
@@ -327,7 +327,7 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             ruleId: '123',
-            type: AlertTypesEnum.RuleError,
+            type: [AlertTypesEnum.RuleError],
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
           },
         },
@@ -386,7 +386,7 @@ describe('RuleDetails', () => {
         },
         variables: {
           input: {
-            type: AlertTypesEnum.Rule,
+            type: [AlertTypesEnum.Rule],
             ruleId: rule.id,
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
           },
@@ -439,7 +439,7 @@ describe('RuleDetails', () => {
         },
         variables: {
           input: {
-            type: AlertTypesEnum.Rule,
+            type: [AlertTypesEnum.Rule],
             ruleId: rule.id,
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
           },
@@ -455,7 +455,7 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             nameContains: 'test',
-            type: AlertTypesEnum.Rule,
+            type: [AlertTypesEnum.Rule],
             ruleId: rule.id,
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
           },
@@ -506,7 +506,7 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             ruleId: '123',
-            type: AlertTypesEnum.Rule,
+            type: [AlertTypesEnum.Rule],
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
             ...overrides,
           },
@@ -636,7 +636,7 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             ruleId: '123',
-            type: AlertTypesEnum.Rule,
+            type: [AlertTypesEnum.Rule],
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
           },
         },
@@ -792,7 +792,7 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             ruleId: '123',
-            type: AlertTypesEnum.RuleError,
+            type: [AlertTypesEnum.RuleError],
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
           },
         },

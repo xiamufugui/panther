@@ -83,7 +83,7 @@ type ListAlertsInput struct {
 	ExclusiveStartKey *string `json:"exclusiveStartKey"`
 
 	// Filtering
-	Type            string     `json:"type" validate:"omitempty,oneof=RULE RULE_ERROR"`
+	Type            []string   `json:"type" validate:"omitempty,oneof=RULE RULE_ERROR POLICY"`
 	Severity        []string   `json:"severity" validate:"omitempty,dive,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 	NameContains    *string    `json:"nameContains"`
 	Status          []string   `json:"status" validate:"omitempty,dive,oneof=OPEN TRIAGED CLOSED RESOLVED"`
@@ -94,6 +94,7 @@ type ListAlertsInput struct {
 	EventCountMin   *int       `json:"eventCountMin" validate:"omitempty,min=0"`
 	EventCountMax   *int       `json:"eventCountMax" validate:"omitempty,min=1"`
 	LogTypes        []string   `json:"logTypes" validate:"omitempty,dive,required"`
+	ResourceTypes   []string   `json:"logTypes" validate:"omitempty,dive,required"`
 	// Sorting
 	SortDir *string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
 }

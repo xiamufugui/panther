@@ -232,6 +232,7 @@ func (table *AlertsTable) applyFilters(builder *expression.Builder, input *model
 	filterByStatus(&filter, input)
 	filterByEventCount(&filter, input)
 	filterByLogType(&filter, input)
+	filterByResourceType(&filter, input)
 	filterByType(&filter, input)
 
 	// Finally, overwrite the existing condition filter on the builder
@@ -303,20 +304,50 @@ func filterByLogType(filter *expression.ConditionBuilder, input *models.ListAler
 	}
 }
 
+// filterByResourceType - filters by list of resource types
+func filterByResourceType(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
+	if len(input.ResourceTypes) > 0 {
+		// Start with the first known key
+		multiFilter := expression.Name(ResourceTypesKey).Contains(input.ResourceTypes[0])
+
+		// Then add or conditions starting at a new slice from the second index
+		for _, resourceType := range input.LogTypes[1:] {
+			multiFilter = multiFilter.Or(expression.Name(ResourceTypesKey).Contains(resourceType))
+		}
+
+		*filter = filter.And(multiFilter)
+	}
+}
+
 // filterByType - filters by the type of the alert
 func filterByType(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
 	if len(input.Type) > 0 {
+		// Start with the first known key
 		var multiFilter expression.ConditionBuilder
-		switch input.Type {
-		case alertdeliverymodels.RuleErrorType:
-			multiFilter = expression.Equal(expression.Name(TypeKey), expression.Value(input.Type))
-		case alertdeliverymodels.RuleType:
-			// Alerts for rule matches don't always have the attribute specified
+
+		// Rule errors don't always have the attribute specified.
+		if input.Type[0] == alertdeliverymodels.RuleErrorType {
 			multiFilter = expression.
-				Equal(expression.Name(TypeKey), expression.Value(input.Type)).
-				Or(expression.Name(TypeKey).AttributeNotExists())
-		default:
-			panic("Uknown type :" + input.Type)
+				Or(
+					expression.AttributeNotExists(expression.Name(TypeKey)),
+					expression.Equal(expression.Name(TypeKey), expression.Value("")),
+				)
+		} else {
+			multiFilter = expression.Name(TypeKey).Equal(expression.Value(input.Type[0]))
+		}
+
+		// Then add or conditions starting at a new slice from the second index
+		for _, alertType := range input.Type[1:] {
+			// Rule errors don't always have the attribute specified.
+			if alertType == alertdeliverymodels.RuleErrorType {
+				multiFilter = multiFilter.
+					Or(
+						expression.AttributeNotExists(expression.Name(TypeKey)),
+						expression.Equal(expression.Name(TypeKey), expression.Value("")),
+					)
+			} else {
+				multiFilter = multiFilter.Or(expression.Name(TypeKey).Equal(expression.Value(alertType)))
+			}
 		}
 
 		*filter = filter.And(multiFilter)

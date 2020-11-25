@@ -39,6 +39,7 @@ const (
 	EventCountKey        = "eventCount"
 	StatusKey            = "status"
 	LogTypesKey          = "logTypes"
+	ResourceTypesKey     = "resourceTypes"
 	DeliveryResponsesKey = "deliveryResponses"
 	LastUpdatedByKey     = "lastUpdatedBy"
 	LastUpdatedByTimeKey = "lastUpdatedByTime"

@@ -69,7 +69,7 @@ const RuleDetailsPage: React.FC = () => {
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
-        type: AlertTypesEnum.Rule,
+        type: [AlertTypesEnum.Rule],
         ruleId: match.params.id,
         pageSize: DEFAULT_SMALL_PAGE_SIZE,
       },
@@ -80,7 +80,7 @@ const RuleDetailsPage: React.FC = () => {
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
-        type: AlertTypesEnum.RuleError,
+        type: [AlertTypesEnum.RuleError],
         ruleId: match.params.id,
         pageSize: DEFAULT_SMALL_PAGE_SIZE,
       },
@@ -143,10 +143,10 @@ const RuleDetailsPage: React.FC = () => {
                   <CardDetails rule={data.rule} />
                 </TabPanel>
                 <TabPanel data-testid="rule-matches-tabpanel" lazy unmountWhenInactive>
-                  <ListRuleAlerts ruleId={match.params.id} type={AlertTypesEnum.Rule} />
+                  <ListRuleAlerts ruleId={match.params.id} type={[AlertTypesEnum.Rule]} />
                 </TabPanel>
                 <TabPanel data-testid="rule-errors-tabpanel" lazy unmountWhenInactive>
-                  <ListRuleAlerts ruleId={match.params.id} type={AlertTypesEnum.RuleError} />
+                  <ListRuleAlerts ruleId={match.params.id} type={[AlertTypesEnum.RuleError]} />
                 </TabPanel>
               </TabPanels>
             </Box>
