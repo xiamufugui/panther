@@ -58,7 +58,17 @@ func (m *S3UploaderMock) Upload(input *s3manager.UploadInput, f ...func(*s3manag
 
 type S3Mock struct {
 	s3iface.S3API
+	Retries int
 	mock.Mock
+}
+
+func (m *S3Mock) MaxRetries() int {
+	return m.Retries
+}
+
+func (m *S3Mock) DeleteObjects(input *s3.DeleteObjectsInput) (*s3.DeleteObjectsOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*s3.DeleteObjectsOutput), args.Error(1)
 }
 
 func (m *S3Mock) GetObject(input *s3.GetObjectInput) (*s3.GetObjectOutput, error) {
