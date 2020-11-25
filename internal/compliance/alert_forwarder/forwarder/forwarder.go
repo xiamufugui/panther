@@ -30,7 +30,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/delivery/models"
 	alertModel "github.com/panther-labs/panther/internal/log_analysis/alert_forwarder/forwarder"
@@ -69,26 +68,11 @@ func (h *Handler) Do(alert models.Alert) error {
 	return nil
 }
 
-func getAlertTypeForLog(alert models.Alert) string {
-	alertType := ""
-	switch alert.Type {
-	case models.PolicyType:
-		alertType = "Policy"
-	case models.RuleType:
-		alertType = "Rule"
-	case models.RuleErrorType:
-		alertType = "Rule_Error"
-	default:
-		zap.L().Error("Invalid Alert type")
-	}
-	return alertType
-}
-
 func (h *Handler) logStats(alert models.Alert) {
 	h.MetricsLogger.Log(
 		[]metrics.Dimension{
 			{Name: "Severity", Value: alert.Severity},
-			{Name: "AnalysisType", Value: getAlertTypeForLog(alert)},
+			{Name: "AnalysisType", Value: "Policy"},
 			{Name: "AnalysisID", Value: alert.AnalysisID},
 		},
 		metrics.Metric{

@@ -30,11 +30,6 @@ func updateAlerts(statuses []DispatchStatus) []*alertModels.AlertSummary {
 	// create a relational mapping for alertID to a list of delivery statuses
 	alertMap := make(map[string][]*alertModels.DeliveryResponse)
 	for _, status := range statuses {
-		// If the alert doesn't have an ID, we need to skip
-		if status.Alert.AlertID == nil {
-			continue
-		}
-
 		// convert to the response type the lambda expects
 		deliveryResponse := &alertModels.DeliveryResponse{
 			OutputID:     status.OutputID,
