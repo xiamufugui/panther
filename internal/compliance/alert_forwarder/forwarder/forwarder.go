@@ -106,20 +106,16 @@ func (h *Handler) storeNewAlert(alert models.Alert) error {
 		ID:                  *alert.AlertID,
 		TimePartition:       defaultTimePartition,
 		Severity:            alert.Severity,
-		RuleDisplayName:     alert.AnalysisName,
 		Title:               aws.StringValue(alert.Title),
-		FirstEventMatchTime: alert.CreatedAt,
+		PolicyID:            alert.AnalysisID,
+		PolicyDisplayName:   aws.StringValue(alert.AnalysisName),
+		PolicyVersion:       aws.StringValue(alert.Version),
+		PolicyIntegrationID: alert.AnalysisIntegrationID,
 		ResourceTypes:       alert.ResourceTypes,
 		ResourceID:          alert.ResourceID,
-		SourceID:            alert.SourceID,
 		AlertDedupEvent: alertModel.AlertDedupEvent{
-			RuleID: alert.AnalysisID,
-			// RuleVersion: *alert.Version, //FIXME: we need to grab the policy that triggered this alert
-			// DeduplicationString: alert.DeduplicationString, // Policies don't have this
 			CreationTime: alert.CreatedAt,
 			UpdateTime:   alert.CreatedAt,
-			EventCount:   1,
-			LogTypes:     alert.LogTypes,
 			Type:         alert.Type,
 		},
 	}

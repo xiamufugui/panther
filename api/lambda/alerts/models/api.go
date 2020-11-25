@@ -184,25 +184,28 @@ type ListAlertsOutput struct {
 
 // AlertSummary contains summary information for an alert
 type AlertSummary struct {
-	AlertID           string              `json:"alertId" validate:"required"`
-	Type              string              `json:"type,omitempty"`
-	RuleID            *string             `json:"ruleId" validate:"required"`
-	RuleDisplayName   *string             `json:"ruleDisplayName,omitempty"`
-	RuleVersion       *string             `json:"ruleVersion" validate:"required"`
-	DedupString       *string             `json:"dedupString,omitempty"`
-	DeliveryResponses []*DeliveryResponse `json:"deliveryResponses" validate:"required"`
-	LogTypes          []string            `json:"logTypes" validate:"required"`
-	ResourceTypes     []string            `json:"resourceTypes" validate:"required"`
-	ResourceID        string              `json:"resourceId" validate:"required"`
-	SourceID          string              `json:"sourceId" validate:"required"`
-	CreationTime      *time.Time          `json:"creationTime" validate:"required"`
-	UpdateTime        *time.Time          `json:"updateTime" validate:"required"`
-	EventsMatched     *int                `json:"eventsMatched" validate:"required"`
-	Severity          *string             `json:"severity" validate:"required"`
-	Status            string              `json:"status,omitempty"`
-	Title             *string             `json:"title" validate:"required"`
-	LastUpdatedBy     string              `json:"lastUpdatedBy,omitempty"`
-	LastUpdatedByTime time.Time           `json:"lastUpdatedByTime,omitempty"`
+	AlertID             string              `json:"alertId" validate:"required"`
+	Type                string              `json:"type,omitempty"`
+	RuleID              *string             `json:"ruleId" validate:"required"`
+	RuleDisplayName     *string             `json:"ruleDisplayName,omitempty"`
+	RuleVersion         *string             `json:"ruleVersion" validate:"required"`
+	DedupString         *string             `json:"dedupString,omitempty"`
+	DeliveryResponses   []*DeliveryResponse `json:"deliveryResponses" validate:"required"`
+	LogTypes            []string            `json:"logTypes" validate:"required"`
+	CreationTime        *time.Time          `json:"creationTime" validate:"required"`
+	UpdateTime          *time.Time          `json:"updateTime" validate:"required"`
+	EventsMatched       *int                `json:"eventsMatched" validate:"required"`
+	Severity            *string             `json:"severity" validate:"required"`
+	Status              string              `json:"status,omitempty"`
+	Title               *string             `json:"title" validate:"required"`
+	LastUpdatedBy       string              `json:"lastUpdatedBy,omitempty"`
+	LastUpdatedByTime   time.Time           `json:"lastUpdatedByTime,omitempty"`
+	PolicyID            string              `json:"policyId,omitempty"`
+	PolicyDisplayName   string              `json:"policyDisplayName,omitempty"`
+	PolicyIntegrationID string              `json:"policyIntegrationID,omitempty"`
+	PolicyVersion       string              `json:"policyVersion,omitempty"`
+	ResourceTypes       []string            `json:"resourceTypes" validate:"required"`
+	ResourceID          string              `json:"resourceId" validate:"required"`
 }
 
 // Alert contains the details of an alert

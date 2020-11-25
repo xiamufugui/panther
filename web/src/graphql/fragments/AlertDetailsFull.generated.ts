@@ -37,11 +37,14 @@ export type AlertDetailsFull = Pick<
   | 'severity'
   | 'status'
   | 'logTypes'
-  | 'resourceTypes'
-  | 'resourceId'
-  | 'sourceId'
   | 'lastUpdatedBy'
   | 'lastUpdatedByTime'
+  | 'policyId'
+  | 'policyDisplayName'
+  | 'policyIntegrationId'
+  | 'policyVersion'
+  | 'resourceTypes'
+  | 'resourceId'
 > & { deliveryResponses: Array<Types.Maybe<DeliveryResponseFull>> };
 
 export const AlertDetailsFull = gql`
@@ -62,11 +65,14 @@ export const AlertDetailsFull = gql`
     severity
     status
     logTypes
-    resourceTypes
-    resourceId
-    sourceId
     lastUpdatedBy
     lastUpdatedByTime
+    policyId
+    policyDisplayName
+    policyIntegrationId
+    policyVersion
+    resourceTypes
+    resourceId
   }
   ${DeliveryResponseFull}
 `;

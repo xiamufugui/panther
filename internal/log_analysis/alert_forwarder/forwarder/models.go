@@ -49,7 +49,6 @@ type AlertDedupEvent struct {
 	Type                string    `dynamodbav:"type"`
 	GeneratedTitle      *string   `dynamodbav:"-"` // The title that was generated dynamically using Python. Might be null.
 	AlertCount          int64     `dynamodbav:"-"` // There is no need to store this item in DDB
-
 }
 
 // Alert contains all the fields associated to the alert stored in DDB
@@ -63,9 +62,14 @@ type Alert struct {
 	Title               string    `dynamodbav:"title,string"` // The alert title. It will be the Python-generated title or a default one if
 	// no Python-generated title is available.
 	AlertDedupEvent
-	ResourceTypes []string `dynamodbav:"resourceTypes,stringset"`
-	ResourceID    string   `dynamodbav:"resourceId,string"`
-	SourceID      string   `dynamodbav:"sourceId,string"`
+
+	// Policy-specific fields
+	PolicyID            string   `dynamodbav:"policyId,string"`
+	PolicyDisplayName   string   `dynamodbav:"policyDisplayName,string"`
+	PolicyVersion       string   `dynamodbav:"policyVersion,string"`
+	PolicyIntegrationID string   `dynamodbav:"policyIntegrationId,string"`
+	ResourceTypes       []string `dynamodbav:"resourceTypes,stringset"`
+	ResourceID          string   `dynamodbav:"resourceId,string"` // This is the failing resource
 }
 
 func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (event *AlertDedupEvent, err error) {

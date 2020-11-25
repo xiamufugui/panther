@@ -15,9 +15,12 @@ fragment AlertDetailsFull on AlertDetails {
   severity
   status
   logTypes
-  resourceTypes
-  resourceId
-  sourceId
   lastUpdatedBy
   lastUpdatedByTime
+  policyId
+  policyDisplayName
+  policyIntegrationId
+  policyVersion
+  resourceTypes
+  resourceId
 }

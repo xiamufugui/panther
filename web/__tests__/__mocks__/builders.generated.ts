@@ -269,9 +269,6 @@ export const buildAlertDetails = (overrides: Partial<AlertDetails> = {}): AlertD
     title: 'title' in overrides ? overrides.title : 'Steel',
     type: 'type' in overrides ? overrides.type : AlertTypesEnum.Rule,
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Books'],
-    resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['Solutions'],
-    resourceId: 'resourceId' in overrides ? overrides.resourceId : 'Pants',
-    sourceId: 'sourceId' in overrides ? overrides.sourceId : 'Michigan',
     lastUpdatedBy:
       'lastUpdatedBy' in overrides
         ? overrides.lastUpdatedBy
@@ -283,6 +280,13 @@ export const buildAlertDetails = (overrides: Partial<AlertDetails> = {}): AlertD
     events: 'events' in overrides ? overrides.events : ['"bar"'],
     eventsLastEvaluatedKey:
       'eventsLastEvaluatedKey' in overrides ? overrides.eventsLastEvaluatedKey : 'Accountability',
+    policyId: 'policyId' in overrides ? overrides.policyId : 'International',
+    policyDisplayName: 'policyDisplayName' in overrides ? overrides.policyDisplayName : 'override',
+    policyIntegrationId:
+      'policyIntegrationId' in overrides ? overrides.policyIntegrationId : 'ivory',
+    policyVersion: 'policyVersion' in overrides ? overrides.policyVersion : 'secondary',
+    resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['Solutions'],
+    resourceId: 'resourceId' in overrides ? overrides.resourceId : 'Pants',
   };
 };
 
@@ -310,6 +314,11 @@ export const buildAlertSummary = (overrides: Partial<AlertSummary> = {}): AlertS
     lastUpdatedByTime:
       'lastUpdatedByTime' in overrides ? overrides.lastUpdatedByTime : '2020-07-29T23:42:06.903Z',
     updateTime: 'updateTime' in overrides ? overrides.updateTime : '2020-09-17T19:32:46.882Z',
+    policyId: 'policyId' in overrides ? overrides.policyId : 'Alaska',
+    policyDisplayName: 'policyDisplayName' in overrides ? overrides.policyDisplayName : 'Wooden',
+    policyIntegrationId:
+      'policyIntegrationId' in overrides ? overrides.policyIntegrationId : 'Delaware',
+    policyVersion: 'policyVersion' in overrides ? overrides.policyVersion : 'Markets',
   };
 };
 

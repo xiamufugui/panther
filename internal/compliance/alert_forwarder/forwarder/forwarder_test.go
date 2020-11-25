@@ -47,18 +47,20 @@ var (
 
 func genSampleAlert() models.Alert {
 	return models.Alert{
-		CreatedAt:           timeNow,
-		AnalysisDescription: aws.String("An alert triggered from a Policy"),
-		AnalysisID:          "Test.Policy",
-		Version:             aws.String("Some version string"),
-		AnalysisName:        aws.String("A test policy to generate alerts"),
-		Runbook:             aws.String("Check out our docs!"),
-		Severity:            "INFO",
-		Tags:                []string{"Tag", "Policy", "AWS"},
-		Type:                models.PolicyType,
-		LogTypes:            []string{"Log", "Types"},
-		ResourceTypes:       []string{"Resource", "Types"},
 		// AlertID:             aws.String("14385b7633e698ede7e036dc010c1fb6"), // This is generated dynamically
+		CreatedAt:             timeNow,
+		Severity:              "INFO",
+		Title:                 aws.String("some title"),
+		AnalysisID:            "Test.Policy",
+		AnalysisName:          aws.String("A test policy to generate alerts"),
+		AnalysisDescription:   aws.String("An alert triggered from a Policy..."),
+		AnalysisIntegrationID: "9d1f16f0-8bcc-11ea-afeb-efa9a81fb878",
+		Version:               aws.String("A policy version"),
+		ResourceTypes:         []string{"Resource", "Types"},
+		ResourceID:            "arn:aws:iam::xxx...",
+		Runbook:               aws.String("Check out our docs!"),
+		Tags:                  []string{"Tag", "Policy", "AWS"},
+		Type:                  models.PolicyType,
 	}
 }
 
@@ -102,18 +104,16 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 		ID:                  "14385b7633e698ede7e036dc010c1fb6",
 		TimePartition:       "defaultPartition",
 		Severity:            "INFO",
-		RuleDisplayName:     expectedAlert.AnalysisName,
 		Title:               aws.StringValue(expectedAlert.Title),
-		FirstEventMatchTime: expectedAlert.CreatedAt,
+		PolicyID:            expectedAlert.AnalysisID,
+		PolicyDisplayName:   aws.StringValue(expectedAlert.AnalysisName),
+		PolicyVersion:       aws.StringValue(expectedAlert.Version),
+		PolicyIntegrationID: expectedAlert.AnalysisIntegrationID,
 		ResourceTypes:       expectedAlert.ResourceTypes,
+		ResourceID:          expectedAlert.ResourceID,
 		AlertDedupEvent: alertModel.AlertDedupEvent{
-			RuleID: expectedAlert.AnalysisID,
-			// RuleVersion: *expectedAlert.Version, // We don't have this working yet
-			// DeduplicationString: alert.DeduplicationString, // Policies don't have this
 			CreationTime: expectedAlert.CreatedAt,
 			UpdateTime:   expectedAlert.CreatedAt,
-			EventCount:   1,
-			LogTypes:     expectedAlert.LogTypes,
 			Type:         expectedAlert.Type,
 		},
 	}

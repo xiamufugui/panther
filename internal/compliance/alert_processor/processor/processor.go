@@ -211,19 +211,19 @@ func getAlertConfigPolicy(event *models.ComplianceNotification) (*alertmodel.Ale
 	}
 
 	return &alertmodel.Alert{
-			AnalysisDescription: &policy.Description,
-			AnalysisID:          event.PolicyID,
-			AnalysisName:        &policy.DisplayName,
-			ResourceTypes:       policy.ResourceTypes,
-			ResourceID:          event.ResourceID,
-			SourceID:            event.SourceID,
-			CreatedAt:           event.Timestamp,
-			OutputIds:           event.OutputIds,
-			Runbook:             &policy.Runbook,
-			Severity:            string(policy.Severity),
-			Tags:                policy.Tags,
-			Type:                alertmodel.PolicyType,
-			Version:             &event.PolicyVersionID,
+			AnalysisDescription:   &policy.Description,
+			AnalysisID:            event.PolicyID,
+			AnalysisName:          &policy.DisplayName,
+			ResourceTypes:         policy.ResourceTypes,
+			ResourceID:            event.ResourceID,
+			AnalysisIntegrationID: event.PolicyIntegrationID,
+			CreatedAt:             event.Timestamp,
+			OutputIds:             event.OutputIds,
+			Runbook:               &policy.Runbook,
+			Severity:              string(policy.Severity),
+			Tags:                  policy.Tags,
+			Type:                  alertmodel.PolicyType,
+			Version:               &event.PolicyVersionID,
 		},
 		policy.AutoRemediationID != "", // means we can remediate
 		nil
