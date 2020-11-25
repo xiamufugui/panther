@@ -35,7 +35,7 @@ type ComplianceNotification struct {
 	PolicyVersionID string `json:"policyVersionId"`
 
 	// PolicyIntegrationID is the id of the source integration
-	PolicyIntegrationID string `json:"policyIntegrationID" validate:"required,min=1"`
+	PolicyIntegrationID string `json:"policyIntegrationId" validate:"required,min=1"`
 
 	// ResourceID is the ID specific to the resource
 	ResourceID string `json:"resourceId" validate:"required,min=1"`

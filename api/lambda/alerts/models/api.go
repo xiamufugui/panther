@@ -202,7 +202,7 @@ type AlertSummary struct {
 	LastUpdatedByTime   time.Time           `json:"lastUpdatedByTime,omitempty"`
 	PolicyID            string              `json:"policyId" validate:"required"`
 	PolicyDisplayName   string              `json:"policyDisplayName" validate:"required"`
-	PolicyIntegrationID string              `json:"policyIntegrationID" validate:"required"`
+	PolicyIntegrationID string              `json:"policyIntegrationId" validate:"required"`
 	PolicyVersion       string              `json:"policyVersion" validate:"required"`
 	ResourceTypes       []string            `json:"resourceTypes" validate:"required"`
 	ResourceID          string              `json:"resourceId" validate:"required"`
