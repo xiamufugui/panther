@@ -31,12 +31,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
+
 	ruleModel "github.com/panther-labs/panther/api/lambda/analysis/models"
 	alertModel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	alertApiModels "github.com/panther-labs/panther/internal/log_analysis/alerts_api/models"
 	"github.com/panther-labs/panther/pkg/metrics"
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
 )
 
 const defaultTimePartition = "defaultPartition"
