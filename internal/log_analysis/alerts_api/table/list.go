@@ -100,8 +100,6 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 
 			// Perform post-filtering data returned from ddb
 			alert = filterByTitleContains(input, alert)
-			alert = filterByIDContains(input, alert)
-			alert = filterByAlertIDContains(input, alert)
 
 			if alert != nil {
 				summaries = append(summaries, alert)
@@ -354,43 +352,66 @@ func filterByType(filter *expression.ConditionBuilder, input *models.ListAlertsI
 	}
 }
 
-// filterByTitleContains - filters by a name that contains a string (case insensitive)
+// filterByTitleContains - filters alerts by a name that contains a string (case insensitive) against multiple fields
 func filterByTitleContains(input *models.ListAlertsInput, alert *AlertItem) *AlertItem {
-	if alert != nil && input.NameContains != nil && alert.Title != nil && !strings.Contains(
+	// If we don't have a search string, return the alert
+	if input.NameContains == nil {
+		return alert
+	}
+
+	// Common across all alert types, we see if it matches an alert title
+	if alert.Title != nil && strings.Contains(
 		strings.ToLower(*alert.Title),
 		strings.ToLower(*input.NameContains),
 	) {
 
+		return alert
+	}
+
+	// Check for non-policy types in this order: RuleDisplayName, RuleID
+	if alert.Type != alertdeliverymodels.PolicyType {
+		if alert.RuleDisplayName != nil && strings.Contains(
+			strings.ToLower(*alert.RuleDisplayName),
+			strings.ToLower(*input.NameContains),
+		) {
+
+			return alert
+		}
+
+		if strings.Contains(
+			strings.ToLower(alert.RuleID),
+			strings.ToLower(*input.NameContains),
+		) {
+
+			return alert
+		}
 		return nil
 	}
-	return alert
-}
+	// Check for policy types in this order: ResourceID, PolicyDisplayName, PolicyID
+	if strings.Contains(
+		strings.ToLower(alert.ResourceID),
+		strings.ToLower(*input.NameContains),
+	) {
 
-// filterByIDContains - filters by a ruleId or policyId that contains a string (case insensitive)
-func filterByIDContains(input *models.ListAlertsInput, alert *AlertItem) *AlertItem {
-	if alert != nil && input.IDContains != nil && !strings.Contains(
-		strings.ToLower(alert.RuleID),
-		strings.ToLower(*input.IDContains),
-	) && !strings.Contains(
+		return alert
+	}
+
+	if strings.Contains(
+		strings.ToLower(alert.PolicyDisplayName),
+		strings.ToLower(*input.NameContains),
+	) {
+
+		return alert
+	}
+
+	if strings.Contains(
 		strings.ToLower(alert.PolicyID),
-		strings.ToLower(*input.IDContains),
+		strings.ToLower(*input.NameContains),
 	) {
 
-		return nil
+		return alert
 	}
-	return alert
-}
-
-// filterByAlertIDContains - filters by an alertId that contains a string (case insensitive)
-func filterByAlertIDContains(input *models.ListAlertsInput, alert *AlertItem) *AlertItem {
-	if alert != nil && input.AlertIDContains != nil && !strings.Contains(
-		strings.ToLower(alert.AlertID),
-		strings.ToLower(*input.AlertIDContains),
-	) {
-
-		return nil
-	}
-	return alert
+	return nil
 }
 
 // filterByEventCount - filters by an eventCount defined by a range of two numbers

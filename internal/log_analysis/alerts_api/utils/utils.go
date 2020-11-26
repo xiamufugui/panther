@@ -77,11 +77,24 @@ func AlertItemToSummary(item *table.AlertItem) *models.AlertSummary {
 // GetAlertTitle - Method required for backwards compatibility
 // In case the alert title is empty, return custom title
 func GetAlertTitle(alert *table.AlertItem) *string {
+	if alert.Type != alertdeliverymodels.PolicyType {
+		if alert.Title != nil {
+			return alert.Title
+		}
+		if alert.RuleDisplayName != nil {
+			return alert.RuleDisplayName
+		}
+		return &alert.RuleID
+	}
+
 	if alert.Title != nil {
 		return alert.Title
 	}
-	if alert.RuleDisplayName != nil {
-		return alert.RuleDisplayName
+	if alert.ResourceID != "" {
+		return &alert.ResourceID
 	}
-	return &alert.RuleID
+	if alert.PolicyDisplayName != "" {
+		return &alert.PolicyDisplayName
+	}
+	return &alert.PolicyID
 }

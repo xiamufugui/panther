@@ -47,9 +47,9 @@ const ListAlerts = () => {
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
-        // FIXME: remove this override when we have a multi-select
-        type: [AlertTypesEnum.RuleError],
         ...requestParams,
+        // FIXME: remove this override when we have a multi-select
+        type: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
         pageSize: DEFAULT_LARGE_PAGE_SIZE,
       },
     },
@@ -68,9 +68,9 @@ const ListAlerts = () => {
       fetchMore({
         variables: {
           input: {
-            // FIXME: remove this override when we have a multi-select
-            type: [AlertTypesEnum.RuleError],
             ...requestParams,
+            // FIXME: remove this override when we have a multi-select
+            type: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
             exclusiveStartKey: lastEvaluatedKey,
           },
