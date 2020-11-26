@@ -784,8 +784,6 @@ export const buildListAlertsInput = (overrides: Partial<ListAlertsInput> = {}): 
       'createdAtBefore' in overrides ? overrides.createdAtBefore : '2020-05-22T12:33:45.819Z',
     createdAtAfter:
       'createdAtAfter' in overrides ? overrides.createdAtAfter : '2020-04-26T13:02:02.091Z',
-    idContains: 'idContains' in overrides ? overrides.idContains : 'Ergonomic Soft Car',
-    alertIdContains: 'alertIdContains' in overrides ? overrides.alertIdContains : 'Garden',
     status: 'status' in overrides ? overrides.status : [AlertStatusesEnum.Open],
     eventCountMin: 'eventCountMin' in overrides ? overrides.eventCountMin : 694,
     eventCountMax: 'eventCountMax' in overrides ? overrides.eventCountMax : 911,

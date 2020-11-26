@@ -498,8 +498,6 @@ export type ListAlertsInput = {
   nameContains?: Maybe<Scalars['String']>;
   createdAtBefore?: Maybe<Scalars['AWSDateTime']>;
   createdAtAfter?: Maybe<Scalars['AWSDateTime']>;
-  idContains?: Maybe<Scalars['String']>;
-  alertIdContains?: Maybe<Scalars['String']>;
   status?: Maybe<Array<Maybe<AlertStatusesEnum>>>;
   eventCountMin?: Maybe<Scalars['Int']>;
   eventCountMax?: Maybe<Scalars['Int']>;

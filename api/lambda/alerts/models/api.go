@@ -65,8 +65,6 @@ type GetAlertOutput = Alert
 //         "nameContains": "string in alert title",
 //         "createdAtAfter": "2020-06-17T15:49:40Z",
 //         "createdAtBefore": "2020-06-17T15:49:40Z",
-//         "idContains": "string in rule id",
-//         "alertIdContains": "string in alert id",
 //         "eventCountMin": "0",
 //         "eventCountMax": "500",
 //         "sortDir": "ascending",
@@ -89,8 +87,6 @@ type ListAlertsInput struct {
 	Status          []string   `json:"status" validate:"omitempty,dive,oneof=OPEN TRIAGED CLOSED RESOLVED"`
 	CreatedAtBefore *time.Time `json:"createdAtBefore"`
 	CreatedAtAfter  *time.Time `json:"createdAtAfter"`
-	IDContains      *string    `json:"idContains"`
-	AlertIDContains *string    `json:"alertIdContains"`
 	EventCountMin   *int       `json:"eventCountMin" validate:"omitempty,min=0"`
 	EventCountMax   *int       `json:"eventCountMax" validate:"omitempty,min=1"`
 	LogTypes        []string   `json:"logTypes" validate:"omitempty,dive,required"`

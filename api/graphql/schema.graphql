@@ -104,8 +104,6 @@ input ListAlertsInput {
   nameContains: String
   createdAtBefore: AWSDateTime
   createdAtAfter: AWSDateTime
-  idContains: String
-  alertIdContains: String
   status: [AlertStatusesEnum]
   eventCountMin: Int
   eventCountMax: Int
