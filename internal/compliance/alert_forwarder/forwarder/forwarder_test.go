@@ -27,13 +27,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/panther-labs/panther/api/lambda/delivery/models"
-	alertModel "github.com/panther-labs/panther/internal/log_analysis/alert_forwarder/forwarder"
+	alertApiModels "github.com/panther-labs/panther/internal/log_analysis/alerts_api/models"
 	"github.com/panther-labs/panther/pkg/metrics"
 	"github.com/panther-labs/panther/pkg/testutils"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -90,19 +89,21 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
 
 	// Then, simulate sending to DDB
-	expectedDynamoAlert := &alertModel.Alert{
-		ID:                  "26df596024d2e81140de028387d517da",
-		TimePartition:       "defaultPartition",
-		Severity:            "INFO",
-		Title:               aws.StringValue(expectedAlert.Title),
-		PolicyID:            expectedAlert.AnalysisID,
-		PolicyDisplayName:   aws.StringValue(expectedAlert.AnalysisName),
-		PolicyVersion:       aws.StringValue(expectedAlert.Version),
-		PolicyIntegrationID: expectedAlert.AnalysisIntegrationID,
-		ResourceTypes:       expectedAlert.ResourceTypes,
-		ResourceID:          expectedAlert.ResourceID,
+	expectedDynamoAlert := &alertApiModels.Alert{
+		ID:            "26df596024d2e81140de028387d517da",
+		TimePartition: "defaultPartition",
+		Severity:      "INFO",
+		Title:         aws.StringValue(expectedAlert.Title),
+		AlertPolicy: alertApiModels.AlertPolicy{
+			PolicyID:            expectedAlert.AnalysisID,
+			PolicyDisplayName:   aws.StringValue(expectedAlert.AnalysisName),
+			PolicyVersion:       aws.StringValue(expectedAlert.Version),
+			PolicyIntegrationID: expectedAlert.AnalysisIntegrationID,
+			ResourceTypes:       expectedAlert.ResourceTypes,
+			ResourceID:          expectedAlert.ResourceID,
+		},
 		// Reuse part of the struct that was intended for Rules
-		AlertDedupEvent: alertModel.AlertDedupEvent{
+		AlertDedupEvent: alertApiModels.AlertDedupEvent{
 			RuleID:       expectedAlert.AnalysisID, // Required for DDB GSI constraint
 			CreationTime: expectedAlert.CreatedAt,
 			UpdateTime:   expectedAlert.CreatedAt,

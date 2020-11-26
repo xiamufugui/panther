@@ -26,11 +26,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/pkg/errors"
-
 	"github.com/panther-labs/panther/api/lambda/delivery/models"
-	alertModel "github.com/panther-labs/panther/internal/log_analysis/alert_forwarder/forwarder"
+	alertApiModels "github.com/panther-labs/panther/internal/log_analysis/alerts_api/models"
 	"github.com/panther-labs/panther/pkg/metrics"
+	"github.com/pkg/errors"
 )
 
 const defaultTimePartition = "defaultPartition"
@@ -80,19 +79,21 @@ func (h *Handler) logStats(alert models.Alert) {
 func (h *Handler) storeNewAlert(alert models.Alert) error {
 	// Here we re-use the same field names for alerts that were
 	// generated from rules.
-	dynamoAlert := &alertModel.Alert{
-		ID:                  *alert.AlertID,
-		TimePartition:       defaultTimePartition,
-		Severity:            alert.Severity,
-		Title:               aws.StringValue(alert.Title),
-		PolicyID:            alert.AnalysisID,
-		PolicyDisplayName:   aws.StringValue(alert.AnalysisName),
-		PolicyVersion:       aws.StringValue(alert.Version),
-		PolicyIntegrationID: alert.AnalysisIntegrationID,
-		ResourceTypes:       alert.ResourceTypes,
-		ResourceID:          alert.ResourceID,
+	dynamoAlert := &alertApiModels.Alert{
+		ID:            *alert.AlertID,
+		TimePartition: defaultTimePartition,
+		Severity:      alert.Severity,
+		Title:         aws.StringValue(alert.Title),
+		AlertPolicy: alertApiModels.AlertPolicy{
+			PolicyID:            alert.AnalysisID,
+			PolicyDisplayName:   aws.StringValue(alert.AnalysisName),
+			PolicyVersion:       aws.StringValue(alert.Version),
+			PolicyIntegrationID: alert.AnalysisIntegrationID,
+			ResourceTypes:       alert.ResourceTypes,
+			ResourceID:          alert.ResourceID,
+		},
 		// Reuse part of the struct that was intended for Rules
-		AlertDedupEvent: alertModel.AlertDedupEvent{
+		AlertDedupEvent: alertApiModels.AlertDedupEvent{
 			RuleID:       alert.AnalysisID, // Not used, but needed to meet the `ruleId-creationTime-index` constraint
 			CreationTime: alert.CreatedAt,
 			UpdateTime:   alert.CreatedAt,

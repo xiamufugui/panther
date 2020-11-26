@@ -31,12 +31,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
-
 	ruleModel "github.com/panther-labs/panther/api/lambda/analysis/models"
 	alertModel "github.com/panther-labs/panther/api/lambda/delivery/models"
+	alertApiModels "github.com/panther-labs/panther/internal/log_analysis/alerts_api/models"
 	"github.com/panther-labs/panther/pkg/metrics"
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 const defaultTimePartition = "defaultPartition"
@@ -50,7 +50,7 @@ type Handler struct {
 	MetricsLogger    metrics.Logger
 }
 
-func (h *Handler) Do(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) (err error) {
+func (h *Handler) Do(oldAlertDedupEvent, newAlertDedupEvent *alertApiModels.AlertDedupEvent) (err error) {
 	var oldRule *ruleModel.Rule
 	if oldAlertDedupEvent != nil {
 		oldRule, err = h.Cache.Get(oldAlertDedupEvent.RuleID, oldAlertDedupEvent.RuleVersion)
@@ -73,12 +73,12 @@ func (h *Handler) Do(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) (e
 	return h.updateExistingAlert(newAlertDedupEvent)
 }
 
-func shouldIgnoreChange(rule *ruleModel.Rule, alertDedupEvent *AlertDedupEvent) bool {
+func shouldIgnoreChange(rule *ruleModel.Rule, alertDedupEvent *alertApiModels.AlertDedupEvent) bool {
 	// If the number of matched events hasn't crossed the threshold for the rule, don't create a new alert.
 	return alertDedupEvent.EventCount < int64(rule.Threshold)
 }
 
-func needToCreateNewAlert(oldRule *ruleModel.Rule, oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) bool {
+func needToCreateNewAlert(oldRule *ruleModel.Rule, oldAlertDedupEvent, newAlertDedupEvent *alertApiModels.AlertDedupEvent) bool {
 	if oldAlertDedupEvent == nil {
 		// If this is the first time we see an alert deduplication entry, create an alert
 		return true
@@ -94,7 +94,7 @@ func needToCreateNewAlert(oldRule *ruleModel.Rule, oldAlertDedupEvent, newAlertD
 	return false
 }
 
-func (h *Handler) handleNewAlert(rule *ruleModel.Rule, event *AlertDedupEvent) error {
+func (h *Handler) handleNewAlert(rule *ruleModel.Rule, event *alertApiModels.AlertDedupEvent) error {
 	if err := h.storeNewAlert(rule, event); err != nil {
 		return errors.Wrap(err, "failed to store new alert in DDB")
 	}
@@ -121,15 +121,15 @@ func (h *Handler) logStats(rule *ruleModel.Rule) {
 	)
 }
 
-func (h *Handler) updateExistingAlert(event *AlertDedupEvent) error {
+func (h *Handler) updateExistingAlert(event *alertApiModels.AlertDedupEvent) error {
 	// When updating alert, we need to update only 3 fields
 	// - The number of events included in the alert
 	// - The log types of the events in the alert
 	// - The alert update time
 	updateExpression := expression.
-		Set(expression.Name(alertTableEventCountAttribute), expression.Value(event.EventCount)).
-		Set(expression.Name(alertTableLogTypesAttribute), expression.Value(event.LogTypes)).
-		Set(expression.Name(alertTableUpdateTimeAttribute), expression.Value(event.UpdateTime))
+		Set(expression.Name(alertApiModels.AlertTableEventCountAttribute), expression.Value(event.EventCount)).
+		Set(expression.Name(alertApiModels.AlertTableLogTypesAttribute), expression.Value(event.LogTypes)).
+		Set(expression.Name(alertApiModels.AlertTableUpdateTimeAttribute), expression.Value(event.UpdateTime))
 	expr, err := expression.NewBuilder().WithUpdate(updateExpression).Build()
 	if err != nil {
 		return errors.Wrap(err, "failed to build update expression")
@@ -141,7 +141,7 @@ func (h *Handler) updateExistingAlert(event *AlertDedupEvent) error {
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		Key: map[string]*dynamodb.AttributeValue{
-			alertTablePartitionKey: {S: aws.String(generateAlertID(event))},
+			alertApiModels.AlertTablePartitionKey: {S: aws.String(generateAlertID(event))},
 		},
 	}
 
@@ -152,8 +152,8 @@ func (h *Handler) updateExistingAlert(event *AlertDedupEvent) error {
 	return nil
 }
 
-func (h *Handler) storeNewAlert(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) error {
-	alert := &Alert{
+func (h *Handler) storeNewAlert(rule *ruleModel.Rule, alertDedup *alertApiModels.AlertDedupEvent) error {
+	alert := &alertApiModels.Alert{
 		ID:                  generateAlertID(alertDedup),
 		TimePartition:       defaultTimePartition,
 		Severity:            string(rule.Severity),
@@ -161,7 +161,7 @@ func (h *Handler) storeNewAlert(rule *ruleModel.Rule, alertDedup *AlertDedupEven
 		Title:               getAlertTitle(rule, alertDedup),
 		FirstEventMatchTime: alertDedup.CreationTime,
 		LogTypes:            alertDedup.LogTypes,
-		AlertDedupEvent: AlertDedupEvent{
+		AlertDedupEvent: alertApiModels.AlertDedupEvent{
 			RuleID:              alertDedup.RuleID,
 			RuleVersion:         alertDedup.RuleVersion,
 			DeduplicationString: alertDedup.DeduplicationString,
@@ -192,7 +192,7 @@ func (h *Handler) storeNewAlert(rule *ruleModel.Rule, alertDedup *AlertDedupEven
 	return nil
 }
 
-func (h *Handler) sendAlertNotification(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) error {
+func (h *Handler) sendAlertNotification(rule *ruleModel.Rule, alertDedup *alertApiModels.AlertDedupEvent) error {
 	alertNotification := &alertModel.Alert{
 		AlertID:             aws.String(generateAlertID(alertDedup)),
 		AnalysisDescription: &rule.Description,
@@ -238,7 +238,7 @@ func (h *Handler) sendAlertNotification(rule *ruleModel.Rule, alertDedup *AlertD
 	return nil
 }
 
-func getAlertTitle(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) string {
+func getAlertTitle(rule *ruleModel.Rule, alertDedup *alertApiModels.AlertDedupEvent) string {
 	if alertDedup.GeneratedTitle != nil {
 		return *alertDedup.GeneratedTitle
 	}
@@ -256,7 +256,7 @@ func getRuleDisplayName(rule *ruleModel.Rule) *string {
 	return nil
 }
 
-func generateAlertID(event *AlertDedupEvent) string {
+func generateAlertID(event *alertApiModels.AlertDedupEvent) string {
 	key := event.RuleID + ":" + strconv.FormatInt(event.AlertCount, 10) + ":" + event.DeduplicationString
 	keyHash := md5.Sum([]byte(key)) // nolint(gosec)
 	return hex.EncodeToString(keyHash[:])
