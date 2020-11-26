@@ -330,7 +330,7 @@ func filterByType(filter *expression.ConditionBuilder, input *models.ListAlertsI
 			multiFilter = expression.
 				Or(
 					expression.AttributeNotExists(expression.Name(TypeKey)),
-					expression.Equal(expression.Name(TypeKey), expression.Value("")),
+					expression.Equal(expression.Name(TypeKey), expression.Value(input.Type[0])),
 				)
 		} else {
 			multiFilter = expression.Name(TypeKey).Equal(expression.Value(input.Type[0]))
@@ -343,7 +343,7 @@ func filterByType(filter *expression.ConditionBuilder, input *models.ListAlertsI
 				multiFilter = multiFilter.
 					Or(
 						expression.AttributeNotExists(expression.Name(TypeKey)),
-						expression.Equal(expression.Name(TypeKey), expression.Value("")),
+						expression.Equal(expression.Name(TypeKey), expression.Value(alertType)),
 					)
 			} else {
 				multiFilter = multiFilter.Or(expression.Name(TypeKey).Equal(expression.Value(alertType)))
