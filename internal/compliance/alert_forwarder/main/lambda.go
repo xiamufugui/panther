@@ -44,6 +44,25 @@ var (
 )
 
 func main() {
+	// Required only once per Lambda container
+	Setup()
+	// TODO: revisit this. Not sure why we neeed Dimension sets and why just an array of dimensions is not enough
+	metricsLogger := metrics.MustLogger([]metrics.DimensionSet{
+		{
+			"AnalysisType",
+			"Severity",
+		},
+		{
+			"AnalysisType",
+		},
+	})
+	handler = &forwarder.Handler{
+		SqsClient:        sqsClient,
+		DdbClient:        ddbClient,
+		AlertingQueueURL: env.AlertingQueueURL,
+		AlertTable:       env.AlertsTable,
+		MetricsLogger:    metricsLogger,
+	}
 	lambda.Start(handle)
 }
 
@@ -80,26 +99,4 @@ func reporterHandler(lc *lambdacontext.LambdaContext, event events.DynamoDBEvent
 		}
 	}
 	return nil
-}
-
-func init() {
-	// Required only once per Lambda container
-	Setup()
-	// TODO: revisit this. Not sure why we neeed Dimension sets and why just an array of dimensions is not enough
-	metricsLogger := metrics.MustLogger([]metrics.DimensionSet{
-		{
-			"AnalysisType",
-			"Severity",
-		},
-		{
-			"AnalysisType",
-		},
-	})
-	handler = &forwarder.Handler{
-		SqsClient:        sqsClient,
-		DdbClient:        ddbClient,
-		AlertingQueueURL: env.AlertingQueueURL,
-		AlertTable:       env.AlertsTable,
-		MetricsLogger:    metricsLogger,
-	}
 }
