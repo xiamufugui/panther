@@ -20,10 +20,11 @@ package forwarder
 
 import (
 	lru "github.com/hashicorp/golang-lru"
-	"github.com/panther-labs/panther/api/lambda/analysis/models"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
+	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 // s3ClientCacheKey -> S3 client
