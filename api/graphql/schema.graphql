@@ -157,10 +157,10 @@ interface Alert {
   lastUpdatedBy: ID # gets mapped to a User in the frontend
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
   updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
-  policyId: String!
-  policyIntegrationId: String!
+  policyId: String
+  policyIntegrationId: String
   resourceTypes: [String!]!
-  resourceId: String!
+  resourceId: String
 }
 
 type AlertDetails implements Alert {
@@ -180,10 +180,10 @@ type AlertDetails implements Alert {
   dedupString: String!
   events: [AWSJSON!]!
   eventsLastEvaluatedKey: String
-  policyId: String!
-  policyIntegrationId: String!
+  policyId: String
+  policyIntegrationId: String
   resourceTypes: [String!]!
-  resourceId: String!
+  resourceId: String
 }
 
 type AlertSummary implements Alert {
@@ -200,10 +200,10 @@ type AlertSummary implements Alert {
   lastUpdatedBy: ID # gets mapped to a User in the frontend
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
   updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
-  policyId: String!
-  policyIntegrationId: String!
+  policyId: String
+  policyIntegrationId: String
   resourceTypes: [String!]!
-  resourceId: String!
+  resourceId: String
 }
 
 type DeliveryResponse {

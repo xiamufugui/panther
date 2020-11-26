@@ -119,10 +119,10 @@ export type Alert = {
   lastUpdatedBy?: Maybe<Scalars['ID']>;
   lastUpdatedByTime?: Maybe<Scalars['AWSDateTime']>;
   updateTime: Scalars['AWSDateTime'];
-  policyId: Scalars['String'];
-  policyIntegrationId: Scalars['String'];
+  policyId?: Maybe<Scalars['String']>;
+  policyIntegrationId?: Maybe<Scalars['String']>;
   resourceTypes: Array<Scalars['String']>;
-  resourceId: Scalars['String'];
+  resourceId?: Maybe<Scalars['String']>;
 };
 
 export type AlertDetails = Alert & {
@@ -143,10 +143,10 @@ export type AlertDetails = Alert & {
   dedupString: Scalars['String'];
   events: Array<Scalars['AWSJSON']>;
   eventsLastEvaluatedKey?: Maybe<Scalars['String']>;
-  policyId: Scalars['String'];
-  policyIntegrationId: Scalars['String'];
+  policyId?: Maybe<Scalars['String']>;
+  policyIntegrationId?: Maybe<Scalars['String']>;
   resourceTypes: Array<Scalars['String']>;
-  resourceId: Scalars['String'];
+  resourceId?: Maybe<Scalars['String']>;
 };
 
 export enum AlertStatusesEnum {
@@ -171,10 +171,10 @@ export type AlertSummary = Alert & {
   lastUpdatedBy?: Maybe<Scalars['ID']>;
   lastUpdatedByTime?: Maybe<Scalars['AWSDateTime']>;
   updateTime: Scalars['AWSDateTime'];
-  policyId: Scalars['String'];
-  policyIntegrationId: Scalars['String'];
+  policyId?: Maybe<Scalars['String']>;
+  policyIntegrationId?: Maybe<Scalars['String']>;
   resourceTypes: Array<Scalars['String']>;
-  resourceId: Scalars['String'];
+  resourceId?: Maybe<Scalars['String']>;
 };
 
 export enum AlertTypesEnum {
@@ -1846,10 +1846,10 @@ export type AlertResolvers<
   lastUpdatedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   lastUpdatedByTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   updateTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
-  policyId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  policyIntegrationId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  policyId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  policyIntegrationId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   resourceTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  resourceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  resourceId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
 export type AlertDetailsResolvers<
@@ -1876,10 +1876,10 @@ export type AlertDetailsResolvers<
   dedupString?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   events?: Resolver<Array<ResolversTypes['AWSJSON']>, ParentType, ContextType>;
   eventsLastEvaluatedKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  policyId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  policyIntegrationId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  policyId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  policyIntegrationId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   resourceTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  resourceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  resourceId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -1904,10 +1904,10 @@ export type AlertSummaryResolvers<
   lastUpdatedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   lastUpdatedByTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   updateTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
-  policyId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  policyIntegrationId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  policyId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  policyIntegrationId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   resourceTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  resourceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  resourceId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
