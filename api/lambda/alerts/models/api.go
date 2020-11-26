@@ -65,7 +65,7 @@ type GetAlertOutput = Alert
 //         "nameContains": "string in alert title",
 //         "createdAtAfter": "2020-06-17T15:49:40Z",
 //         "createdAtBefore": "2020-06-17T15:49:40Z",
-//         "ruleIdContains": "string in rule id",
+//         "idContains": "string in rule id",
 //         "alertIdContains": "string in alert id",
 //         "eventCountMin": "0",
 //         "eventCountMax": "500",
@@ -83,18 +83,18 @@ type ListAlertsInput struct {
 	ExclusiveStartKey *string `json:"exclusiveStartKey"`
 
 	// Filtering
-	Type            []string   `json:"type" validate:"omitempty,oneof=RULE RULE_ERROR POLICY"`
+	Type            []string   `json:"type" validate:"omitempty,dive,oneof=RULE RULE_ERROR POLICY"`
 	Severity        []string   `json:"severity" validate:"omitempty,dive,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 	NameContains    *string    `json:"nameContains"`
 	Status          []string   `json:"status" validate:"omitempty,dive,oneof=OPEN TRIAGED CLOSED RESOLVED"`
 	CreatedAtBefore *time.Time `json:"createdAtBefore"`
 	CreatedAtAfter  *time.Time `json:"createdAtAfter"`
-	RuleIDContains  *string    `json:"ruleIdContains"`
+	IDContains      *string    `json:"idContains"`
 	AlertIDContains *string    `json:"alertIdContains"`
 	EventCountMin   *int       `json:"eventCountMin" validate:"omitempty,min=0"`
 	EventCountMax   *int       `json:"eventCountMax" validate:"omitempty,min=1"`
 	LogTypes        []string   `json:"logTypes" validate:"omitempty,dive,required"`
-	ResourceTypes   []string   `json:"logTypes" validate:"omitempty,dive,required"`
+	ResourceTypes   []string   `json:"resourceTypes" validate:"omitempty,dive,required"`
 	// Sorting
 	SortDir *string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
 }

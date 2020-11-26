@@ -40,9 +40,7 @@ export type AlertDetailsFull = Pick<
   | 'lastUpdatedBy'
   | 'lastUpdatedByTime'
   | 'policyId'
-  | 'policyDisplayName'
   | 'policyIntegrationId'
-  | 'policyVersion'
   | 'resourceTypes'
   | 'resourceId'
 > & { deliveryResponses: Array<Types.Maybe<DeliveryResponseFull>> };
@@ -68,9 +66,7 @@ export const AlertDetailsFull = gql`
     lastUpdatedBy
     lastUpdatedByTime
     policyId
-    policyDisplayName
     policyIntegrationId
-    policyVersion
     resourceTypes
     resourceId
   }

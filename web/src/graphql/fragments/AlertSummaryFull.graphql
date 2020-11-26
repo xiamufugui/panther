@@ -15,9 +15,7 @@ fragment AlertSummaryFull on AlertSummary {
   lastUpdatedBy
   lastUpdatedByTime
   policyId
-  policyDisplayName
   policyIntegrationId
-  policyVersion
   resourceTypes
   resourceId
 }

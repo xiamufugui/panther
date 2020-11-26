@@ -100,7 +100,7 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 
 			// Perform post-filtering data returned from ddb
 			alert = filterByTitleContains(input, alert)
-			alert = filterByRuleIDContains(input, alert)
+			alert = filterByIDContains(input, alert)
 			alert = filterByAlertIDContains(input, alert)
 
 			if alert != nil {
@@ -366,11 +366,14 @@ func filterByTitleContains(input *models.ListAlertsInput, alert *AlertItem) *Ale
 	return alert
 }
 
-// filterByRuleIDContains - filters by a name that contains a string (case insensitive)
-func filterByRuleIDContains(input *models.ListAlertsInput, alert *AlertItem) *AlertItem {
-	if alert != nil && input.RuleIDContains != nil && !strings.Contains(
+// filterByIDContains - filters by a ruleId or policyId that contains a string (case insensitive)
+func filterByIDContains(input *models.ListAlertsInput, alert *AlertItem) *AlertItem {
+	if alert != nil && input.IDContains != nil && !strings.Contains(
 		strings.ToLower(alert.RuleID),
-		strings.ToLower(*input.RuleIDContains),
+		strings.ToLower(*input.IDContains),
+	) && !strings.Contains(
+		strings.ToLower(alert.PolicyID),
+		strings.ToLower(*input.IDContains),
 	) {
 
 		return nil
@@ -378,7 +381,7 @@ func filterByRuleIDContains(input *models.ListAlertsInput, alert *AlertItem) *Al
 	return alert
 }
 
-// filterByAlertIDContains - filters by a name that contains a string (case insensitive)
+// filterByAlertIDContains - filters by an alertId that contains a string (case insensitive)
 func filterByAlertIDContains(input *models.ListAlertsInput, alert *AlertItem) *AlertItem {
 	if alert != nil && input.AlertIDContains != nil && !strings.Contains(
 		strings.ToLower(alert.AlertID),

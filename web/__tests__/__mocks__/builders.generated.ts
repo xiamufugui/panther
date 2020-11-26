@@ -281,10 +281,8 @@ export const buildAlertDetails = (overrides: Partial<AlertDetails> = {}): AlertD
     eventsLastEvaluatedKey:
       'eventsLastEvaluatedKey' in overrides ? overrides.eventsLastEvaluatedKey : 'Accountability',
     policyId: 'policyId' in overrides ? overrides.policyId : 'International',
-    policyDisplayName: 'policyDisplayName' in overrides ? overrides.policyDisplayName : 'override',
     policyIntegrationId:
       'policyIntegrationId' in overrides ? overrides.policyIntegrationId : 'ivory',
-    policyVersion: 'policyVersion' in overrides ? overrides.policyVersion : 'secondary',
     resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['Solutions'],
     resourceId: 'resourceId' in overrides ? overrides.resourceId : 'Pants',
   };
@@ -312,10 +310,8 @@ export const buildAlertSummary = (overrides: Partial<AlertSummary> = {}): AlertS
       'lastUpdatedByTime' in overrides ? overrides.lastUpdatedByTime : '2020-07-29T23:42:06.903Z',
     updateTime: 'updateTime' in overrides ? overrides.updateTime : '2020-09-17T19:32:46.882Z',
     policyId: 'policyId' in overrides ? overrides.policyId : 'Alaska',
-    policyDisplayName: 'policyDisplayName' in overrides ? overrides.policyDisplayName : 'Wooden',
     policyIntegrationId:
       'policyIntegrationId' in overrides ? overrides.policyIntegrationId : 'Delaware',
-    policyVersion: 'policyVersion' in overrides ? overrides.policyVersion : 'Markets',
     resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['Ball'],
     resourceId: 'resourceId' in overrides ? overrides.resourceId : 'Fantastic',
   };
@@ -788,7 +784,7 @@ export const buildListAlertsInput = (overrides: Partial<ListAlertsInput> = {}): 
       'createdAtBefore' in overrides ? overrides.createdAtBefore : '2020-05-22T12:33:45.819Z',
     createdAtAfter:
       'createdAtAfter' in overrides ? overrides.createdAtAfter : '2020-04-26T13:02:02.091Z',
-    ruleIdContains: 'ruleIdContains' in overrides ? overrides.ruleIdContains : 'virtual',
+    idContains: 'idContains' in overrides ? overrides.idContains : 'Ergonomic Soft Car',
     alertIdContains: 'alertIdContains' in overrides ? overrides.alertIdContains : 'Garden',
     status: 'status' in overrides ? overrides.status : [AlertStatusesEnum.Open],
     eventCountMin: 'eventCountMin' in overrides ? overrides.eventCountMin : 694,

@@ -104,7 +104,7 @@ input ListAlertsInput {
   nameContains: String
   createdAtBefore: AWSDateTime
   createdAtAfter: AWSDateTime
-  ruleIdContains: String
+  idContains: String
   alertIdContains: String
   status: [AlertStatusesEnum]
   eventCountMin: Int
@@ -160,11 +160,9 @@ interface Alert {
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
   updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
   policyId: String!
-  policyDisplayName: String! # remove
   policyIntegrationId: String!
-  policyVersion: String! # remove
   resourceTypes: [String!]!
-  resourceId: String! # replace in backend to write to the title and remove this field
+  resourceId: String!
 }
 
 type AlertDetails implements Alert {
@@ -185,9 +183,7 @@ type AlertDetails implements Alert {
   events: [AWSJSON!]!
   eventsLastEvaluatedKey: String
   policyId: String!
-  policyDisplayName: String!
   policyIntegrationId: String!
-  policyVersion: String!
   resourceTypes: [String!]!
   resourceId: String!
 }
@@ -207,9 +203,7 @@ type AlertSummary implements Alert {
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
   updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
   policyId: String!
-  policyDisplayName: String!
   policyIntegrationId: String!
-  policyVersion: String!
   resourceTypes: [String!]!
   resourceId: String!
 }

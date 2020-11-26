@@ -120,9 +120,7 @@ export type Alert = {
   lastUpdatedByTime?: Maybe<Scalars['AWSDateTime']>;
   updateTime: Scalars['AWSDateTime'];
   policyId: Scalars['String'];
-  policyDisplayName: Scalars['String'];
   policyIntegrationId: Scalars['String'];
-  policyVersion: Scalars['String'];
   resourceTypes: Array<Scalars['String']>;
   resourceId: Scalars['String'];
 };
@@ -146,9 +144,7 @@ export type AlertDetails = Alert & {
   events: Array<Scalars['AWSJSON']>;
   eventsLastEvaluatedKey?: Maybe<Scalars['String']>;
   policyId: Scalars['String'];
-  policyDisplayName: Scalars['String'];
   policyIntegrationId: Scalars['String'];
-  policyVersion: Scalars['String'];
   resourceTypes: Array<Scalars['String']>;
   resourceId: Scalars['String'];
 };
@@ -176,9 +172,7 @@ export type AlertSummary = Alert & {
   lastUpdatedByTime?: Maybe<Scalars['AWSDateTime']>;
   updateTime: Scalars['AWSDateTime'];
   policyId: Scalars['String'];
-  policyDisplayName: Scalars['String'];
   policyIntegrationId: Scalars['String'];
-  policyVersion: Scalars['String'];
   resourceTypes: Array<Scalars['String']>;
   resourceId: Scalars['String'];
 };
@@ -504,7 +498,7 @@ export type ListAlertsInput = {
   nameContains?: Maybe<Scalars['String']>;
   createdAtBefore?: Maybe<Scalars['AWSDateTime']>;
   createdAtAfter?: Maybe<Scalars['AWSDateTime']>;
-  ruleIdContains?: Maybe<Scalars['String']>;
+  idContains?: Maybe<Scalars['String']>;
   alertIdContains?: Maybe<Scalars['String']>;
   status?: Maybe<Array<Maybe<AlertStatusesEnum>>>;
   eventCountMin?: Maybe<Scalars['Int']>;
@@ -1855,9 +1849,7 @@ export type AlertResolvers<
   lastUpdatedByTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   updateTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   policyId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  policyDisplayName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   policyIntegrationId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  policyVersion?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   resourceTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   resourceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
@@ -1887,9 +1879,7 @@ export type AlertDetailsResolvers<
   events?: Resolver<Array<ResolversTypes['AWSJSON']>, ParentType, ContextType>;
   eventsLastEvaluatedKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   policyId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  policyDisplayName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   policyIntegrationId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  policyVersion?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   resourceTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   resourceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
@@ -1917,9 +1907,7 @@ export type AlertSummaryResolvers<
   lastUpdatedByTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   updateTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   policyId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  policyDisplayName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   policyIntegrationId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  policyVersion?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   resourceTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   resourceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
