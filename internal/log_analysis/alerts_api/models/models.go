@@ -27,9 +27,6 @@ import (
 )
 
 const (
-	// The type of an Alert that is triggered because of a rule encountering an error
-	RuleErrorType = "RULE_ERROR"
-
 	AlertTablePartitionKey        = "id"
 	AlertTableLogTypesAttribute   = "logTypes"
 	AlertTableEventCountAttribute = "eventCount"
