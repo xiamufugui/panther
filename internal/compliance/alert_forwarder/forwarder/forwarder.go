@@ -19,9 +19,6 @@ package forwarder
  */
 
 import (
-	"crypto/md5" // nolint: gosec
-	"encoding/hex"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
@@ -47,9 +44,6 @@ type Handler struct {
 }
 
 func (h *Handler) Do(alert models.Alert) error {
-	// Creates an ID and sets it in the alert
-	alert.AlertID = GenerateAlertID(alert)
-
 	// Persist to DDB
 	if err := h.storeNewAlert(alert); err != nil {
 		return errors.Wrap(err, "failed to store new alert (policy) in DDB")
@@ -137,14 +131,4 @@ func (h *Handler) sendAlertNotification(alert models.Alert) error {
 		return errors.Wrap(err, "failed to send notification")
 	}
 	return nil
-}
-
-// Generates an ID from the policyID (policy name) and the current timestamp.
-// We do not have control over any dedup strings so we use a timestamp for
-// differentiation.
-func GenerateAlertID(alert models.Alert) *string {
-	key := alert.AnalysisID + ":" + alert.CreatedAt.String()
-	keyHash := md5.Sum([]byte(key)) // nolint(gosec)
-	encoded := hex.EncodeToString(keyHash[:])
-	return &encoded
 }

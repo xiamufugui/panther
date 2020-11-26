@@ -19,6 +19,8 @@ package processor
  */
 
 import (
+	"crypto/md5" // nolint: gosec
+	"encoding/hex"
 	"net/http"
 	"os"
 	"time"
@@ -211,6 +213,7 @@ func getAlertConfigPolicy(event *models.ComplianceNotification) (*alertmodel.Ale
 	}
 
 	return &alertmodel.Alert{
+			AlertID:               GenerateAlertID(event),
 			AnalysisDescription:   &policy.Description,
 			AnalysisID:            event.PolicyID,
 			AnalysisName:          &policy.DisplayName,
@@ -227,4 +230,12 @@ func getAlertConfigPolicy(event *models.ComplianceNotification) (*alertmodel.Ale
 		},
 		policy.AutoRemediationID != "", // means we can remediate
 		nil
+}
+
+// generates an ID from the policyID (policy name) and the current timestamp.
+func GenerateAlertID(event *models.ComplianceNotification) *string {
+	key := event.PolicyID + ":" + event.Timestamp.String()
+	keyHash := md5.Sum([]byte(key)) // nolint(gosec)
+	encoded := hex.EncodeToString(keyHash[:])
+	return &encoded
 }

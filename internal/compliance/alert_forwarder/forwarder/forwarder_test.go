@@ -47,7 +47,7 @@ var (
 
 func genSampleAlert() models.Alert {
 	return models.Alert{
-		// AlertID:             aws.String("14385b7633e698ede7e036dc010c1fb6"), // This is generated dynamically
+		AlertID:               aws.String("26df596024d2e81140de028387d517da"), // This is generated dynamically
 		CreatedAt:             timeNow,
 		Severity:              "INFO",
 		Title:                 aws.String("some title"),
@@ -64,12 +64,6 @@ func genSampleAlert() models.Alert {
 	}
 }
 
-func TestGenerateAlertID(t *testing.T) {
-	alert := genSampleAlert()
-	alertID := GenerateAlertID(alert)
-	assert.Equal(t, *alertID, "26df596024d2e81140de028387d517da")
-}
-
 func TestHandleStoreAndSendNotification(t *testing.T) {
 	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
@@ -84,11 +78,7 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 		MetricsLogger:    metricsMock,
 	}
 
-	// An alert will not have an AlertID
 	expectedAlert := genSampleAlert()
-
-	// Now, we dynamically generate that ID
-	expectedAlert.AlertID = GenerateAlertID(expectedAlert)
 
 	// Next, simulate sending to SQS
 	expectedMarshaledAlert, err := jsoniter.MarshalToString(expectedAlert)

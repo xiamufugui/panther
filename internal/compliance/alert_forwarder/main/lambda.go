@@ -95,7 +95,8 @@ func reporterHandler(lc *lambdacontext.LambdaContext, event events.DynamoDBEvent
 		}
 
 		if err = handler.Do(alert); err != nil {
-			return errors.Wrap(err, "encountered issue while handling policy event")
+			err = errors.Wrap(err, "encountered issue while handling policy event")
+			return err
 		}
 	}
 	return nil

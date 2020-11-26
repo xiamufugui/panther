@@ -237,7 +237,7 @@ func (r *batchResults) analyze(resources resourceMap, policies policyMap) error 
 				PolicyVersionID:     policy.VersionID,
 				ResourceID:          resource.ID,
 				OutputIds:           policy.OutputIDs,
-				Timestamp:           time.Now(),
+				Timestamp:           time.Now().UTC(),
 				// We only need to send an alert to the user if the status is newly FAILing
 				ShouldAlert: status != compliancemodels.StatusFail,
 			}

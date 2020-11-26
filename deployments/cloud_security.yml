@@ -339,16 +339,6 @@ Resources:
                 - dynamodb:PutItem
                 - dynamodb:UpdateItem
               Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-log-alert-info
-        - Id: ReadTableStreams
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - dynamodb:DescribeStream
-                - dynamodb:GetRecords
-                - dynamodb:GetShardIterator
-                - dynamodb:ListStreams
-              Resource: !Sub ${AlertForwarderTable.Arn}/stream/*
         - Id: PublishToAlertQueue
           Version: 2012-10-17
           Statement:
