@@ -1165,6 +1165,12 @@ Resources:
               Resource:
                 - !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:panther-analysis/*
                 - !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:panther-policies/*
+        - Id: AssumePantherAuditRoles
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Resource: !Sub arn:${AWS::Partition}:iam::*:role/PantherAuditRole-${AWS::Region}
 
   PolicyEngineLayers:
     Type: Custom::LayerAttachment
