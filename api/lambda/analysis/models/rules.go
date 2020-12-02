@@ -89,10 +89,15 @@ type TestRuleRecord struct {
 }
 
 type TestRuleRecordFunctions struct {
-	Rule         *TestDetectionSubRecord `json:"ruleFunction"`
-	Title        *TestDetectionSubRecord `json:"titleFunction"`
-	Dedup        *TestDetectionSubRecord `json:"dedupFunction"`
-	AlertContext *TestDetectionSubRecord `json:"alertContextFunction"`
+	Rule                *TestDetectionSubRecord `json:"ruleFunction"`
+	Title               *TestDetectionSubRecord `json:"titleFunction"`
+	Dedup               *TestDetectionSubRecord `json:"dedupFunction"`
+	AlertContext        *TestDetectionSubRecord `json:"alertContextFunction"`
+	Description         *TestDetectionSubRecord `json:"descriptionFunction"`
+	DestinationOverride *TestDetectionSubRecord `json:"destinationOverrideFunction"`
+	Reference           *TestDetectionSubRecord `json:"referenceFunction"`
+	Runbook             *TestDetectionSubRecord `json:"runbookFunction"`
+	Severity            *TestDetectionSubRecord `json:"severityFunction"`
 }
 
 type UpdateRuleInput struct {
@@ -111,7 +116,7 @@ type UpdateRuleInput struct {
 	Tags               []string            `json:"tags" validate:"max=500,dive,required,max=1000"`
 	Tests              []UnitTest          `json:"tests" validate:"max=500,dive"`
 	Threshold          int                 `json:"threshold" validate:"min=0"`
-	UserID             string              `json:"userId" validate:"uuid4"`
+	UserID             string              `json:"userId" validate:"required"`
 }
 
 type Rule struct {
