@@ -33,6 +33,11 @@ Parameters:
     Default: ''
     # Example: "arn:aws:sns:us-west-2:111122223333:panther-cw-alarms"
     AllowedPattern: '^(arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+)?$'
+  AllowPolicyEngineScans:
+    Type: String
+    Description: Whether or not to allow the policy engine to assume the PantherAuditRole. Be careful when enabling this setting, as it grants very broad permissions to the policy engine!
+    Default: false
+    AllowedValues: [true, false]
   CertificateArn:
     Type: String
     Description: TLS certificate (ACM or IAM) used by the web app - see also CustomDomain. If not specified, a self-signed cert is created for you.
@@ -270,6 +275,7 @@ Resources:
       TemplateURL: ../../deployments/cloud_security.yml
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
+        AllowPolicyEngineScans: !Ref AllowPolicyEngineScans
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         Debug: !Ref Debug

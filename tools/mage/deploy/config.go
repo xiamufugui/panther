@@ -54,16 +54,17 @@ type Monitoring struct {
 }
 
 type Setup struct {
-	Company               Company          `yaml:"Company"`
-	FirstUser             FirstUser        `yaml:"FirstUser"`
-	OnboardSelf           bool             `yaml:"OnboardSelf"`
-	EnableS3AccessLogs    bool             `yaml:"EnableS3AccessLogs"`
-	EnableCloudTrail      bool             `yaml:"EnableCloudTrail"`
-	EnableGuardDuty       bool             `yaml:"EnableGuardDuty"`
-	S3AccessLogsBucket    string           `yaml:"S3AccessLogsBucket"`
-	DataReplicationBucket string           `yaml:"DataReplicationBucket"`
-	InitialAnalysisSets   []string         `yaml:"InitialAnalysisSets"`
-	LogSubscriptions      LogSubscriptions `yaml:"LogSubscriptions"`
+	AllowPolicyEngineScans string           `yaml:"AllowPolicyEngineScans"`
+	Company                Company          `yaml:"Company"`
+	FirstUser              FirstUser        `yaml:"FirstUser"`
+	OnboardSelf            bool             `yaml:"OnboardSelf"`
+	EnableS3AccessLogs     bool             `yaml:"EnableS3AccessLogs"`
+	EnableCloudTrail       bool             `yaml:"EnableCloudTrail"`
+	EnableGuardDuty        bool             `yaml:"EnableGuardDuty"`
+	S3AccessLogsBucket     string           `yaml:"S3AccessLogsBucket"`
+	DataReplicationBucket  string           `yaml:"DataReplicationBucket"`
+	InitialAnalysisSets    []string         `yaml:"InitialAnalysisSets"`
+	LogSubscriptions       LogSubscriptions `yaml:"LogSubscriptions"`
 }
 
 type Company struct {

@@ -85,6 +85,11 @@ Monitoring:
   TracingMode: ''
 
 Setup:
+  # Whether or not the policy engine can assume the PantherAuditRole. This is an extremely broad
+  # permission, so only enable this with great care! If enabled, then if an attacker compromises your
+  # custom python detections, they will have the capability to do arbitrary recon of your infra.
+  AllowPolicyEngineScans: false
+
   # The company name/email displayed in Settings > General (not used anywhere else today)
   Company:
     DisplayName: AwesomeCo

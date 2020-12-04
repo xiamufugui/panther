@@ -26,6 +26,10 @@ Parameters:
     Description: SNS topic for CloudWatch alarms
     # Example: "arn:aws:sns:us-west-2:111122223333:panther-cw-alarms"
     AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
+  AllowPolicyEngineScans:
+    Type: String
+    Description: Whether or not to allow the policy engine to assume the PantherAuditRole
+    AllowedValues: [true, false]
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
@@ -107,6 +111,7 @@ Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
   DebugEnabled: !Equals [!Ref Debug, true]
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
+  AllowPolicyEngineScans: !Equals [true, !Ref AllowPolicyEngineScans]
 
 Resources:
   ###### Update Glue Table Schemas for Deployed Tables #####
@@ -1320,6 +1325,7 @@ Resources:
               Action: lambda:InvokeFunction
               Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-resources-api
         - Id: AssumePantherAuditRoles
+          Condition: AllowPolicyEngineScans
           Version: 2012-10-17
           Statement:
             - Effect: Allow

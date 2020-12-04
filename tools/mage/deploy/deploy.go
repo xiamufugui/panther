@@ -495,6 +495,7 @@ func deployAppsyncStack(outputs map[string]string) error {
 func deployCloudSecurityStack(settings *PantherConfig, outputs map[string]string) error {
 	_, err := deployTemplate(cfnstacks.CloudsecTemplate, outputs["SourceBucket"], cfnstacks.Cloudsec, map[string]string{
 		"AlarmTopicArn":              outputs["AlarmTopicArn"],
+		"AllowPolicyEngineScans":     settings.Setup.AllowPolicyEngineScans,
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"CustomResourceVersion":      customResourceVersion(),
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
