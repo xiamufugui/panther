@@ -1392,14 +1392,14 @@ Resources:
             $set($alert = $item)
             #if ($item.ruleId)
               $util.qr($alert.put("detection", {
-                "__typename", "AlertSummaryRuleInfo",
+                "__typename": "AlertSummaryRuleInfo",
                 "ruleId": $item.ruleId,
                 "logTypes": $item.logTypes,
                 "eventsMatched": $item.eventsMatched
               }))
             #else
               $util.qr($alert.put("detection", {
-                "__typename", "AlertSummaryPolicyInfo",
+                "__typename": "AlertSummaryPolicyInfo",
                 "policyId": $item.policyId,
                 "resourceId": $item.resourceId,
                 "policyIntegrationId": $item.policyIntegrationId,
@@ -1430,24 +1430,24 @@ Resources:
         #if($ctx.error)
           $util.error($ctx.error.errorMessage, $ctx.error.errorType, $ctx.args)
         #else
-          $set($payload = $ctx.result)
+          #set($payload = $ctx.result)
           #if ($payload.ruleId)
             $util.qr($payload.put("detection", {
-              "__typename", "AlertSummaryRuleInfo",
-              "ruleId": $item.ruleId,
-              "logTypes": $item.logTypes,
-              "eventsMatched": $item.eventsMatched,
-              "dedupString": $item.dedupString,
-              "events": $item.events,
-              "eventsLastEvaluatedKey": $item.eventsLastEvaluatedKey
+              "__typename": "AlertDetailsRuleInfo",
+              "ruleId": $ctx.result.ruleId,
+              "logTypes": $ctx.result.logTypes,
+              "eventsMatched": $ctx.result.eventsMatched,
+              "dedupString": $ctx.result.dedupString,
+              "events": $ctx.result.events,
+              "eventsLastEvaluatedKey": $ctx.result.eventsLastEvaluatedKey
             }))
           #else
             $util.qr($payload.put("detection", {
-              "__typename", "AlertSummaryPolicyInfo",
-              "policyId": $item.policyId,
-              "resourceId": $item.resourceId,
-              "policyIntegrationId": $item.policyIntegrationId,
-              "resourceTypes": $item.resourceTypes
+              "__typename": "AlertSummaryPolicyInfo",
+              "policyId": $ctx.result.policyId,
+              "resourceId": $ctx.result.resourceId,
+              "policyIntegrationId": $ctx.result.policyIntegrationId,
+              "resourceTypes": $ctx.result.resourceTypes
             }))
           #end
           $util.toJson($payload)
