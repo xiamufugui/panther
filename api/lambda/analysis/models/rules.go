@@ -45,7 +45,7 @@ type ListRulesInput struct {
 	LogTypes []string `json:"logTypes" validate:"max=500,dive,required,max=500"`
 
 	// Only include policies with this severity
-	Severity models.Severity `json:"severity" validate:"omitempty,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
+	Severity []models.Severity `json:"severity" validate:"dive,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 
 	// Only include policies with all of these tags (case-insensitive)
 	Tags []string `json:"tags" validate:"max=500,dive,required,max=500"`
@@ -116,7 +116,7 @@ type UpdateRuleInput struct {
 	Tags               []string            `json:"tags" validate:"max=500,dive,required,max=1000"`
 	Tests              []UnitTest          `json:"tests" validate:"max=500,dive"`
 	Threshold          int                 `json:"threshold" validate:"min=0"`
-	UserID             string              `json:"userId" validate:"uuid4"`
+	UserID             string              `json:"userId" validate:"required"`
 }
 
 type Rule struct {
