@@ -25,7 +25,10 @@ import {
   AddS3LogIntegrationInput,
   AddSqsLogIntegrationInput,
   AlertDetails,
+  AlertDetailsRuleInfo,
   AlertSummary,
+  AlertSummaryPolicyInfo,
+  AlertSummaryRuleInfo,
   AsanaConfig,
   AsanaConfigInput,
   ComplianceIntegration,
@@ -141,7 +144,9 @@ import {
   UploadPoliciesResponse,
   User,
   AccountTypeEnum,
+  AlertDetailsDetectionInfo,
   AlertStatusesEnum,
+  AlertSummaryDetectionInfo,
   AlertTypesEnum,
   ComplianceStatusEnum,
   DestinationTypeEnum,
@@ -262,13 +267,10 @@ export const buildAlertDetails = (overrides: Partial<AlertDetails> = {}): AlertD
     creationTime: 'creationTime' in overrides ? overrides.creationTime : '2020-10-28T02:06:29.865Z',
     deliveryResponses:
       'deliveryResponses' in overrides ? overrides.deliveryResponses : [buildDeliveryResponse()],
-    eventsMatched: 'eventsMatched' in overrides ? overrides.eventsMatched : 516,
-    ruleId: 'ruleId' in overrides ? overrides.ruleId : '9ad2c6da-417d-414f-a3e5-7959acdeaa9e',
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Critical,
     status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Closed,
     title: 'title' in overrides ? overrides.title : 'Steel',
     type: 'type' in overrides ? overrides.type : AlertTypesEnum.Rule,
-    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Books'],
     lastUpdatedBy:
       'lastUpdatedBy' in overrides
         ? overrides.lastUpdatedBy
@@ -276,15 +278,22 @@ export const buildAlertDetails = (overrides: Partial<AlertDetails> = {}): AlertD
     lastUpdatedByTime:
       'lastUpdatedByTime' in overrides ? overrides.lastUpdatedByTime : '2020-07-02T20:00:23.050Z',
     updateTime: 'updateTime' in overrides ? overrides.updateTime : '2020-02-22T04:54:35.910Z',
-    dedupString: 'dedupString' in overrides ? overrides.dedupString : 'Auto Loan Account',
-    events: 'events' in overrides ? overrides.events : ['"bar"'],
+    detection: 'detection' in overrides ? overrides.detection : buildAlertDetailsRuleInfo(),
+  };
+};
+
+export const buildAlertDetailsRuleInfo = (
+  overrides: Partial<AlertDetailsRuleInfo> = {}
+): AlertDetailsRuleInfo => {
+  return {
+    __typename: 'AlertDetailsRuleInfo',
+    ruleId: 'ruleId' in overrides ? overrides.ruleId : '17db7258-2d08-4d56-b993-666b8e6db65e',
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Baht'],
+    eventsMatched: 'eventsMatched' in overrides ? overrides.eventsMatched : 545,
+    dedupString: 'dedupString' in overrides ? overrides.dedupString : 'panel',
+    events: 'events' in overrides ? overrides.events : ['"car"'],
     eventsLastEvaluatedKey:
-      'eventsLastEvaluatedKey' in overrides ? overrides.eventsLastEvaluatedKey : 'Accountability',
-    policyId: 'policyId' in overrides ? overrides.policyId : 'International',
-    policyIntegrationId:
-      'policyIntegrationId' in overrides ? overrides.policyIntegrationId : 'ivory',
-    resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['Solutions'],
-    resourceId: 'resourceId' in overrides ? overrides.resourceId : 'Pants',
+      'eventsLastEvaluatedKey' in overrides ? overrides.eventsLastEvaluatedKey : 'index',
   };
 };
 
@@ -295,13 +304,10 @@ export const buildAlertSummary = (overrides: Partial<AlertSummary> = {}): AlertS
     creationTime: 'creationTime' in overrides ? overrides.creationTime : '2020-08-08T12:15:31.121Z',
     deliveryResponses:
       'deliveryResponses' in overrides ? overrides.deliveryResponses : [buildDeliveryResponse()],
-    eventsMatched: 'eventsMatched' in overrides ? overrides.eventsMatched : 670,
-    ruleId: 'ruleId' in overrides ? overrides.ruleId : '6eb9c948-5a13-4955-bd91-b98801b55bed',
     type: 'type' in overrides ? overrides.type : AlertTypesEnum.RuleError,
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Medium,
     status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Triaged,
     title: 'title' in overrides ? overrides.title : 'indexing',
-    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Costa Rica'],
     lastUpdatedBy:
       'lastUpdatedBy' in overrides
         ? overrides.lastUpdatedBy
@@ -309,11 +315,31 @@ export const buildAlertSummary = (overrides: Partial<AlertSummary> = {}): AlertS
     lastUpdatedByTime:
       'lastUpdatedByTime' in overrides ? overrides.lastUpdatedByTime : '2020-07-29T23:42:06.903Z',
     updateTime: 'updateTime' in overrides ? overrides.updateTime : '2020-09-17T19:32:46.882Z',
-    policyId: 'policyId' in overrides ? overrides.policyId : 'Alaska',
+    detection: 'detection' in overrides ? overrides.detection : buildAlertSummaryRuleInfo(),
+  };
+};
+
+export const buildAlertSummaryPolicyInfo = (
+  overrides: Partial<AlertSummaryPolicyInfo> = {}
+): AlertSummaryPolicyInfo => {
+  return {
+    __typename: 'AlertSummaryPolicyInfo',
+    policyId: 'policyId' in overrides ? overrides.policyId : 'a68babd7-7c1c-4dee-a33e-b8009e6d8017',
+    resourceId: 'resourceId' in overrides ? overrides.resourceId : '5th generation',
     policyIntegrationId:
-      'policyIntegrationId' in overrides ? overrides.policyIntegrationId : 'Delaware',
-    resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['Ball'],
-    resourceId: 'resourceId' in overrides ? overrides.resourceId : 'Fantastic',
+      'policyIntegrationId' in overrides ? overrides.policyIntegrationId : 'Ergonomic',
+    resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['brand'],
+  };
+};
+
+export const buildAlertSummaryRuleInfo = (
+  overrides: Partial<AlertSummaryRuleInfo> = {}
+): AlertSummaryRuleInfo => {
+  return {
+    __typename: 'AlertSummaryRuleInfo',
+    ruleId: 'ruleId' in overrides ? overrides.ruleId : '8780849b-30b8-4ce2-934b-bf033369b110',
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Personal Loan Account'],
+    eventsMatched: 'eventsMatched' in overrides ? overrides.eventsMatched : 240,
   };
 };
 

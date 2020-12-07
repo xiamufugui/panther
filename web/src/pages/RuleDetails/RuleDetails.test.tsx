@@ -20,6 +20,7 @@ import React from 'react';
 import queryString from 'query-string';
 import {
   buildAlertSummary,
+  buildAlertSummaryRuleInfo,
   buildListAlertsResponse,
   buildRuleDetails,
   fireClickAndMouseEvents,
@@ -146,7 +147,9 @@ describe('RuleDetails', () => {
             ...buildListAlertsResponse(),
             alertSummaries: [
               buildAlertSummary({
-                ruleId: '123',
+                detection: buildAlertSummaryRuleInfo({
+                  ruleId: '123',
+                }),
                 title: `Alert 1`,
                 alertId: `alert_1`,
                 type: AlertTypesEnum.Rule,
@@ -249,7 +252,9 @@ describe('RuleDetails', () => {
             ...buildListAlertsResponse(),
             alertSummaries: [
               buildAlertSummary({
-                ruleId: '123',
+                detection: buildAlertSummaryRuleInfo({
+                  ruleId: '123',
+                }),
                 title: `Alert 1`,
                 alertId: `alert_1`,
                 type: AlertTypesEnum.Rule,
@@ -316,7 +321,9 @@ describe('RuleDetails', () => {
             ...buildListAlertsResponse(),
             alertSummaries: [
               buildAlertSummary({
-                ruleId: '123',
+                detection: buildAlertSummaryRuleInfo({
+                  ruleId: '123',
+                }),
                 title: `Error 1`,
                 alertId: `error_1`,
                 type: AlertTypesEnum.RuleError,
@@ -495,7 +502,9 @@ describe('RuleDetails', () => {
             ...buildListAlertsResponse(),
             alertSummaries: [
               buildAlertSummary({
-                ruleId: '123',
+                detection: buildAlertSummaryRuleInfo({
+                  ruleId: '123',
+                }),
                 title: `Unique alert ${counter}`,
                 alertId: `alert_${counter}`,
                 type: AlertTypesEnum.Rule,
@@ -593,13 +602,17 @@ describe('RuleDetails', () => {
     });
     const alertSummaries = [
       buildAlertSummary({
-        ruleId: '123',
+        detection: buildAlertSummaryRuleInfo({
+          ruleId: '123',
+        }),
         title: `Alert 1`,
         alertId: `alert_1`,
         type: AlertTypesEnum.Rule,
       }),
       buildAlertSummary({
-        ruleId: '123',
+        detection: buildAlertSummaryRuleInfo({
+          ruleId: '123',
+        }),
         title: `Alert 2`,
         alertId: `alert_2`,
         type: AlertTypesEnum.Rule,
@@ -749,13 +762,17 @@ describe('RuleDetails', () => {
     });
     const alertSummaries = [
       buildAlertSummary({
-        ruleId: '123',
+        detection: buildAlertSummaryRuleInfo({
+          ruleId: '123',
+        }),
         title: `Error 1`,
         alertId: `error_1`,
         type: AlertTypesEnum.RuleError,
       }),
       buildAlertSummary({
-        ruleId: '123',
+        detection: buildAlertSummaryRuleInfo({
+          ruleId: '123',
+        }),
         title: `Error 2`,
         alertId: `error_2`,
         type: AlertTypesEnum.RuleError,

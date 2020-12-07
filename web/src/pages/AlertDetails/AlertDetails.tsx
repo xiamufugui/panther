@@ -30,11 +30,9 @@ import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import invert from 'lodash/invert';
 import useUrlParams from 'Hooks/useUrlParams';
 import { useListDestinations } from 'Source/graphql/queries';
-import { AlertTypesEnum } from 'Generated/schema';
+import { AlertDetailsRuleInfo, AlertTypesEnum } from 'Generated/schema';
 import { useAlertDetails } from './graphql/alertDetails.generated';
 import { useRuleTeaser } from './graphql/ruleTeaser.generated';
-// FIXME: uncomment when policy-alerts are supported
-// import { usePolicyTeaser } from './graphql/policyTeaser.generated';
 import AlertDetailsBanner from './AlertDetailsBanner';
 import AlertDetailsInfo from './AlertDetailsInfo';
 
@@ -72,24 +70,16 @@ const AlertDetailsPage = () => {
     },
   });
 
+  const alertDetectionInfo = alertData?.alert?.detection as AlertDetailsRuleInfo;
+
   const { data: ruleData, loading: ruleLoading } = useRuleTeaser({
     skip: !alertData || alertData.alert?.type === AlertTypesEnum.Policy,
     variables: {
       input: {
-        id: alertData?.alert?.ruleId,
+        id: alertDetectionInfo?.ruleId,
       },
     },
   });
-
-  // FIXME: uncomment when policy-alerts are supported
-  // const { data: policyData, loading: policyLoading } = usePolicyTeaser({
-  //   skip: !alertData || alertData.alert?.type !== AlertTypesEnum.Policy,
-  //   variables: {
-  //     input: {
-  //       id: alertData?.alert?.ruleId,
-  //     },
-  //   },
-  // });
 
   // FIXME: The destination information should come directly from GraphQL, by executing another
   //  query in the Front-end and using the results of both to calculate it.
@@ -100,7 +90,7 @@ const AlertDetailsPage = () => {
       variables: {
         input: {
           ...variables.input,
-          eventsExclusiveStartKey: alertData.alert.eventsLastEvaluatedKey,
+          eventsExclusiveStartKey: alertDetectionInfo.eventsLastEvaluatedKey,
         },
       },
       updateQuery: (previousResult, { fetchMoreResult }) => {
@@ -110,7 +100,10 @@ const AlertDetailsPage = () => {
           alert: {
             ...previousResult.alert,
             ...fetchMoreResult.alert,
-            events: [...previousResult.alert.events, ...fetchMoreResult.alert.events],
+            events: [
+              ...(previousResult.alert.detection as AlertDetailsRuleInfo).events,
+              ...(fetchMoreResult.alert.detection as AlertDetailsRuleInfo).events,
+            ],
           },
         };
       },
@@ -120,8 +113,6 @@ const AlertDetailsPage = () => {
   if (
     (alertLoading && !alertData) ||
     (ruleLoading && !ruleData) ||
-    // FIXME: uncomment when policy-alerts are supported
-    // (policyLoading && !policyData) ||
     (destinationLoading && !destinationData)
   ) {
     return <Skeleton />;
@@ -158,7 +149,7 @@ const AlertDetailsPage = () => {
             <Box px={2}>
               <TabList>
                 <BorderedTab>Details</BorderedTab>
-                <BorderedTab>Events ({alertData.alert.eventsMatched})</BorderedTab>
+                <BorderedTab>Events ({alertDetectionInfo.eventsMatched})</BorderedTab>
               </TabList>
             </Box>
             <BorderTabDivider />
