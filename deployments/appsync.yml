@@ -1382,7 +1382,34 @@ Resources:
             "listAlerts": $ctx.args.input
           })
         }
-      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
+      ResponseMappingTemplate: |
+        #if($ctx.error)
+          $util.error($ctx.error.errorMessage, $ctx.error.errorType, $ctx.args)
+        #else
+          #set($payload = [])
+
+          #foreach($item in $ctx.result)
+            $set($alert = $item)
+            #if ($item.ruleId)
+              $util.qr($alert.put("detection", {
+                "__typename", "AlertSummaryRuleInfo",
+                "ruleId": $item.ruleId,
+                "logTypes": $item.logTypes,
+                "eventsMatched": $item.eventsMatched
+              }))
+            #else
+              $util.qr($alert.put("detection", {
+                "__typename", "AlertSummaryPolicyInfo",
+                "policyId": $item.policyId,
+                "resourceId": $item.resourceId,
+                "policyIntegrationId": $item.policyIntegrationId,
+                "resourceTypes": $item.resourceTypes
+              }))
+            #end
+            $util.qr($payload.add($alert))
+          #end
+          $util.toJson($payload)
+        #end
 
   GetAlertResolver:
     Type: AWS::AppSync::Resolver
@@ -1399,7 +1426,32 @@ Resources:
             "getAlert": $ctx.args.input
           })
         }
-      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
+      ResponseMappingTemplate: |
+        #if($ctx.error)
+          $util.error($ctx.error.errorMessage, $ctx.error.errorType, $ctx.args)
+        #else
+          $set($payload = $ctx.result)
+          #if ($payload.ruleId)
+            $util.qr($payload.put("detection", {
+              "__typename", "AlertSummaryRuleInfo",
+              "ruleId": $item.ruleId,
+              "logTypes": $item.logTypes,
+              "eventsMatched": $item.eventsMatched,
+              "dedupString": $item.dedupString,
+              "events": $item.events,
+              "eventsLastEvaluatedKey": $item.eventsLastEvaluatedKey
+            }))
+          #else
+            $util.qr($payload.put("detection", {
+              "__typename", "AlertSummaryPolicyInfo",
+              "policyId": $item.policyId,
+              "resourceId": $item.resourceId,
+              "policyIntegrationId": $item.policyIntegrationId,
+              "resourceTypes": $item.resourceTypes
+            }))
+          #end
+          $util.toJson($payload)
+        #end
 
   UpdateAlertStatusResolver:
     Type: AWS::AppSync::Resolver

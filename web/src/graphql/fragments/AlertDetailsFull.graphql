@@ -1,24 +1,30 @@
 fragment AlertDetailsFull on AlertDetails {
   alertId
-  ruleId
   type
   title
   creationTime
   deliveryResponses {
     ...DeliveryResponseFull
   }
-  eventsMatched
   updateTime
-  eventsLastEvaluatedKey
-  events
-  dedupString
   severity
   status
-  logTypes
   lastUpdatedBy
   lastUpdatedByTime
-  policyId
-  policyIntegrationId
-  resourceTypes
-  resourceId
+  detection {
+    ... on AlertSummaryPolicyInfo {
+      policyId
+      resourceTypes
+      resourceId
+      policyIntegrationId
+    }
+    ... on AlertDetailsRuleInfo {
+      ruleId
+      logTypes
+      eventsMatched
+      eventsLastEvaluatedKey
+      events
+      dedupString
+    }
+  }
 }
