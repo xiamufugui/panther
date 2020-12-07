@@ -50,15 +50,15 @@ func genSampleAlert() models.Alert {
 		AlertID:               aws.String("26df596024d2e81140de028387d517da"), // This is generated dynamically
 		CreatedAt:             timeNow,
 		Severity:              "INFO",
-		Title:                 aws.String("some title"),
+		Title:                 "some title",
 		AnalysisID:            "Test.Policy",
 		AnalysisName:          aws.String("A test policy to generate alerts"),
-		AnalysisDescription:   aws.String("An alert triggered from a Policy..."),
+		AnalysisDescription:   "An alert triggered from a Policy...",
 		AnalysisIntegrationID: "9d1f16f0-8bcc-11ea-afeb-efa9a81fb878",
 		Version:               aws.String("A policy version"),
 		ResourceTypes:         []string{"Resource", "Types"},
 		ResourceID:            "arn:aws:iam::xxx...",
-		Runbook:               aws.String("Check out our docs!"),
+		Runbook:               "Check out our docs!",
 		Tags:                  []string{"Tag", "Policy", "AWS"},
 		Type:                  models.PolicyType,
 	}
@@ -94,7 +94,7 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 		ID:            "26df596024d2e81140de028387d517da",
 		TimePartition: "defaultPartition",
 		Severity:      "INFO",
-		Title:         aws.StringValue(expectedAlert.Title),
+		Title:         expectedAlert.Title,
 		AlertPolicy: alertApiModels.AlertPolicy{
 			PolicyID:            expectedAlert.AnalysisID,
 			PolicyDisplayName:   aws.StringValue(expectedAlert.AnalysisName),

@@ -47,6 +47,10 @@ func init() {
 		},
 		{
 			"AnalysisType",
+			"AnalysisID",
+		},
+		{
+			"AnalysisType",
 		},
 	})
 	cache := forwarder.NewCache(policyClient)

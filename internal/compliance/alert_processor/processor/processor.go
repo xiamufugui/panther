@@ -214,7 +214,7 @@ func getAlertConfigPolicy(event *models.ComplianceNotification) (*alertmodel.Ale
 
 	return &alertmodel.Alert{
 			AlertID:               GenerateAlertID(event),
-			AnalysisDescription:   &policy.Description,
+			AnalysisDescription:   policy.Description,
 			AnalysisID:            event.PolicyID,
 			AnalysisName:          &policy.DisplayName,
 			ResourceTypes:         policy.ResourceTypes,
@@ -222,7 +222,7 @@ func getAlertConfigPolicy(event *models.ComplianceNotification) (*alertmodel.Ale
 			AnalysisIntegrationID: event.PolicyIntegrationID,
 			CreatedAt:             event.Timestamp,
 			OutputIds:             event.OutputIds,
-			Runbook:               &policy.Runbook,
+			Runbook:               policy.Runbook,
 			Severity:              string(policy.Severity),
 			Tags:                  policy.Tags,
 			Type:                  alertmodel.PolicyType,
