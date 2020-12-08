@@ -485,7 +485,7 @@ exports[`AlertCard should match snapshot 1`] = `
               aria-label="Creation time for f67b8f04-5fac-404a-93a4-38db29f258ba"
               class="panther-3"
             >
-              2020-08-08 15:15 GMT+3
+              2020-08-08 12:15 GMT
             </span>
           </header>
           <span

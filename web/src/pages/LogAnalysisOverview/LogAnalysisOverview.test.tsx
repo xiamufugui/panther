@@ -41,7 +41,7 @@ const recentAlerts = [
   buildAlertSummary({
     alertId: '1',
     detection: buildAlertSummaryRuleInfo({
-      ruleId: '123',
+      ruleId: 'rule_1',
     }),
   }),
 ];
@@ -50,14 +50,14 @@ const highSeverityAlerts = [
   buildAlertSummary({
     alertId: '2',
     detection: buildAlertSummaryRuleInfo({
-      ruleId: '123',
+      ruleId: 'rule_2',
     }),
     severity: SeverityEnum.Critical,
   }),
   buildAlertSummary({
     alertId: '3',
     detection: buildAlertSummaryRuleInfo({
-      ruleId: '123',
+      ruleId: 'rule_3',
     }),
     severity: SeverityEnum.High,
   }),
