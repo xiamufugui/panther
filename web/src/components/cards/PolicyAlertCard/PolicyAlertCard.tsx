@@ -51,10 +51,10 @@ const PolicyAlertCard: React.FC<PolicyAlertCardProps> = ({
   });
 
   const detectionData = alert.detection as AlertSummaryPolicyInfo;
-  const sourceName =
-    complianceSourceData?.listComplianceIntegrations?.find(
-      source => source.integrationId === detectionData.policyIntegrationId
-    )?.integrationLabel ?? null;
+  const source = complianceSourceData?.listComplianceIntegrations?.find(
+    s => s.integrationId === detectionData.policyIntegrationId
+  );
+
   return (
     <GenericItemCard>
       <Flex align="start" pr={2}>
@@ -100,7 +100,7 @@ const PolicyAlertCard: React.FC<PolicyAlertCardProps> = ({
               }
             />
           )}
-          <GenericItemCard.Value label="Source" value={sourceName} />
+          <GenericItemCard.Value label="Source" value={source ? source.integrationLabel : null} />
           <GenericItemCard.Value
             label="Destinations"
             value={
