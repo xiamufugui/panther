@@ -360,8 +360,8 @@ func filterByTitleContains(input *models.ListAlertsInput, alert *AlertItem) *Ale
 	}
 
 	// Common across all alert types, we see if it matches an alert title
-	if alert.Title != nil && strings.Contains(
-		strings.ToLower(*alert.Title),
+	if alert.Title != "" && strings.Contains(
+		strings.ToLower(alert.Title),
 		strings.ToLower(*input.NameContains),
 	) {
 

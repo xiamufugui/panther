@@ -48,7 +48,7 @@ var (
 			EventCount:        100,
 			RuleVersion:       "ruleVersion",
 			RuleDisplayName:   aws.String("ruleDisplayName"),
-			Title:             aws.String("title"),
+			Title:             "title",
 			LastUpdatedBy:     "userId",
 			LastUpdatedByTime: timeInTest,
 			DeliveryResponses: []*models.DeliveryResponse{},

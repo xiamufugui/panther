@@ -84,7 +84,7 @@ func (h *Handler) storeNewAlert(alert models.Alert) error {
 		ID:            *alert.AlertID,
 		TimePartition: defaultTimePartition,
 		Severity:      alert.Severity,
-		Title:         aws.StringValue(alert.Title),
+		Title:         alert.Title,
 		AlertPolicy: alertApiModels.AlertPolicy{
 			PolicyID:            alert.AnalysisID,
 			PolicyDisplayName:   aws.StringValue(alert.AnalysisName),

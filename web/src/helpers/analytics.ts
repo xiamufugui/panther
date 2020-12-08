@@ -18,7 +18,8 @@
 
 import { DestinationTypeEnum } from 'Generated/schema';
 import storage from 'Helpers/storage';
-import { ANALYTICS_CONSENT_STORAGE_KEY, STABLE_PANTHER_VERSION } from 'Source/constants';
+import { pantherConfig } from 'Source/config';
+import { ANALYTICS_CONSENT_STORAGE_KEY } from 'Source/constants';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 import { logError } from 'Helpers/errors';
 
@@ -36,7 +37,7 @@ const evaluateTracking = (...args) => {
       try {
         mx.init(mixpanelPublicToken);
         const [eventName, meta] = args;
-        mx.track(eventName, { ...meta, version: STABLE_PANTHER_VERSION });
+        mx.track(eventName, { ...meta, version: pantherConfig.PANTHER_VERSION });
       } catch (e) {
         // Reporting to sentry
         logError(e);
@@ -52,6 +53,7 @@ export enum PageViewEnum {
   ListAlerts = 'List Alerts',
   ListLogSources = 'List Log Sources',
   Home = 'Home',
+  Support = 'Support',
 }
 
 interface TrackPageViewProps {
@@ -69,12 +71,15 @@ export enum EventEnum {
   SignedIn = 'Signed in successfully',
   AddedRule = 'Added Rule',
   AddedPolicy = 'Added Policy',
+  AddedComplianceSource = 'Added Compliance Source',
   AddedLogSource = 'Added Log Source',
   AddedDestination = 'Added Destination',
   PickedDestination = 'Picked Destination to create',
   PickedLogSource = 'Picked Log Source to created',
   InvitedUser = 'Invited user',
   UpdatedAlertStatus = 'Updated Alert Status',
+  UpdatedComplianceSource = 'Updated Compliance Source',
+  UpdatedLogSource = 'Updated Log Source',
   BulkUpdatedAlertStatus = 'Bulk Updated Alert Status',
   TestedDestination = 'Tested a destination',
   TestedDestinationSuccessfully = 'Successfully tested Destination',
@@ -88,6 +93,7 @@ export enum SrcEnum {
   Auth = 'auth',
   Users = 'users',
   Alerts = 'alerts',
+  ComplianceSources = 'compliance sources',
   LogSources = 'log sources',
 }
 
@@ -144,8 +150,24 @@ interface PickedLogSourceEvent {
   ctx: LogSources;
 }
 
+interface AddedComplianceSourceEvent {
+  event: EventEnum.AddedComplianceSource;
+  src: SrcEnum.ComplianceSources;
+}
+
+interface UpdatedComplianceSourceEvent {
+  event: EventEnum.UpdatedComplianceSource;
+  src: SrcEnum.ComplianceSources;
+}
+
 interface AddedLogSourceEvent {
   event: EventEnum.AddedLogSource;
+  src: SrcEnum.LogSources;
+  ctx: LogSources;
+}
+
+interface UpdatedLogSourceEvent {
+  event: EventEnum.UpdatedLogSource;
   src: SrcEnum.LogSources;
   ctx: LogSources;
 }
@@ -175,6 +197,9 @@ type TrackEvent =
   | AddedRuleEvent
   | AddedPolicyEvent
   | AddedLogSourceEvent
+  | AddedComplianceSourceEvent
+  | UpdatedComplianceSourceEvent
+  | UpdatedLogSourceEvent
   | PickedDestinationEvent
   | PickedLogSourceEvent
   | InvitedUserEvent
@@ -196,6 +221,10 @@ export const trackEvent = (payload: TrackEvent) => {
 export enum TrackErrorEnum {
   FailedToAddDestination = 'Failed to create Destination',
   FailedToAddRule = 'Failed to create Rule',
+  FailedToAddLogSource = 'Failed to add log source',
+  FailedToUpdateLogSource = 'Failed to update log source',
+  FailedToAddComplianceSource = 'Failed to add compliance source',
+  FailedToUpdateComplianceSource = 'Failed to update compliance source',
   FailedMfa = 'Failed MFA',
   FailedDestinationTest = 'Failed to sent Destination test',
 }
@@ -214,6 +243,28 @@ interface TestDestinationError extends DestinationError {
   event: TrackErrorEnum.FailedDestinationTest;
 }
 
+interface AddLogSourceError {
+  event: TrackErrorEnum.FailedToAddLogSource;
+  src: SrcEnum.LogSources;
+  ctx: LogSources;
+}
+
+interface UpdateLogSourceError {
+  event: TrackErrorEnum.FailedToUpdateLogSource;
+  src: SrcEnum.LogSources;
+  ctx: LogSources;
+}
+
+interface AddComplianceSourceError {
+  event: TrackErrorEnum.FailedToAddComplianceSource;
+  src: SrcEnum.ComplianceSources;
+}
+
+interface UpdateComplianceSourceError {
+  event: TrackErrorEnum.FailedToUpdateComplianceSource;
+  src: SrcEnum.ComplianceSources;
+}
+
 interface AddRuleError {
   event: TrackErrorEnum.FailedToAddRule;
   src: SrcEnum.Rules;
@@ -223,7 +274,15 @@ interface MfaError {
   src: SrcEnum.Auth;
 }
 
-type TrackError = AddDestinationError | TestDestinationError | AddRuleError | MfaError;
+type TrackError =
+  | AddDestinationError
+  | TestDestinationError
+  | AddRuleError
+  | MfaError
+  | AddLogSourceError
+  | UpdateLogSourceError
+  | AddComplianceSourceError
+  | UpdateComplianceSourceError;
 
 export const trackError = (payload: TrackError) => {
   evaluateTracking(payload.event, {
