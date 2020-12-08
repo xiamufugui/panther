@@ -31,6 +31,7 @@ import withSEO from 'Hoc/withSEO';
 import useTrackPageView from 'Hooks/useTrackPageView';
 import { PageViewEnum } from 'Helpers/analytics';
 import RuleAlertCard from 'Components/cards/RuleAlertCard';
+import PolicyAlertCard from 'Components/cards/PolicyAlertCard';
 import { SelectAllCheckbox, withSelectContext } from 'Components/utils/SelectContext';
 import { compose } from 'Helpers/compose';
 import ListAlertsActions from 'Pages/ListAlerts/ListAlertsActions';
@@ -115,7 +116,6 @@ const ListAlerts = () => {
   }
 
   const hasError = Boolean(error);
-
   return (
     <ErrorBoundary>
       {hasError && (
@@ -144,9 +144,13 @@ const ListAlerts = () => {
           <Box position="relative">
             <Flex direction="column" spacing={2}>
               {alertItems.length ? (
-                alertItems.map(alert => (
-                  <RuleAlertCard key={alert.alertId} alert={alert} selectionEnabled />
-                ))
+                alertItems.map(alert =>
+                  alert.type === AlertTypesEnum.Policy ? (
+                    <PolicyAlertCard key={alert.alertId} alert={alert} selectionEnabled />
+                  ) : (
+                    <RuleAlertCard key={alert.alertId} alert={alert} selectionEnabled />
+                  )
+                )
               ) : (
                 <Box my={8}>
                   <NoResultsFound />
