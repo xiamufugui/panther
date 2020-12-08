@@ -18,7 +18,7 @@
 
 import GenericItemCard from 'Components/GenericItemCard';
 import { Flex, Icon, Link, Text, Box } from 'pouncejs';
-import { AlertDetailsRuleInfo, AlertTypesEnum } from 'Generated/schema';
+import {AlertSummaryRuleInfo, AlertTypesEnum } from 'Generated/schema';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import React from 'react';
@@ -48,7 +48,7 @@ const RuleAlertCard: React.FC<RuleAlertCardProps> = ({
     alert,
   });
 
-  const detectionData = alert.detection as AlertDetailsRuleInfo;
+  const detectionData = alert.detection as AlertSummaryRuleInfo;
   return (
     <GenericItemCard>
       <Flex align="start" pr={2}>
