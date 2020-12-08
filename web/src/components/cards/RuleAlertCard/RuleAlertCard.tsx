@@ -32,13 +32,13 @@ import useAlertDestinationsDeliverySuccess from 'Hooks/useAlertDestinationsDeliv
 import { SelectCheckbox } from 'Components/utils/SelectContext';
 import UpdateAlertDropdown from '../../dropdowns/UpdateAlertDropdown';
 
-interface AlertCardProps {
+interface RuleAlertCardProps {
   alert: AlertSummaryFull;
   hideRuleButton?: boolean;
   selectionEnabled?: boolean;
 }
 
-const AlertCard: React.FC<AlertCardProps> = ({
+const RuleAlertCard: React.FC<RuleAlertCardProps> = ({
   alert,
   hideRuleButton = false,
   selectionEnabled = false,
@@ -144,4 +144,4 @@ const AlertCard: React.FC<AlertCardProps> = ({
   );
 };
 
-export default React.memo(AlertCard);
+export default React.memo(RuleAlertCard);

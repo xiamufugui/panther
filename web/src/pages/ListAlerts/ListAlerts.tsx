@@ -30,7 +30,7 @@ import isEmpty from 'lodash/isEmpty';
 import withSEO from 'Hoc/withSEO';
 import useTrackPageView from 'Hooks/useTrackPageView';
 import { PageViewEnum } from 'Helpers/analytics';
-import AlertCard from 'Components/cards/AlertCard/AlertCard';
+import RuleAlertCard from 'Components/cards/RuleAlertCard';
 import { SelectAllCheckbox, withSelectContext } from 'Components/utils/SelectContext';
 import { compose } from 'Helpers/compose';
 import ListAlertsActions from 'Pages/ListAlerts/ListAlertsActions';
@@ -145,7 +145,7 @@ const ListAlerts = () => {
             <Flex direction="column" spacing={2}>
               {alertItems.length ? (
                 alertItems.map(alert => (
-                  <AlertCard key={alert.alertId} alert={alert} selectionEnabled />
+                  <RuleAlertCard key={alert.alertId} alert={alert} selectionEnabled />
                 ))
               ) : (
                 <Box my={8}>
