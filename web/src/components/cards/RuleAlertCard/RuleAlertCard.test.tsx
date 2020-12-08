@@ -34,7 +34,7 @@ import urls from 'Source/urls';
 import { mockListDestinations } from 'Source/graphql/queries';
 import RuleAlertCard from './index';
 
-describe('RuleRuleAlertCard', () => {
+describe('RuleAlertCard', () => {
   it('should match snapshot', async () => {
     const alert = buildAlertSummary();
 
