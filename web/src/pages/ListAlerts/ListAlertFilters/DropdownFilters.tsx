@@ -17,18 +17,18 @@
  */
 
 import React from 'react';
-import { Form, Formik, FastField, Field } from 'formik';
+import { FastField, Field, Form, Formik } from 'formik';
 import {
   Box,
-  SimpleGrid,
   Button,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  Flex,
   Card,
+  Flex,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  SimpleGrid,
 } from 'pouncejs';
-import { ListAlertsInput, SeverityEnum, AlertStatusesEnum } from 'Generated/schema';
+import { AlertStatusesEnum, AlertTypesEnum, ListAlertsInput, SeverityEnum } from 'Generated/schema';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import { capitalize } from 'Helpers/utils';
 import pick from 'lodash/pick';
@@ -40,7 +40,7 @@ import { RESOURCE_TYPES } from 'Source/constants';
 
 export type ListAlertsDropdownFiltersValues = Pick<
   ListAlertsInput,
-  'resourceTypes' | 'logTypes' | 'severity' | 'status' | 'eventCountMax' | 'eventCountMin'
+  'types' | 'resourceTypes' | 'logTypes' | 'severity' | 'status' | 'eventCountMax' | 'eventCountMin'
 >;
 
 const filterItemToString = (item: SeverityEnum | AlertStatusesEnum) =>
@@ -48,7 +48,9 @@ const filterItemToString = (item: SeverityEnum | AlertStatusesEnum) =>
 
 const statusOptions = Object.values(AlertStatusesEnum);
 const severityOptions = Object.values(SeverityEnum);
+const alertTypeOptions = Object.values(AlertTypesEnum);
 const filterKeys: (keyof Partial<ListAlertsInput>)[] = [
+  'types',
   'resourceTypes',
   'logTypes',
   'severity',
@@ -58,6 +60,7 @@ const filterKeys: (keyof Partial<ListAlertsInput>)[] = [
 ];
 
 const defaultValues: ListAlertsDropdownFiltersValues = {
+  types: [],
   resourceTypes: [],
   logTypes: [],
   severity: [],
@@ -111,6 +114,13 @@ const DropdownFilters: React.FC = () => {
                 {({ setValues }) => (
                   <Form>
                     <Flex direction="column" spacing={4}>
+                      <Field
+                        as={FormikMultiCombobox}
+                        label="Alert Types"
+                        name="types"
+                        placeholder="Select alert types"
+                        items={alertTypeOptions}
+                      />
                       <FastField
                         name="severity"
                         as={FormikMultiCombobox}

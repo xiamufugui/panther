@@ -92,7 +92,6 @@ describe('ListAlerts', () => {
         variables: {
           input: {
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
-            types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
           },
         },
         data: {
@@ -197,7 +196,6 @@ describe('ListAlerts', () => {
         variables: {
           input: {
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
-            types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
           },
         },
         data: {
@@ -275,6 +273,7 @@ describe('ListAlerts', () => {
       `&createdAtBefore=2020-12-17T19%3A33%3A55Z` +
       `&eventCountMax=5` +
       `&eventCountMin=2` +
+      `&types[]=${AlertTypesEnum.Rule}&types[]=${AlertTypesEnum.RuleError}` +
       `&logTypes[]=${mockedLogType}` +
       `&resourceTypes[]=${mockedResourceType}` +
       `&nameContains=test` +
@@ -294,7 +293,7 @@ describe('ListAlerts', () => {
       }),
       mockListAlerts({
         variables: {
-          input: { ...parsedInitialParams, types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError] },
+          input: parsedInitialParams,
         },
         data: {
           alerts: buildListAlertsResponse({
@@ -322,8 +321,12 @@ describe('ListAlerts', () => {
     expect(getAllByLabelText('Sort By')[0]).toHaveValue('Most Recent');
 
     // Verify filter value inside the Dropdown
-    fireClickAndMouseEvents(getByText('Filters (6)'));
+    fireClickAndMouseEvents(getByText('Filters (7)'));
     const withinDropdown = within(await findByTestId('dropdown-alert-listing-filters'));
+    expect(withinDropdown.getByText(AlertTypesEnum.Rule)).toBeInTheDocument();
+    expect(withinDropdown.getByText(AlertTypesEnum.RuleError)).toBeInTheDocument();
+    expect(withinDropdown.queryByText(AlertTypesEnum.Policy)).not.toBeInTheDocument();
+    expect(withinDropdown.getByText(mockedLogType)).toBeInTheDocument();
     expect(withinDropdown.getByText(mockedLogType)).toBeInTheDocument();
     expect(withinDropdown.getByText(mockedResourceType)).toBeInTheDocument();
     expect(withinDropdown.getByText('Open')).toBeInTheDocument();
@@ -356,7 +359,7 @@ describe('ListAlerts', () => {
       }),
       mockListAlerts({
         variables: {
-          input: { ...parsedInitialParams, types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError] },
+          input: parsedInitialParams,
         },
         data: {
           alerts: buildListAlertsResponse({
@@ -385,7 +388,7 @@ describe('ListAlerts', () => {
       }),
       mockListAlerts({
         variables: {
-          input: { ...parsedInitialParams, types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError] },
+          input: parsedInitialParams,
         },
         data: {
           alerts: buildListAlertsResponse({
@@ -423,10 +426,17 @@ describe('ListAlerts', () => {
     fireEvent.click(withinDropdown.getByText('Medium'));
     fireEvent.change(withinDropdown.getByLabelText('Min Events'), { target: { value: 2 } });
     fireEvent.change(withinDropdown.getByLabelText('Max Events'), { target: { value: 5 } });
-    fireEvent.change(withinDropdown.getAllByLabelText('Log Types')[0], { target: { value: mockedLogType }}); // prettier-ignore
+    fireEvent.change(withinDropdown.getAllByLabelText('Log Types')[0], {
+      target: { value: mockedLogType },
+    });
     fireClickAndMouseEvents(await withinDropdown.findByText(mockedLogType));
-    fireEvent.change(withinDropdown.getAllByLabelText('Resource Types')[0], { target: { value: mockedResourceType }}); // prettier-ignore
+    fireEvent.change(withinDropdown.getAllByLabelText('Resource Types')[0], {
+      target: { value: mockedResourceType },
+    });
     fireClickAndMouseEvents(await withinDropdown.findByText(mockedResourceType));
+    fireClickAndMouseEvents(withinDropdown.getAllByLabelText('Alert Types')[0]);
+    fireEvent.click(withinDropdown.getByText(AlertTypesEnum.Rule));
+    fireEvent.click(withinDropdown.getByText(AlertTypesEnum.RuleError));
 
     // Expect nothing to have changed until "Apply is pressed"
     expect(parseParams(history.location.search)).toEqual(parseParams(initialParams));
@@ -443,6 +453,7 @@ describe('ListAlerts', () => {
       `&eventCountMax=5` +
       `&eventCountMin=2` +
       `&logTypes[]=${mockedLogType}` +
+      `&types[]=${AlertTypesEnum.Rule}&types[]=${AlertTypesEnum.RuleError}` +
       `&resourceTypes[]=${mockedResourceType}` +
       `&severity[]=${SeverityEnum.Info}&severity[]=${SeverityEnum.Medium}` +
       `&status[]=${AlertStatusesEnum.Open}&status[]=${AlertStatusesEnum.Triaged}`;
@@ -458,7 +469,7 @@ describe('ListAlerts', () => {
     expect(getAllByLabelText('Sort By')[0]).toHaveValue('Most Recent');
 
     // Open the Dropdown (again)
-    fireClickAndMouseEvents(getByText('Filters (6)'));
+    fireClickAndMouseEvents(getByText('Filters (7)'));
     withinDropdown = within(await findByTestId('dropdown-alert-listing-filters'));
 
     // Clear all the filter values
@@ -467,6 +478,9 @@ describe('ListAlerts', () => {
     // Verify that they are cleared
     expect(withinDropdown.queryByText('Open')).not.toBeInTheDocument();
     expect(withinDropdown.queryByText('Triaged')).not.toBeInTheDocument();
+    expect(withinDropdown.queryByText(AlertTypesEnum.Rule)).not.toBeInTheDocument();
+    expect(withinDropdown.queryByText(AlertTypesEnum.RuleError)).not.toBeInTheDocument();
+    expect(withinDropdown.queryByText(AlertTypesEnum.Policy)).not.toBeInTheDocument();
     expect(withinDropdown.queryByText('Info')).not.toBeInTheDocument();
     expect(withinDropdown.queryByText('Medium')).not.toBeInTheDocument();
     expect(withinDropdown.getByLabelText('Min Events')).toHaveValue(null);
@@ -501,6 +515,7 @@ describe('ListAlerts', () => {
       `&status[]=${AlertStatusesEnum.Open}&status[]=${AlertStatusesEnum.Triaged}` +
       `&logTypes[]=${mockedLogType}` +
       `&resourceTypes[]=${mockedResourceType}` +
+      `&types[]=${AlertTypesEnum.Rule}` +
       `&eventCountMin=2` +
       `&eventCountMax=5` +
       `&pageSize=${DEFAULT_LARGE_PAGE_SIZE}`;
@@ -516,7 +531,7 @@ describe('ListAlerts', () => {
       }),
       mockListAlerts({
         variables: {
-          input: { ...parsedInitialParams, types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError] },
+          input: parsedInitialParams,
         },
         data: {
           alerts: buildListAlertsResponse({
@@ -528,7 +543,6 @@ describe('ListAlerts', () => {
         variables: {
           input: {
             ...parsedInitialParams,
-            types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
             nameContains: 'test',
           },
         },
@@ -542,7 +556,6 @@ describe('ListAlerts', () => {
         variables: {
           input: {
             ...parsedInitialParams,
-            types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
             nameContains: 'test',
             sortBy: ListAlertsSortFieldsEnum.CreatedAt,
             sortDir: SortDirEnum.Descending,
@@ -558,7 +571,6 @@ describe('ListAlerts', () => {
         variables: {
           input: {
             ...parsedInitialParams,
-            types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
             nameContains: 'test',
             sortBy: ListAlertsSortFieldsEnum.CreatedAt,
             sortDir: SortDirEnum.Descending,
@@ -574,7 +586,6 @@ describe('ListAlerts', () => {
         variables: {
           input: {
             ...parsedInitialParams,
-            types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
             nameContains: 'test',
             sortBy: ListAlertsSortFieldsEnum.CreatedAt,
             sortDir: SortDirEnum.Descending,
@@ -664,7 +675,7 @@ describe('ListAlerts', () => {
     await findByText('Date Filtered Alert');
 
     // Verify that the filters inside the Dropdown are left intact
-    fireClickAndMouseEvents(getByText('Filters (6)'));
+    fireClickAndMouseEvents(getByText('Filters (7)'));
     const withinDropdown = within(await findByTestId('dropdown-alert-listing-filters'));
     expect(withinDropdown.getByText(mockedLogType)).toBeInTheDocument();
     expect(withinDropdown.getByText(mockedResourceType)).toBeInTheDocument();
@@ -672,6 +683,7 @@ describe('ListAlerts', () => {
     expect(withinDropdown.getByText('Triaged')).toBeInTheDocument();
     expect(withinDropdown.getByText('Info')).toBeInTheDocument();
     expect(withinDropdown.getByText('Medium')).toBeInTheDocument();
+    expect(withinDropdown.getByText(AlertTypesEnum.Rule)).toBeInTheDocument();
     expect(withinDropdown.getByLabelText('Min Events')).toHaveValue(2);
     expect(withinDropdown.getByLabelText('Max Events')).toHaveValue(5);
   });

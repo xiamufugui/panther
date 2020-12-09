@@ -49,7 +49,6 @@ const ListAlerts = () => {
     variables: {
       input: {
         ...requestParams,
-        types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
         pageSize: DEFAULT_LARGE_PAGE_SIZE,
       },
     },
@@ -69,8 +68,6 @@ const ListAlerts = () => {
         variables: {
           input: {
             ...requestParams,
-            // FIXME: remove this override when we have a multi-select
-            types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
             exclusiveStartKey: lastEvaluatedKey,
           },
