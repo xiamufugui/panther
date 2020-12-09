@@ -36,10 +36,11 @@ import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import TextButton from 'Components/buttons/TextButton';
 import FormikNumberInput from 'Components/fields/NumberInput';
 import { useListAvailableLogTypes } from 'Source/graphql/queries';
+import { RESOURCE_TYPES } from 'Source/constants';
 
 export type ListAlertsDropdownFiltersValues = Pick<
   ListAlertsInput,
-  'logTypes' | 'severity' | 'status' | 'eventCountMax' | 'eventCountMin'
+  'resourceTypes' | 'logTypes' | 'severity' | 'status' | 'eventCountMax' | 'eventCountMin'
 >;
 
 const filterItemToString = (item: SeverityEnum | AlertStatusesEnum) =>
@@ -48,6 +49,7 @@ const filterItemToString = (item: SeverityEnum | AlertStatusesEnum) =>
 const statusOptions = Object.values(AlertStatusesEnum);
 const severityOptions = Object.values(SeverityEnum);
 const filterKeys: (keyof Partial<ListAlertsInput>)[] = [
+  'resourceTypes',
   'logTypes',
   'severity',
   'status',
@@ -56,6 +58,7 @@ const filterKeys: (keyof Partial<ListAlertsInput>)[] = [
 ];
 
 const defaultValues: ListAlertsDropdownFiltersValues = {
+  resourceTypes: [],
   logTypes: [],
   severity: [],
   status: [],
@@ -152,16 +155,24 @@ const DropdownFilters: React.FC = () => {
                           placeholder="Maximum number of events"
                         />
                       </SimpleGrid>
-                      <Flex direction="column" justify="center" align="center" spacing={4}>
-                        <Box>
-                          <Button type="submit" onClick={closePopover}>
-                            Apply Filters
-                          </Button>
-                        </Box>
-                        <TextButton role="button" onClick={() => setValues(defaultValues)}>
-                          Clear Filters
-                        </TextButton>
-                      </Flex>
+                      <Field
+                        as={FormikMultiCombobox}
+                        label="Resource Types"
+                        name="resourceTypes"
+                        placeholder="Select resource types"
+                        items={RESOURCE_TYPES}
+                        searchable
+                      />
+                    </Flex>
+                    <Flex direction="column" justify="center" align="center" mt={8} spacing={4}>
+                      <Box>
+                        <Button type="submit" onClick={closePopover}>
+                          Apply Filters
+                        </Button>
+                      </Box>
+                      <TextButton role="button" onClick={() => setValues(defaultValues)}>
+                        Clear Filters
+                      </TextButton>
                     </Flex>
                   </Form>
                 )}

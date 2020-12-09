@@ -268,12 +268,15 @@ describe('ListAlerts', () => {
 
   it('can correctly boot from URL params', async () => {
     const mockedLogType = 'AWS.ALB';
+    const mockedResourceType = 'AWS.EC2.VPC';
+
     const initialParams =
       `?createdAtAfter=2020-11-05T19%3A33%3A55Z` +
       `&createdAtBefore=2020-12-17T19%3A33%3A55Z` +
       `&eventCountMax=5` +
       `&eventCountMin=2` +
       `&logTypes[]=${mockedLogType}` +
+      `&resourceTypes[]=${mockedResourceType}` +
       `&nameContains=test` +
       `&severity[]=${SeverityEnum.Info}&severity[]=${SeverityEnum.Medium}` +
       `&sortBy=${ListAlertsSortFieldsEnum.CreatedAt}&sortDir=${SortDirEnum.Descending}` +
@@ -319,9 +322,10 @@ describe('ListAlerts', () => {
     expect(getAllByLabelText('Sort By')[0]).toHaveValue('Most Recent');
 
     // Verify filter value inside the Dropdown
-    fireClickAndMouseEvents(getByText('Filters (5)'));
+    fireClickAndMouseEvents(getByText('Filters (6)'));
     const withinDropdown = within(await findByTestId('dropdown-alert-listing-filters'));
     expect(withinDropdown.getByText(mockedLogType)).toBeInTheDocument();
+    expect(withinDropdown.getByText(mockedResourceType)).toBeInTheDocument();
     expect(withinDropdown.getByText('Open')).toBeInTheDocument();
     expect(withinDropdown.getByText('Triaged')).toBeInTheDocument();
     expect(withinDropdown.getByText('Info')).toBeInTheDocument();
@@ -332,6 +336,7 @@ describe('ListAlerts', () => {
 
   it('correctly applies & resets dropdown filters', async () => {
     const mockedLogType = 'AWS.ALB';
+    const mockedResourceType = 'AWS.EC2.VPC';
     const initialParams =
       `?createdAtAfter=2020-11-05T19%3A33%3A55Z` +
       `&createdAtBefore=2020-12-17T19%3A33%3A55Z` +
@@ -366,6 +371,7 @@ describe('ListAlerts', () => {
             eventCountMin: 2,
             eventCountMax: 5,
             logTypes: [mockedLogType],
+            resourceTypes: [mockedResourceType],
             severity: [SeverityEnum.Info, SeverityEnum.Medium],
             status: [AlertStatusesEnum.Open, AlertStatusesEnum.Triaged],
             types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
@@ -419,6 +425,8 @@ describe('ListAlerts', () => {
     fireEvent.change(withinDropdown.getByLabelText('Max Events'), { target: { value: 5 } });
     fireEvent.change(withinDropdown.getAllByLabelText('Log Types')[0], { target: { value: mockedLogType }}); // prettier-ignore
     fireClickAndMouseEvents(await withinDropdown.findByText(mockedLogType));
+    fireEvent.change(withinDropdown.getAllByLabelText('Resource Types')[0], { target: { value: mockedResourceType }}); // prettier-ignore
+    fireClickAndMouseEvents(await withinDropdown.findByText(mockedResourceType));
 
     // Expect nothing to have changed until "Apply is pressed"
     expect(parseParams(history.location.search)).toEqual(parseParams(initialParams));
@@ -435,6 +443,7 @@ describe('ListAlerts', () => {
       `&eventCountMax=5` +
       `&eventCountMin=2` +
       `&logTypes[]=${mockedLogType}` +
+      `&resourceTypes[]=${mockedResourceType}` +
       `&severity[]=${SeverityEnum.Info}&severity[]=${SeverityEnum.Medium}` +
       `&status[]=${AlertStatusesEnum.Open}&status[]=${AlertStatusesEnum.Triaged}`;
     expect(parseParams(history.location.search)).toEqual(parseParams(updatedParams));
@@ -449,7 +458,7 @@ describe('ListAlerts', () => {
     expect(getAllByLabelText('Sort By')[0]).toHaveValue('Most Recent');
 
     // Open the Dropdown (again)
-    fireClickAndMouseEvents(getByText('Filters (5)'));
+    fireClickAndMouseEvents(getByText('Filters (6)'));
     withinDropdown = within(await findByTestId('dropdown-alert-listing-filters'));
 
     // Clear all the filter values
@@ -463,6 +472,7 @@ describe('ListAlerts', () => {
     expect(withinDropdown.getByLabelText('Min Events')).toHaveValue(null);
     expect(withinDropdown.getByLabelText('Max Events')).toHaveValue(null);
     expect(withinDropdown.queryByText(mockedLogType)).not.toBeInTheDocument();
+    expect(withinDropdown.queryByText(mockedResourceType)).not.toBeInTheDocument();
 
     // Expect the URL to not have changed until "Apply Filters" is clicked
     expect(parseParams(history.location.search)).toEqual(parseParams(updatedParams));
@@ -485,9 +495,12 @@ describe('ListAlerts', () => {
 
   it('correctly updates filters & sorts on every change outside of the dropdown', async () => {
     const mockedLogType = 'AWS.ALB';
+    const mockedResourceType = 'AWS.EC2.VPC';
     const initialParams =
       `?severity[]=${SeverityEnum.Info}&severity[]=${SeverityEnum.Medium}` +
       `&status[]=${AlertStatusesEnum.Open}&status[]=${AlertStatusesEnum.Triaged}` +
+      `&logTypes[]=${mockedLogType}` +
+      `&resourceTypes[]=${mockedResourceType}` +
       `&eventCountMin=2` +
       `&eventCountMax=5` +
       `&pageSize=${DEFAULT_LARGE_PAGE_SIZE}`;
@@ -651,8 +664,10 @@ describe('ListAlerts', () => {
     await findByText('Date Filtered Alert');
 
     // Verify that the filters inside the Dropdown are left intact
-    fireClickAndMouseEvents(getByText('Filters (4)'));
+    fireClickAndMouseEvents(getByText('Filters (6)'));
     const withinDropdown = within(await findByTestId('dropdown-alert-listing-filters'));
+    expect(withinDropdown.getByText(mockedLogType)).toBeInTheDocument();
+    expect(withinDropdown.getByText(mockedResourceType)).toBeInTheDocument();
     expect(withinDropdown.getByText('Open')).toBeInTheDocument();
     expect(withinDropdown.getByText('Triaged')).toBeInTheDocument();
     expect(withinDropdown.getByText('Info')).toBeInTheDocument();
