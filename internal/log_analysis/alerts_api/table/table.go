@@ -95,7 +95,7 @@ type AlertItem struct {
 	Description         string                     `json:"description"`
 	Reference           string                     `json:"reference"`
 	Runbook             string                     `json:"runbook"`
-	DestinationOverride []string                   `json:"destinationOverride,omitempty" validate:"dive,uuid4"`
+	Destinations        []string                   `json:"destinations,omitempty" validate:"dive,uuid4"`
 	DedupString         string                     `json:"dedup"`
 	FirstEventMatchTime time.Time                  `json:"firstEventMatchTime"`
 	CreationTime        time.Time                  `json:"creationTime"`
@@ -111,10 +111,10 @@ type AlertItem struct {
 	// LastUpdatedByTime - stores the timestamp of the last person who modified the Alert
 	LastUpdatedByTime time.Time `json:"lastUpdatedByTime"`
 	// Policy related fields
-	PolicyID            string   `json:"policyId"`
-	PolicyDisplayName   string   `json:"policyDisplayName"`
-	PolicyIntegrationID string   `json:"policyIntegrationId"`
-	PolicyVersion       string   `json:"policyVersion"`
-	ResourceTypes       []string `json:"resourceTypes"`
-	ResourceID          string   `json:"resourceId"`
+	PolicyID          string   `json:"policyId"`
+	PolicyDisplayName string   `json:"policyDisplayName"`
+	PolicySourceID    string   `json:"policySourceId"`
+	PolicyVersion     string   `json:"policyVersion"`
+	ResourceTypes     []string `json:"resourceTypes"`
+	ResourceID        string   `json:"resourceId"`
 }

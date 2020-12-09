@@ -146,8 +146,8 @@ type Alert struct {
 	// ResourceID is the ID of the failing resource in the policy.
 	ResourceID string `json:"resourceId,omitempty"`
 
-	// AnalysisIntegrationID is the ID of the source integration for the rule/policy that failed.
-	AnalysisIntegrationID string `json:"analysisIntegrationId,omitempty"`
+	// AnalysisSourceID is the ID of the source integration for the rule/policy that failed.
+	AnalysisSourceID string `json:"analysisSourceId,omitempty"`
 
 	// AnalysisDescription is the description of the rule/policy that triggered the alert.
 	AnalysisDescription string `json:"analysisDescription,omitempty"`
@@ -161,8 +161,8 @@ type Alert struct {
 	// Reference is the user-provided triage information
 	Reference string `json:"reference,omitempty"`
 
-	// DestinationOverride is the custom user-provided destination override
-	DestinationOverride []string `json:"destinationOverride,omitempty" validate:"dive,uuid4"`
+	// Destinations is the custom user-provided destination override
+	Destinations []string `json:"destinations,omitempty" validate:"dive,uuid4"`
 
 	// Runbook is the user-provided triage information.
 	Runbook string `json:"runbook,omitempty"`

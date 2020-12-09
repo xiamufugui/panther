@@ -52,7 +52,7 @@ const PolicyAlertCard: React.FC<PolicyAlertCardProps> = ({
 
   const detectionData = alert.detection as AlertSummaryPolicyInfo;
   const source = complianceSourceData?.listComplianceIntegrations?.find(
-    s => s.integrationId === detectionData.policyIntegrationId
+    s => s.integrationId === detectionData.policySourceId
   );
 
   return (

@@ -81,7 +81,7 @@ type ListAlertsInput struct {
 	ExclusiveStartKey *string `json:"exclusiveStartKey"`
 
 	// Filtering
-	Type            []string   `json:"type" validate:"omitempty,dive,oneof=RULE RULE_ERROR POLICY"`
+	Types           []string   `json:"types" validate:"omitempty,dive,oneof=RULE RULE_ERROR POLICY"`
 	Severity        []string   `json:"severity" validate:"omitempty,dive,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 	NameContains    *string    `json:"nameContains"`
 	Status          []string   `json:"status" validate:"omitempty,dive,oneof=OPEN TRIAGED CLOSED RESOLVED"`
@@ -181,28 +181,28 @@ type ListAlertsOutput struct {
 
 // AlertSummary contains summary information for an alert
 type AlertSummary struct {
-	AlertID             string              `json:"alertId"`
-	Type                string              `json:"type"`
-	RuleID              *string             `json:"ruleId"`
-	RuleDisplayName     *string             `json:"ruleDisplayName"`
-	RuleVersion         *string             `json:"ruleVersion"`
-	DedupString         *string             `json:"dedupString"`
-	DeliveryResponses   []*DeliveryResponse `json:"deliveryResponses"`
-	LogTypes            []string            `json:"logTypes"`
-	CreationTime        *time.Time          `json:"creationTime"`
-	UpdateTime          *time.Time          `json:"updateTime"`
-	EventsMatched       *int                `json:"eventsMatched"`
-	Severity            *string             `json:"severity"`
-	Status              string              `json:"status,omitempty"`
-	Title               *string             `json:"title"`
-	LastUpdatedBy       string              `json:"lastUpdatedBy"`
-	LastUpdatedByTime   time.Time           `json:"lastUpdatedByTime"`
-	PolicyID            string              `json:"policyId"`
-	PolicyDisplayName   string              `json:"policyDisplayName"`
-	PolicyIntegrationID string              `json:"policyIntegrationId"`
-	PolicyVersion       string              `json:"policyVersion"`
-	ResourceTypes       []string            `json:"resourceTypes"`
-	ResourceID          string              `json:"resourceId"`
+	AlertID           string              `json:"alertId"`
+	Type              string              `json:"type"`
+	RuleID            *string             `json:"ruleId"`
+	RuleDisplayName   *string             `json:"ruleDisplayName"`
+	RuleVersion       *string             `json:"ruleVersion"`
+	DedupString       *string             `json:"dedupString"`
+	DeliveryResponses []*DeliveryResponse `json:"deliveryResponses"`
+	LogTypes          []string            `json:"logTypes"`
+	CreationTime      *time.Time          `json:"creationTime"`
+	UpdateTime        *time.Time          `json:"updateTime"`
+	EventsMatched     *int                `json:"eventsMatched"`
+	Severity          *string             `json:"severity"`
+	Status            string              `json:"status,omitempty"`
+	Title             *string             `json:"title"`
+	LastUpdatedBy     string              `json:"lastUpdatedBy"`
+	LastUpdatedByTime time.Time           `json:"lastUpdatedByTime"`
+	PolicyID          string              `json:"policyId"`
+	PolicyDisplayName string              `json:"policyDisplayName"`
+	PolicySourceID    string              `json:"policySourceId"`
+	PolicyVersion     string              `json:"policyVersion"`
+	ResourceTypes     []string            `json:"resourceTypes"`
+	ResourceID        string              `json:"resourceId"`
 }
 
 // Alert contains the details of an alert

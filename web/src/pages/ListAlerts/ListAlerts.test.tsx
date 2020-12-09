@@ -92,7 +92,7 @@ describe('ListAlerts', () => {
         variables: {
           input: {
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
-            type: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
+            types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
           },
         },
         data: {
@@ -197,7 +197,7 @@ describe('ListAlerts', () => {
         variables: {
           input: {
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
-            type: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
+            types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
           },
         },
         data: {
@@ -276,7 +276,6 @@ describe('ListAlerts', () => {
       `&logTypes[]=${mockedlogType}` +
       `&nameContains=test` +
       `&severity[]=${SeverityEnum.Info}&severity[]=${SeverityEnum.Medium}` +
-      `&type[]=AlertTypesEnum.Rule&type[]=AlertTypesEnum.RuleError` +
       `&sortBy=${ListAlertsSortFieldsEnum.CreatedAt}&sortDir=${SortDirEnum.Descending}` +
       `&status[]=${AlertStatusesEnum.Open}&status[]=${AlertStatusesEnum.Triaged}` +
       `&pageSize=${DEFAULT_LARGE_PAGE_SIZE}`;
@@ -292,7 +291,7 @@ describe('ListAlerts', () => {
       }),
       mockListAlerts({
         variables: {
-          input: { ...parsedInitialParams, type: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError] },
+          input: { ...parsedInitialParams, types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError] },
         },
         data: {
           alerts: buildListAlertsResponse({
@@ -358,7 +357,7 @@ describe('ListAlerts', () => {
       }),
       mockListAlerts({
         variables: {
-          input: { ...parsedInitialParams, type: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError] },
+          input: { ...parsedInitialParams, types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError] },
         },
         data: {
           alerts: buildListAlertsResponse({
@@ -374,7 +373,7 @@ describe('ListAlerts', () => {
             eventCountMax: 5,
             severity: [SeverityEnum.Info, SeverityEnum.Medium],
             status: [AlertStatusesEnum.Open, AlertStatusesEnum.Triaged],
-            type: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
+            types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
           },
         },
         data: {
@@ -385,7 +384,7 @@ describe('ListAlerts', () => {
       }),
       mockListAlerts({
         variables: {
-          input: { ...parsedInitialParams, type: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError] },
+          input: { ...parsedInitialParams, types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError] },
         },
         data: {
           alerts: buildListAlertsResponse({
@@ -494,7 +493,6 @@ describe('ListAlerts', () => {
     const initialParams =
       `?severity[]=${SeverityEnum.Info}&severity[]=${SeverityEnum.Medium}` +
       `&status[]=${AlertStatusesEnum.Open}&status[]=${AlertStatusesEnum.Triaged}` +
-      `&type[]=AlertTypesEnum.Rule&type[]=AlertTypesEnum.RuleError` +
       `&eventCountMin=2` +
       `&eventCountMax=5` +
       `&pageSize=${DEFAULT_LARGE_PAGE_SIZE}`;
@@ -510,7 +508,7 @@ describe('ListAlerts', () => {
       }),
       mockListAlerts({
         variables: {
-          input: { ...parsedInitialParams, type: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError] },
+          input: { ...parsedInitialParams, types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError] },
         },
         data: {
           alerts: buildListAlertsResponse({
@@ -522,7 +520,7 @@ describe('ListAlerts', () => {
         variables: {
           input: {
             ...parsedInitialParams,
-            type: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
+            types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
             nameContains: 'test',
           },
         },
@@ -536,7 +534,7 @@ describe('ListAlerts', () => {
         variables: {
           input: {
             ...parsedInitialParams,
-            type: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
+            types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
             nameContains: 'test',
             sortBy: ListAlertsSortFieldsEnum.CreatedAt,
             sortDir: SortDirEnum.Descending,
@@ -552,7 +550,7 @@ describe('ListAlerts', () => {
         variables: {
           input: {
             ...parsedInitialParams,
-            type: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
+            types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
             nameContains: 'test',
             sortBy: ListAlertsSortFieldsEnum.CreatedAt,
             sortDir: SortDirEnum.Descending,
@@ -569,7 +567,7 @@ describe('ListAlerts', () => {
         variables: {
           input: {
             ...parsedInitialParams,
-            type: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
+            types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
             nameContains: 'test',
             sortBy: ListAlertsSortFieldsEnum.CreatedAt,
             sortDir: SortDirEnum.Descending,

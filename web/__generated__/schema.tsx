@@ -175,7 +175,7 @@ export type AlertSummaryPolicyInfo = {
   __typename?: 'AlertSummaryPolicyInfo';
   policyId?: Maybe<Scalars['ID']>;
   resourceId?: Maybe<Scalars['String']>;
-  policyIntegrationId: Scalars['String'];
+  policySourceId: Scalars['String'];
   resourceTypes: Array<Scalars['String']>;
 };
 
@@ -503,7 +503,7 @@ export type ListAlertsInput = {
   severity?: Maybe<Array<Maybe<SeverityEnum>>>;
   logTypes?: Maybe<Array<Scalars['String']>>;
   resourceTypes?: Maybe<Array<Scalars['String']>>;
-  type?: Maybe<Array<AlertTypesEnum>>;
+  types?: Maybe<Array<AlertTypesEnum>>;
   nameContains?: Maybe<Scalars['String']>;
   createdAtBefore?: Maybe<Scalars['AWSDateTime']>;
   createdAtAfter?: Maybe<Scalars['AWSDateTime']>;
@@ -552,6 +552,9 @@ export type ListGlobalPythonModulesResponse = {
 };
 
 export type ListPoliciesInput = {
+  createdBy?: Maybe<Scalars['String']>;
+  lastModifiedBy?: Maybe<Scalars['String']>;
+  initialSet?: Maybe<Scalars['Boolean']>;
   complianceStatus?: Maybe<ComplianceStatusEnum>;
   nameContains?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
@@ -606,6 +609,9 @@ export enum ListResourcesSortFieldsEnum {
 }
 
 export type ListRulesInput = {
+  createdBy?: Maybe<Scalars['String']>;
+  lastModifiedBy?: Maybe<Scalars['String']>;
+  initialSet?: Maybe<Scalars['Boolean']>;
   nameContains?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
   logTypes?: Maybe<Array<Scalars['String']>>;
@@ -1966,7 +1972,7 @@ export type AlertSummaryPolicyInfoResolvers<
 > = {
   policyId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   resourceId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  policyIntegrationId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  policySourceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   resourceTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };

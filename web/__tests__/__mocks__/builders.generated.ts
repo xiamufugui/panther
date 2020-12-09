@@ -326,8 +326,7 @@ export const buildAlertSummaryPolicyInfo = (
     __typename: 'AlertSummaryPolicyInfo',
     policyId: 'policyId' in overrides ? overrides.policyId : 'a68babd7-7c1c-4dee-a33e-b8009e6d8017',
     resourceId: 'resourceId' in overrides ? overrides.resourceId : '5th generation',
-    policyIntegrationId:
-      'policyIntegrationId' in overrides ? overrides.policyIntegrationId : 'Ergonomic',
+    policySourceId: 'policySourceId' in overrides ? overrides.policySourceId : 'program',
     resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['brand'],
   };
 };
@@ -804,7 +803,7 @@ export const buildListAlertsInput = (overrides: Partial<ListAlertsInput> = {}): 
     severity: 'severity' in overrides ? overrides.severity : [SeverityEnum.Low],
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Awesome Wooden Mouse'],
     resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['24 hour'],
-    type: 'type' in overrides ? overrides.type : [AlertTypesEnum.Rule],
+    types: 'types' in overrides ? overrides.types : [AlertTypesEnum.Policy],
     nameContains: 'nameContains' in overrides ? overrides.nameContains : 'Island',
     createdAtBefore:
       'createdAtBefore' in overrides ? overrides.createdAtBefore : '2020-05-22T12:33:45.819Z',
@@ -876,6 +875,9 @@ export const buildListPoliciesInput = (
   overrides: Partial<ListPoliciesInput> = {}
 ): ListPoliciesInput => {
   return {
+    createdBy: 'createdBy' in overrides ? overrides.createdBy : 'Sports',
+    lastModifiedBy: 'lastModifiedBy' in overrides ? overrides.lastModifiedBy : 'incubate',
+    initialSet: 'initialSet' in overrides ? overrides.initialSet : false,
     complianceStatus:
       'complianceStatus' in overrides ? overrides.complianceStatus : ComplianceStatusEnum.Pass,
     nameContains: 'nameContains' in overrides ? overrides.nameContains : 'parse',
@@ -933,6 +935,9 @@ export const buildListResourcesResponse = (
 
 export const buildListRulesInput = (overrides: Partial<ListRulesInput> = {}): ListRulesInput => {
   return {
+    createdBy: 'createdBy' in overrides ? overrides.createdBy : 'neural',
+    lastModifiedBy: 'lastModifiedBy' in overrides ? overrides.lastModifiedBy : 'Integration',
+    initialSet: 'initialSet' in overrides ? overrides.initialSet : true,
     nameContains: 'nameContains' in overrides ? overrides.nameContains : 'Cotton',
     enabled: 'enabled' in overrides ? overrides.enabled : false,
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Drive'],
