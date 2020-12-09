@@ -22,18 +22,12 @@ import { formatDatetime, minutesToString, formatNumber } from 'Helpers/utils';
 import Linkify from 'Components/Linkify';
 import urls from 'Source/urls';
 import { RuleDetails } from 'Generated/schema';
-import useDetectionDestinations from 'Hooks/useDetectionDestinations';
-import RelatedDestinations from 'Components/RelatedDestinations';
 
 interface RuleCardDetailsProps {
   rule?: RuleDetails;
 }
 
 const RuleCardDetails: React.FC<RuleCardDetailsProps> = ({ rule }) => {
-  const {
-    detectionDestinations,
-    loading: loadingDetectionDestinations,
-  } = useDetectionDestinations({ rule });
   return (
     <Card as="article" p={6}>
       <Card variant="dark" as="section" p={4} mb={4}>
@@ -130,18 +124,6 @@ const RuleCardDetails: React.FC<RuleCardDetailsProps> = ({ rule }) => {
               </Box>
               <Box gridColumn="3/8" id="updated-at">
                 {formatDatetime(rule.lastModified)}
-              </Box>
-
-              <Box color="navyblue-100" gridColumn="1/3" aria-describedby="updated-at">
-                Destinations
-              </Box>
-              <Box gridColumn="3/8" id="updated-at">
-                <RelatedDestinations
-                  destinations={detectionDestinations}
-                  loading={loadingDetectionDestinations}
-                  limit={5}
-                  verbose
-                />
               </Box>
             </SimpleGrid>
           </Box>
