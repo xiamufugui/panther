@@ -18,6 +18,7 @@
 
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
 export type Maybe<T> = T | null;
+export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 export type RequireFields<T, K extends keyof T> = { [X in Exclude<keyof T, K>]?: T[X] } &
   { [P in K]-?: NonNullable<T[P]> };
 /** All built-in and custom scalars, mapped to their actual values */
@@ -109,12 +110,10 @@ export type Alert = {
   alertId: Scalars['ID'];
   creationTime: Scalars['AWSDateTime'];
   deliveryResponses: Array<Maybe<DeliveryResponse>>;
-  eventsMatched: Scalars['Int'];
-  ruleId?: Maybe<Scalars['ID']>;
   severity: SeverityEnum;
   status: AlertStatusesEnum;
   title: Scalars['String'];
-  logTypes: Array<Scalars['String']>;
+  type: AlertTypesEnum;
   lastUpdatedBy?: Maybe<Scalars['ID']>;
   lastUpdatedByTime?: Maybe<Scalars['AWSDateTime']>;
   updateTime: Scalars['AWSDateTime'];
@@ -125,16 +124,23 @@ export type AlertDetails = Alert & {
   alertId: Scalars['ID'];
   creationTime: Scalars['AWSDateTime'];
   deliveryResponses: Array<Maybe<DeliveryResponse>>;
-  eventsMatched: Scalars['Int'];
-  ruleId?: Maybe<Scalars['ID']>;
   severity: SeverityEnum;
   status: AlertStatusesEnum;
   title: Scalars['String'];
   type: AlertTypesEnum;
-  logTypes: Array<Scalars['String']>;
   lastUpdatedBy?: Maybe<Scalars['ID']>;
   lastUpdatedByTime?: Maybe<Scalars['AWSDateTime']>;
   updateTime: Scalars['AWSDateTime'];
+  detection: AlertDetailsDetectionInfo;
+};
+
+export type AlertDetailsDetectionInfo = AlertDetailsRuleInfo | AlertSummaryPolicyInfo;
+
+export type AlertDetailsRuleInfo = {
+  __typename?: 'AlertDetailsRuleInfo';
+  ruleId?: Maybe<Scalars['ID']>;
+  logTypes: Array<Scalars['String']>;
+  eventsMatched: Scalars['Int'];
   dedupString: Scalars['String'];
   events: Array<Scalars['AWSJSON']>;
   eventsLastEvaluatedKey?: Maybe<Scalars['String']>;
@@ -152,21 +158,37 @@ export type AlertSummary = Alert & {
   alertId: Scalars['ID'];
   creationTime: Scalars['AWSDateTime'];
   deliveryResponses: Array<Maybe<DeliveryResponse>>;
-  eventsMatched: Scalars['Int'];
-  ruleId?: Maybe<Scalars['ID']>;
   type: AlertTypesEnum;
   severity: SeverityEnum;
   status: AlertStatusesEnum;
   title: Scalars['String'];
-  logTypes: Array<Scalars['String']>;
   lastUpdatedBy?: Maybe<Scalars['ID']>;
   lastUpdatedByTime?: Maybe<Scalars['AWSDateTime']>;
   updateTime: Scalars['AWSDateTime'];
+  detection: AlertSummaryDetectionInfo;
+};
+
+export type AlertSummaryDetectionInfo = AlertSummaryRuleInfo | AlertSummaryPolicyInfo;
+
+export type AlertSummaryPolicyInfo = {
+  __typename?: 'AlertSummaryPolicyInfo';
+  policyId?: Maybe<Scalars['ID']>;
+  resourceId?: Maybe<Scalars['String']>;
+  policySourceId: Scalars['String'];
+  resourceTypes: Array<Scalars['String']>;
+};
+
+export type AlertSummaryRuleInfo = {
+  __typename?: 'AlertSummaryRuleInfo';
+  ruleId?: Maybe<Scalars['ID']>;
+  logTypes: Array<Scalars['String']>;
+  eventsMatched: Scalars['Int'];
 };
 
 export enum AlertTypesEnum {
   Rule = 'RULE',
   RuleError = 'RULE_ERROR',
+  Policy = 'POLICY',
 }
 
 export type AsanaConfig = {
@@ -478,12 +500,11 @@ export type ListAlertsInput = {
   exclusiveStartKey?: Maybe<Scalars['String']>;
   severity?: Maybe<Array<Maybe<SeverityEnum>>>;
   logTypes?: Maybe<Array<Scalars['String']>>;
-  type?: Maybe<AlertTypesEnum>;
+  resourceTypes?: Maybe<Array<Scalars['String']>>;
+  types?: Maybe<Array<AlertTypesEnum>>;
   nameContains?: Maybe<Scalars['String']>;
   createdAtBefore?: Maybe<Scalars['AWSDateTime']>;
   createdAtAfter?: Maybe<Scalars['AWSDateTime']>;
-  ruleIdContains?: Maybe<Scalars['String']>;
-  alertIdContains?: Maybe<Scalars['String']>;
   status?: Maybe<Array<Maybe<AlertStatusesEnum>>>;
   eventCountMin?: Maybe<Scalars['Int']>;
   eventCountMax?: Maybe<Scalars['Int']>;
@@ -529,6 +550,9 @@ export type ListGlobalPythonModulesResponse = {
 };
 
 export type ListPoliciesInput = {
+  createdBy?: Maybe<Scalars['String']>;
+  lastModifiedBy?: Maybe<Scalars['String']>;
+  initialSet?: Maybe<Scalars['Boolean']>;
   complianceStatus?: Maybe<ComplianceStatusEnum>;
   nameContains?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
@@ -583,6 +607,9 @@ export enum ListResourcesSortFieldsEnum {
 }
 
 export type ListRulesInput = {
+  createdBy?: Maybe<Scalars['String']>;
+  lastModifiedBy?: Maybe<Scalars['String']>;
+  initialSet?: Maybe<Scalars['Boolean']>;
   nameContains?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
   logTypes?: Maybe<Array<Scalars['String']>>;
@@ -1509,7 +1536,9 @@ export type ResolversTypes = {
   ID: ResolverTypeWrapper<Scalars['ID']>;
   Int: ResolverTypeWrapper<Scalars['Int']>;
   String: ResolverTypeWrapper<Scalars['String']>;
-  AlertDetails: ResolverTypeWrapper<AlertDetails>;
+  AlertDetails: ResolverTypeWrapper<
+    Omit<AlertDetails, 'detection'> & { detection: ResolversTypes['AlertDetailsDetectionInfo'] }
+  >;
   Alert: ResolversTypes['AlertDetails'] | ResolversTypes['AlertSummary'];
   AWSDateTime: ResolverTypeWrapper<Scalars['AWSDateTime']>;
   DeliveryResponse: ResolverTypeWrapper<DeliveryResponse>;
@@ -1517,12 +1546,23 @@ export type ResolversTypes = {
   SeverityEnum: SeverityEnum;
   AlertStatusesEnum: AlertStatusesEnum;
   AlertTypesEnum: AlertTypesEnum;
+  AlertDetailsDetectionInfo:
+    | ResolversTypes['AlertDetailsRuleInfo']
+    | ResolversTypes['AlertSummaryPolicyInfo'];
+  AlertDetailsRuleInfo: ResolverTypeWrapper<AlertDetailsRuleInfo>;
   AWSJSON: ResolverTypeWrapper<Scalars['AWSJSON']>;
+  AlertSummaryPolicyInfo: ResolverTypeWrapper<AlertSummaryPolicyInfo>;
   ListAlertsInput: ListAlertsInput;
   ListAlertsSortFieldsEnum: ListAlertsSortFieldsEnum;
   SortDirEnum: SortDirEnum;
   ListAlertsResponse: ResolverTypeWrapper<ListAlertsResponse>;
-  AlertSummary: ResolverTypeWrapper<AlertSummary>;
+  AlertSummary: ResolverTypeWrapper<
+    Omit<AlertSummary, 'detection'> & { detection: ResolversTypes['AlertSummaryDetectionInfo'] }
+  >;
+  AlertSummaryDetectionInfo:
+    | ResolversTypes['AlertSummaryRuleInfo']
+    | ResolversTypes['AlertSummaryPolicyInfo'];
+  AlertSummaryRuleInfo: ResolverTypeWrapper<AlertSummaryRuleInfo>;
   SendTestAlertInput: SendTestAlertInput;
   Destination: ResolverTypeWrapper<Destination>;
   DestinationTypeEnum: DestinationTypeEnum;
@@ -1665,7 +1705,9 @@ export type ResolversParentTypes = {
   ID: Scalars['ID'];
   Int: Scalars['Int'];
   String: Scalars['String'];
-  AlertDetails: AlertDetails;
+  AlertDetails: Omit<AlertDetails, 'detection'> & {
+    detection: ResolversParentTypes['AlertDetailsDetectionInfo'];
+  };
   Alert: ResolversParentTypes['AlertDetails'] | ResolversParentTypes['AlertSummary'];
   AWSDateTime: Scalars['AWSDateTime'];
   DeliveryResponse: DeliveryResponse;
@@ -1673,12 +1715,23 @@ export type ResolversParentTypes = {
   SeverityEnum: SeverityEnum;
   AlertStatusesEnum: AlertStatusesEnum;
   AlertTypesEnum: AlertTypesEnum;
+  AlertDetailsDetectionInfo:
+    | ResolversParentTypes['AlertDetailsRuleInfo']
+    | ResolversParentTypes['AlertSummaryPolicyInfo'];
+  AlertDetailsRuleInfo: AlertDetailsRuleInfo;
   AWSJSON: Scalars['AWSJSON'];
+  AlertSummaryPolicyInfo: AlertSummaryPolicyInfo;
   ListAlertsInput: ListAlertsInput;
   ListAlertsSortFieldsEnum: ListAlertsSortFieldsEnum;
   SortDirEnum: SortDirEnum;
   ListAlertsResponse: ListAlertsResponse;
-  AlertSummary: AlertSummary;
+  AlertSummary: Omit<AlertSummary, 'detection'> & {
+    detection: ResolversParentTypes['AlertSummaryDetectionInfo'];
+  };
+  AlertSummaryDetectionInfo:
+    | ResolversParentTypes['AlertSummaryRuleInfo']
+    | ResolversParentTypes['AlertSummaryPolicyInfo'];
+  AlertSummaryRuleInfo: AlertSummaryRuleInfo;
   SendTestAlertInput: SendTestAlertInput;
   Destination: Destination;
   DestinationTypeEnum: DestinationTypeEnum;
@@ -1837,12 +1890,10 @@ export type AlertResolvers<
     ParentType,
     ContextType
   >;
-  eventsMatched?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  ruleId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   severity?: Resolver<ResolversTypes['SeverityEnum'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['AlertStatusesEnum'], ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  logTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['AlertTypesEnum'], ParentType, ContextType>;
   lastUpdatedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   lastUpdatedByTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   updateTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
@@ -1859,16 +1910,35 @@ export type AlertDetailsResolvers<
     ParentType,
     ContextType
   >;
-  eventsMatched?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  ruleId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   severity?: Resolver<ResolversTypes['SeverityEnum'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['AlertStatusesEnum'], ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   type?: Resolver<ResolversTypes['AlertTypesEnum'], ParentType, ContextType>;
-  logTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   lastUpdatedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   lastUpdatedByTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   updateTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
+  detection?: Resolver<ResolversTypes['AlertDetailsDetectionInfo'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type AlertDetailsDetectionInfoResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['AlertDetailsDetectionInfo'] = ResolversParentTypes['AlertDetailsDetectionInfo']
+> = {
+  __resolveType: TypeResolveFn<
+    'AlertDetailsRuleInfo' | 'AlertSummaryPolicyInfo',
+    ParentType,
+    ContextType
+  >;
+};
+
+export type AlertDetailsRuleInfoResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['AlertDetailsRuleInfo'] = ResolversParentTypes['AlertDetailsRuleInfo']
+> = {
+  ruleId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  logTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  eventsMatched?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   dedupString?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   events?: Resolver<Array<ResolversTypes['AWSJSON']>, ParentType, ContextType>;
   eventsLastEvaluatedKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -1886,16 +1956,46 @@ export type AlertSummaryResolvers<
     ParentType,
     ContextType
   >;
-  eventsMatched?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  ruleId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   type?: Resolver<ResolversTypes['AlertTypesEnum'], ParentType, ContextType>;
   severity?: Resolver<ResolversTypes['SeverityEnum'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['AlertStatusesEnum'], ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  logTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   lastUpdatedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   lastUpdatedByTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   updateTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
+  detection?: Resolver<ResolversTypes['AlertSummaryDetectionInfo'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type AlertSummaryDetectionInfoResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['AlertSummaryDetectionInfo'] = ResolversParentTypes['AlertSummaryDetectionInfo']
+> = {
+  __resolveType: TypeResolveFn<
+    'AlertSummaryRuleInfo' | 'AlertSummaryPolicyInfo',
+    ParentType,
+    ContextType
+  >;
+};
+
+export type AlertSummaryPolicyInfoResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['AlertSummaryPolicyInfo'] = ResolversParentTypes['AlertSummaryPolicyInfo']
+> = {
+  policyId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  resourceId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  policySourceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  resourceTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type AlertSummaryRuleInfoResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['AlertSummaryRuleInfo'] = ResolversParentTypes['AlertSummaryRuleInfo']
+> = {
+  ruleId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  logTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  eventsMatched?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -3099,7 +3199,12 @@ export type Resolvers<ContextType = any> = {
   ActiveSuppressCount?: ActiveSuppressCountResolvers<ContextType>;
   Alert?: AlertResolvers;
   AlertDetails?: AlertDetailsResolvers<ContextType>;
+  AlertDetailsDetectionInfo?: AlertDetailsDetectionInfoResolvers;
+  AlertDetailsRuleInfo?: AlertDetailsRuleInfoResolvers<ContextType>;
   AlertSummary?: AlertSummaryResolvers<ContextType>;
+  AlertSummaryDetectionInfo?: AlertSummaryDetectionInfoResolvers;
+  AlertSummaryPolicyInfo?: AlertSummaryPolicyInfoResolvers<ContextType>;
+  AlertSummaryRuleInfo?: AlertSummaryRuleInfoResolvers<ContextType>;
   AsanaConfig?: AsanaConfigResolvers<ContextType>;
   AWSDateTime?: GraphQLScalarType;
   AWSEmail?: GraphQLScalarType;
