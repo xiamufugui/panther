@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Form, Formik, FastField } from 'formik';
+import { Form, Formik, FastField, Field } from 'formik';
 import {
   Box,
   SimpleGrid,
@@ -31,13 +31,15 @@ import {
 import { ListAlertsInput, SeverityEnum, AlertStatusesEnum } from 'Generated/schema';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import { capitalize } from 'Helpers/utils';
+import pick from 'lodash/pick';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import TextButton from 'Components/buttons/TextButton';
 import FormikNumberInput from 'Components/fields/NumberInput';
+import { useListAvailableLogTypes } from 'Source/graphql/queries';
 
 export type ListAlertsDropdownFiltersValues = Pick<
   ListAlertsInput,
-  'severity' | 'status' | 'eventCountMax' | 'eventCountMin'
+  'logTypes' | 'severity' | 'status' | 'eventCountMax' | 'eventCountMin'
 >;
 
 const filterItemToString = (item: SeverityEnum | AlertStatusesEnum) =>
@@ -45,8 +47,16 @@ const filterItemToString = (item: SeverityEnum | AlertStatusesEnum) =>
 
 const statusOptions = Object.values(AlertStatusesEnum);
 const severityOptions = Object.values(SeverityEnum);
+const filterKeys: (keyof Partial<ListAlertsInput>)[] = [
+  'logTypes',
+  'severity',
+  'status',
+  'eventCountMax',
+  'eventCountMin',
+];
 
 const defaultValues: ListAlertsDropdownFiltersValues = {
+  logTypes: [],
   severity: [],
   status: [],
   // @ts-ignore
@@ -56,18 +66,17 @@ const defaultValues: ListAlertsDropdownFiltersValues = {
 };
 
 const DropdownFilters: React.FC = () => {
+  const { data: logTypeData } = useListAvailableLogTypes();
   const { requestParams, updateRequestParams } = useRequestParamsWithoutPagination<
     ListAlertsInput
   >();
 
-  const initialDropdownFilters = React.useMemo(
-    () =>
-      ({
-        ...defaultValues,
-        ...requestParams,
-      } as ListAlertsDropdownFiltersValues),
-    [requestParams]
-  );
+  const initialFilterValues = React.useMemo(() => {
+    return {
+      ...defaultValues,
+      ...pick(requestParams, filterKeys),
+    } as ListAlertsDropdownFiltersValues;
+  }, [requestParams]);
 
   const filtersCount = Object.keys(defaultValues).filter(key => key in requestParams).length;
   return (
@@ -88,28 +97,17 @@ const DropdownFilters: React.FC = () => {
               my={14}
               p={6}
               pb={4}
-              minWidth={425}
+              minWidth={540}
               data-testid="dropdown-alert-listing-filters"
             >
               <Formik<ListAlertsDropdownFiltersValues>
                 enableReinitialize
                 onSubmit={updateRequestParams}
-                initialValues={initialDropdownFilters}
+                initialValues={initialFilterValues}
               >
                 {({ setValues }) => (
                   <Form>
-                    <Box pb={4}>
-                      <FastField
-                        name="status"
-                        as={FormikMultiCombobox}
-                        items={statusOptions}
-                        itemToString={filterItemToString}
-                        label="Status"
-                        data-testid="alert-listing-status-filtering"
-                        placeholder="Select statuses"
-                      />
-                    </Box>
-                    <Box pb={4}>
+                    <Flex direction="column" spacing={4}>
                       <FastField
                         name="severity"
                         as={FormikMultiCombobox}
@@ -119,34 +117,51 @@ const DropdownFilters: React.FC = () => {
                         data-testid="alert-listing-severity-filtering"
                         placeholder="Select severities"
                       />
-                    </Box>
-                    <SimpleGrid columns={2} gap={4} pb={4}>
-                      <FastField
-                        name="eventCountMin"
-                        as={FormikNumberInput}
-                        min={0}
-                        label="Min Events"
-                        data-testid="alert-listing-min-event"
-                        placeholder="Minimum number of events"
+                      <Field
+                        as={FormikMultiCombobox}
+                        label="Log Types"
+                        name="logTypes"
+                        placeholder="Select log types"
+                        items={logTypeData?.listAvailableLogTypes?.logTypes ?? []}
+                        searchable
                       />
                       <FastField
-                        name="eventCountMax"
-                        as={FormikNumberInput}
-                        min={0}
-                        label="Max Events"
-                        data-testid="alert-listing-max-event"
-                        placeholder="Maximum number of events"
+                        name="status"
+                        as={FormikMultiCombobox}
+                        items={statusOptions}
+                        itemToString={filterItemToString}
+                        label="Status"
+                        data-testid="alert-listing-status-filtering"
+                        placeholder="Select statuses"
                       />
-                    </SimpleGrid>
-                    <Flex direction="column" justify="center" align="center" spacing={4}>
-                      <Box>
-                        <Button type="submit" onClick={closePopover}>
-                          Apply Filters
-                        </Button>
-                      </Box>
-                      <TextButton role="button" onClick={() => setValues(defaultValues)}>
-                        Clear Filters
-                      </TextButton>
+                      <SimpleGrid columns={2} gap={4}>
+                        <FastField
+                          name="eventCountMin"
+                          as={FormikNumberInput}
+                          min={0}
+                          label="Min Events"
+                          data-testid="alert-listing-min-event"
+                          placeholder="Minimum number of events"
+                        />
+                        <FastField
+                          name="eventCountMax"
+                          as={FormikNumberInput}
+                          min={0}
+                          label="Max Events"
+                          data-testid="alert-listing-max-event"
+                          placeholder="Maximum number of events"
+                        />
+                      </SimpleGrid>
+                      <Flex direction="column" justify="center" align="center" spacing={4}>
+                        <Box>
+                          <Button type="submit" onClick={closePopover}>
+                            Apply Filters
+                          </Button>
+                        </Box>
+                        <TextButton role="button" onClick={() => setValues(defaultValues)}>
+                          Clear Filters
+                        </TextButton>
+                      </Flex>
                     </Flex>
                   </Form>
                 )}
