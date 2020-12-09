@@ -46,6 +46,18 @@ export type ListAlertsDropdownFiltersValues = Pick<
 const filterItemToString = (item: SeverityEnum | AlertStatusesEnum) =>
   capitalize(item.toLowerCase());
 
+const alertTypeToString = (item: AlertTypesEnum) => {
+  switch (item) {
+    case AlertTypesEnum.Rule:
+      return 'Rule Matches';
+    case AlertTypesEnum.RuleError:
+      return 'Rule Errors';
+    case AlertTypesEnum.Policy:
+    default:
+      return 'Policy Fails';
+  }
+};
+
 const statusOptions = Object.values(AlertStatusesEnum);
 const severityOptions = Object.values(SeverityEnum);
 const alertTypeOptions = Object.values(AlertTypesEnum);
@@ -120,6 +132,7 @@ const DropdownFilters: React.FC = () => {
                         name="types"
                         placeholder="Select alert types"
                         items={alertTypeOptions}
+                        itemToString={alertTypeToString}
                       />
                       <FastField
                         name="severity"

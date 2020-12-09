@@ -323,9 +323,9 @@ describe('ListAlerts', () => {
     // Verify filter value inside the Dropdown
     fireClickAndMouseEvents(getByText('Filters (7)'));
     const withinDropdown = within(await findByTestId('dropdown-alert-listing-filters'));
-    expect(withinDropdown.getByText(AlertTypesEnum.Rule)).toBeInTheDocument();
-    expect(withinDropdown.getByText(AlertTypesEnum.RuleError)).toBeInTheDocument();
-    expect(withinDropdown.queryByText(AlertTypesEnum.Policy)).not.toBeInTheDocument();
+    expect(withinDropdown.getByText('Rule Matches')).toBeInTheDocument();
+    expect(withinDropdown.getByText('Rule Errors')).toBeInTheDocument();
+    expect(withinDropdown.queryByText('Policy Fails')).not.toBeInTheDocument();
     expect(withinDropdown.getByText(mockedLogType)).toBeInTheDocument();
     expect(withinDropdown.getByText(mockedLogType)).toBeInTheDocument();
     expect(withinDropdown.getByText(mockedResourceType)).toBeInTheDocument();
@@ -435,8 +435,8 @@ describe('ListAlerts', () => {
     });
     fireClickAndMouseEvents(await withinDropdown.findByText(mockedResourceType));
     fireClickAndMouseEvents(withinDropdown.getAllByLabelText('Alert Types')[0]);
-    fireEvent.click(withinDropdown.getByText(AlertTypesEnum.Rule));
-    fireEvent.click(withinDropdown.getByText(AlertTypesEnum.RuleError));
+    fireEvent.click(withinDropdown.getByText('Rule Matches'));
+    fireEvent.click(withinDropdown.getByText('Rule Errors'));
 
     // Expect nothing to have changed until "Apply is pressed"
     expect(parseParams(history.location.search)).toEqual(parseParams(initialParams));
@@ -478,9 +478,9 @@ describe('ListAlerts', () => {
     // Verify that they are cleared
     expect(withinDropdown.queryByText('Open')).not.toBeInTheDocument();
     expect(withinDropdown.queryByText('Triaged')).not.toBeInTheDocument();
-    expect(withinDropdown.queryByText(AlertTypesEnum.Rule)).not.toBeInTheDocument();
-    expect(withinDropdown.queryByText(AlertTypesEnum.RuleError)).not.toBeInTheDocument();
-    expect(withinDropdown.queryByText(AlertTypesEnum.Policy)).not.toBeInTheDocument();
+    expect(withinDropdown.queryByText('Rule Matches')).not.toBeInTheDocument();
+    expect(withinDropdown.queryByText('Rule Errors')).not.toBeInTheDocument();
+    expect(withinDropdown.queryByText('Policy Fails')).not.toBeInTheDocument();
     expect(withinDropdown.queryByText('Info')).not.toBeInTheDocument();
     expect(withinDropdown.queryByText('Medium')).not.toBeInTheDocument();
     expect(withinDropdown.getByLabelText('Min Events')).toHaveValue(null);
@@ -683,7 +683,7 @@ describe('ListAlerts', () => {
     expect(withinDropdown.getByText('Triaged')).toBeInTheDocument();
     expect(withinDropdown.getByText('Info')).toBeInTheDocument();
     expect(withinDropdown.getByText('Medium')).toBeInTheDocument();
-    expect(withinDropdown.getByText(AlertTypesEnum.Rule)).toBeInTheDocument();
+    expect(withinDropdown.getByText('Rule Matches')).toBeInTheDocument();
     expect(withinDropdown.getByLabelText('Min Events')).toHaveValue(2);
     expect(withinDropdown.getByLabelText('Max Events')).toHaveValue(5);
   });
