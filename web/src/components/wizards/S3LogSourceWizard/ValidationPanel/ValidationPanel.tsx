@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { AbstractButton, Alert, Button, Flex, Img, Link, Text } from 'pouncejs';
+import { AbstractButton, Alert, Button, Flex, Img, Link, Text, Box } from 'pouncejs';
 import { useFormikContext } from 'formik';
 import FailureStatus from 'Assets/statuses/failure.svg';
 import WaitingStatus from 'Assets/statuses/waiting.svg';
@@ -122,11 +122,13 @@ const ValidationPanel: React.FC = () => {
       <WizardPanel>
         <Flex align="center" direction="column" mx="auto" width={600}>
           {managedNotificationsStatus === 'fail' && (
-            <Alert
-              variant="error"
-              title={'Setting up managed notifications failed'}
-              description={'You should set them up by following instructions below'}
-            />
+            <Box mb={6}>
+              <Alert
+                variant="error"
+                title={'Setting up managed notifications failed'}
+                description={'You should set them up by following instructions below'}
+              />
+            </Box>
           )}
           <WizardPanel.Heading
             title="Adding Notifications for New Data"
