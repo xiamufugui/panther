@@ -19,7 +19,7 @@
 import React from 'react';
 import { Box, Card, Flex, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
 import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
-import RuleAlertCard from 'Components/cards/RuleAlertCard';
+import RuleAlertCard from 'Components/cards/AlertCard';
 import NoResultsFound from 'Components/NoResultsFound';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 

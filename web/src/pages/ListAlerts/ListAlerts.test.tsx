@@ -589,8 +589,9 @@ describe('ListAlerts', () => {
             nameContains: 'test',
             sortBy: ListAlertsSortFieldsEnum.CreatedAt,
             sortDir: SortDirEnum.Descending,
-            createdAtAfter: '2000-01-29T00:00:00Z',
-            createdAtBefore: '2000-01-30T00:00:00Z',
+            logTypes: [mockedLogType],
+            createdAtAfter: '2000-01-29T00:00:00.000Z',
+            createdAtBefore: '2000-01-30T00:00:00.000Z',
           },
         },
         data: {
@@ -668,7 +669,7 @@ describe('ListAlerts', () => {
     await waitMs(1);
 
     // Expect the URL to be updated
-    const completeParams = `${paramsWithSortingAndTextFilter}&createdAtAfter=2000-01-29T00:00:00Z&createdAtBefore=2000-01-30T00:00:00Z`;
+    const completeParams = `${paramsWithSortingAndTextFilter}&createdAtAfter=2000-01-29T00:00:00.000Z&createdAtBefore=2000-01-30T00:00:00.000Z`;
     expect(parseParams(history.location.search)).toEqual(parseParams(completeParams));
 
     // Expect the API request to have fired and a new alert to have returned (verifies API execution)
