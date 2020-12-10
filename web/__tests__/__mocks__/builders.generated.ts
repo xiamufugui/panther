@@ -711,8 +711,6 @@ export const buildGetS3LogIntegrationTemplateInput = (
     integrationLabel: 'integrationLabel' in overrides ? overrides.integrationLabel : 'Concrete',
     s3Bucket: 's3Bucket' in overrides ? overrides.s3Bucket : 'generating',
     kmsKey: 'kmsKey' in overrides ? overrides.kmsKey : 'Books',
-    s3PrefixLogTypes:
-      's3PrefixLogTypes' in overrides ? overrides.s3PrefixLogTypes : [buildS3PrefixLogTypesInput()],
     managedBucketNotifications:
       'managedBucketNotifications' in overrides ? overrides.managedBucketNotifications : false,
   };

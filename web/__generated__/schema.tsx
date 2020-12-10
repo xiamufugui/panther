@@ -434,7 +434,6 @@ export type GetS3LogIntegrationTemplateInput = {
   integrationLabel: Scalars['String'];
   s3Bucket: Scalars['String'];
   kmsKey?: Maybe<Scalars['String']>;
-  s3PrefixLogTypes: Array<S3PrefixLogTypesInput>;
   managedBucketNotifications: Scalars['Boolean'];
 };
 
@@ -1592,7 +1591,6 @@ export type ResolversTypes = {
   S3PrefixLogTypes: ResolverTypeWrapper<S3PrefixLogTypes>;
   S3LogIntegrationHealth: ResolverTypeWrapper<S3LogIntegrationHealth>;
   GetS3LogIntegrationTemplateInput: GetS3LogIntegrationTemplateInput;
-  S3PrefixLogTypesInput: S3PrefixLogTypesInput;
   SqsLogSourceIntegration: ResolverTypeWrapper<SqsLogSourceIntegration>;
   SqsConfig: ResolverTypeWrapper<SqsConfig>;
   SqsLogIntegrationHealth: ResolverTypeWrapper<SqsLogIntegrationHealth>;
@@ -1661,6 +1659,7 @@ export type ResolversTypes = {
   CustomWebhookConfigInput: CustomWebhookConfigInput;
   AddComplianceIntegrationInput: AddComplianceIntegrationInput;
   AddS3LogIntegrationInput: AddS3LogIntegrationInput;
+  S3PrefixLogTypesInput: S3PrefixLogTypesInput;
   AddSqsLogIntegrationInput: AddSqsLogIntegrationInput;
   SqsLogConfigInput: SqsLogConfigInput;
   AddPolicyInput: AddPolicyInput;
@@ -1761,7 +1760,6 @@ export type ResolversParentTypes = {
   S3PrefixLogTypes: S3PrefixLogTypes;
   S3LogIntegrationHealth: S3LogIntegrationHealth;
   GetS3LogIntegrationTemplateInput: GetS3LogIntegrationTemplateInput;
-  S3PrefixLogTypesInput: S3PrefixLogTypesInput;
   SqsLogSourceIntegration: SqsLogSourceIntegration;
   SqsConfig: SqsConfig;
   SqsLogIntegrationHealth: SqsLogIntegrationHealth;
@@ -1832,6 +1830,7 @@ export type ResolversParentTypes = {
   CustomWebhookConfigInput: CustomWebhookConfigInput;
   AddComplianceIntegrationInput: AddComplianceIntegrationInput;
   AddS3LogIntegrationInput: AddS3LogIntegrationInput;
+  S3PrefixLogTypesInput: S3PrefixLogTypesInput;
   AddSqsLogIntegrationInput: AddSqsLogIntegrationInput;
   SqsLogConfigInput: SqsLogConfigInput;
   AddPolicyInput: AddPolicyInput;
