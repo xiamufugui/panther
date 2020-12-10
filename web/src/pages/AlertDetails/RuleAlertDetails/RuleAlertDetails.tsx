@@ -106,8 +106,8 @@ const RuleAlertDetails: React.FC<RuleAlertDetailsProps> = ({ alert, fetchMore })
   }
 
   return (
-    <Box as="article">
-      <Flex direction="column" spacing={6} my={6}>
+    <Box as="article" mb={6}>
+      <Flex direction="column" spacing={6}>
         <AlertDetailsBanner alert={alert} />
         <Card position="relative">
           <Tabs

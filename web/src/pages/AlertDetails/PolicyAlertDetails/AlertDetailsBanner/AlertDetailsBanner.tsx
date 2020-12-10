@@ -64,7 +64,7 @@ const AlertDetailsBanner: React.FC<AlertDetailsBannerProps> = ({ alert }) => {
         </Flex>
         <Flex>
           <Box color="navyblue-100" as="dd" pr={2}>
-            Log Types
+            Resource Types
           </Box>
           <Flex as="dl" align="center" spacing={6}>
             {(alert.detection as AlertSummaryPolicyInfo).resourceTypes.map(resourceType => (

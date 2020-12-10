@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`AlertDetailsBanner renders 1`] = `
-.panther-26 {
+exports[`RuleAlert - AlertDetailsBanner renders 1`] = `
+.panther-25 {
   background-color: #23344e;
   border-radius: 4px;
   padding: 24px;
@@ -186,7 +186,7 @@ exports[`AlertDetailsBanner renders 1`] = `
   color: currentColor;
 }
 
-.panther-25 {
+.panther-24 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -195,7 +195,7 @@ exports[`AlertDetailsBanner renders 1`] = `
   padding-top: 20px;
 }
 
-.panther-25>*:not(:last-child) {
+.panther-24>*:not(:last-child) {
   margin-right: 32px;
 }
 
@@ -263,7 +263,7 @@ exports[`AlertDetailsBanner renders 1`] = `
   line-height: 1.5;
 }
 
-.panther-53 {
+.panther-51 {
   background-color: #23344e;
   border-radius: 4px;
   padding: 24px;
@@ -272,7 +272,7 @@ exports[`AlertDetailsBanner renders 1`] = `
   border-color: #850003;
 }
 
-.panther-40 {
+.panther-39 {
   font-weight: 700;
   color: #af0003;
 }
@@ -282,7 +282,7 @@ exports[`AlertDetailsBanner renders 1`] = `
     id="main-header"
   />
   <article
-    class="panther-26"
+    class="panther-25"
   >
     <header
       class="panther-11"
@@ -296,7 +296,6 @@ exports[`AlertDetailsBanner renders 1`] = `
         class="panther-10"
       >
         <li
-          aria-describedby="alert-severity-description"
           class="panther-2"
         >
           <div
@@ -308,7 +307,6 @@ exports[`AlertDetailsBanner renders 1`] = `
           </div>
         </li>
         <li
-          aria-describedby="alert-status-description"
           class="panther-2"
         >
           <div
@@ -355,20 +353,18 @@ exports[`AlertDetailsBanner renders 1`] = `
       </ul>
     </header>
     <div
-      class="panther-25"
+      class="panther-24"
     >
       <div
         class="panther-14"
       >
         <dd
-          aria-describedby="rule-type"
           class="panther-12"
         >
           Alert Type
         </dd>
         <dl
           class="panther-13"
-          id="rule-type"
         >
           Rule Match
         </dl>
@@ -377,14 +373,12 @@ exports[`AlertDetailsBanner renders 1`] = `
         class="panther-14"
       >
         <dd
-          aria-describedby="alert-id"
           class="panther-12"
         >
           Alert ID
         </dd>
         <dl
           class="panther-16"
-          id="alert-id"
         >
           2c5aa76d-eb43-49f0-a65c-50e4daa756a4
         </dl>
@@ -393,37 +387,31 @@ exports[`AlertDetailsBanner renders 1`] = `
         class="panther-14"
       >
         <dd
-          aria-describedby="alert-log-types"
           class="panther-12"
         >
           Log Types
         </dd>
         <dl
-          class="panther-2"
-          id="alert-log-types"
+          class="panther-22"
         >
           <div
-            class="panther-22"
+            class="panther-21"
           >
-            <div
-              class="panther-21"
+            <span
+              class="panther-19"
+            />
+            <span
+              class="panther-20"
             >
-              <span
-                class="panther-19"
-              />
-              <span
-                class="panther-20"
-              >
-                Baht
-              </span>
-            </div>
+              Baht
+            </span>
           </div>
         </dl>
       </div>
     </div>
   </article>
   <article
-    class="panther-53"
+    class="panther-51"
   >
     <header
       class="panther-11"
@@ -437,7 +425,6 @@ exports[`AlertDetailsBanner renders 1`] = `
         class="panther-10"
       >
         <li
-          aria-describedby="alert-severity-description"
           class="panther-2"
         >
           <div
@@ -449,7 +436,6 @@ exports[`AlertDetailsBanner renders 1`] = `
           </div>
         </li>
         <li
-          aria-describedby="alert-status-description"
           class="panther-2"
         >
           <div
@@ -496,20 +482,18 @@ exports[`AlertDetailsBanner renders 1`] = `
       </ul>
     </header>
     <div
-      class="panther-25"
+      class="panther-24"
     >
       <div
         class="panther-14"
       >
         <dd
-          aria-describedby="rule-type"
           class="panther-12"
         >
           Alert Type
         </dd>
         <dl
-          class="panther-40"
-          id="rule-type"
+          class="panther-39"
         >
           Rule Error
         </dl>
@@ -518,14 +502,12 @@ exports[`AlertDetailsBanner renders 1`] = `
         class="panther-14"
       >
         <dd
-          aria-describedby="alert-id"
           class="panther-12"
         >
           Alert ID
         </dd>
         <dl
           class="panther-16"
-          id="alert-id"
         >
           2c5aa76d-eb43-49f0-a65c-50e4daa756a4
         </dl>
@@ -534,30 +516,24 @@ exports[`AlertDetailsBanner renders 1`] = `
         class="panther-14"
       >
         <dd
-          aria-describedby="alert-log-types"
           class="panther-12"
         >
           Log Types
         </dd>
         <dl
-          class="panther-2"
-          id="alert-log-types"
+          class="panther-22"
         >
           <div
-            class="panther-22"
+            class="panther-21"
           >
-            <div
-              class="panther-21"
+            <span
+              class="panther-19"
+            />
+            <span
+              class="panther-20"
             >
-              <span
-                class="panther-19"
-              />
-              <span
-                class="panther-20"
-              >
-                Baht
-              </span>
-            </div>
+              Baht
+            </span>
           </div>
         </dl>
       </div>

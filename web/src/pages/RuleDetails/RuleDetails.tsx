@@ -105,8 +105,8 @@ const RuleDetailsPage: React.FC = () => {
   }
 
   return (
-    <Box as="article">
-      <Flex direction="column" spacing={6} my={6}>
+    <Box as="article" mb={6}>
+      <Flex direction="column" spacing={6}>
         <ErrorBoundary>
           <RuleDetailsInfo rule={data.rule} />
         </ErrorBoundary>
