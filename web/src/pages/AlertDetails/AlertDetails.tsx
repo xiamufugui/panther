@@ -75,11 +75,15 @@ const AlertDetailsPage = () => {
     return <Page404 />;
   }
 
-  return alertData.alert.type === AlertTypesEnum.Policy ? (
-    <PolicyAlertDetails alert={alert} />
-  ) : (
-    <RuleAlertDetails alert={alert} fetchMore={fetchMore} />
-  );
+  switch (alert.type) {
+    case AlertTypesEnum.Policy:
+      return <PolicyAlertDetails alert={alert} />;
+
+    case AlertTypesEnum.Rule:
+    case AlertTypesEnum.RuleError:
+    default:
+      return <RuleAlertDetails alert={alert} fetchMore={fetchMore} />;
+  }
 };
 
 export default withSEO({ title: ({ match }) => `Alert #${shortenId(match.params.id)}` })(
