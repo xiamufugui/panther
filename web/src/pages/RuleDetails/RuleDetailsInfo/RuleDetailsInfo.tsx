@@ -87,7 +87,7 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
         </Flex>
         <Flex fontSize="small-medium" pt={5} spacing={8}>
           <Flex>
-            <Box color="navyblue-100" aria-describedby="rule-type" as="dd" pr={2}>
+            <Box color="navyblue-100" as="dd" pr={2}>
               Rule ID
             </Box>
             <Box as="dl" fontWeight="bold">

@@ -35,7 +35,7 @@ import { Route } from 'react-router-dom';
 import { mockListDestinations } from 'Source/graphql/queries';
 import { mockAlertDetails } from './graphql/alertDetails.generated';
 import { mockRuleTeaser } from './graphql/ruleTeaser.generated';
-import { mockRetryAlertDelivery } from './AlertDetailsInfo/AlertDeliverySection/graphql/retryAlertDelivery.generated';
+import { mockRetryAlertDelivery } from './common/AlertDeliverySection/graphql/retryAlertDelivery.generated';
 import AlertDetails from './AlertDetails';
 
 describe('AlertDetails', () => {

@@ -17,20 +17,23 @@
  */
 
 import React from 'react';
-import TablePlaceholder from 'Components/TablePlaceholder';
-import { Card } from 'pouncejs';
+import { buildAlertDetails, render } from 'test-utils';
+import { AlertTypesEnum } from 'Generated/schema';
+import AlertDetailsBanner from './index';
 
-const AlertDetailsPageSkeleton: React.FC = () => {
-  return (
-    <React.Fragment>
-      <Card p={6}>
-        <TablePlaceholder rowCount={2} />
-      </Card>
-      <Card p={6} mt={5}>
-        <TablePlaceholder />
-      </Card>
-    </React.Fragment>
-  );
-};
+describe('PolicyAlert - AlertDetailsBanner', () => {
+  it('renders', () => {
+    const alert = buildAlertDetails();
+    const alertWithRuleError = buildAlertDetails({
+      type: AlertTypesEnum.RuleError,
+    });
 
-export default AlertDetailsPageSkeleton;
+    const { container } = render(
+      <>
+        <AlertDetailsBanner alert={alert} />
+        <AlertDetailsBanner alert={alertWithRuleError} />
+      </>
+    );
+    expect(container).toMatchSnapshot();
+  });
+});
