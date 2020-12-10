@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Button, Flex, Card, Heading } from 'pouncejs';
+import { Box, Button, Icon, Flex, Card, Heading, Tooltip } from 'pouncejs';
 import { RuleDetails } from 'Generated/schema';
 import urls from 'Source/urls';
 import useModal from 'Hooks/useModal';
@@ -26,9 +26,6 @@ import SeverityBadge from 'Components/badges/SeverityBadge';
 import StatusBadge from 'Components/badges/StatusBadge';
 import LinkButton from 'Components/buttons/LinkButton';
 import Breadcrumbs from 'Components/Breadcrumbs';
-import BulletedLogType from 'Components/BulletedLogType';
-import RelatedDestinations from 'Components/RelatedDestinations/RelatedDestinations';
-import useDetectionDestinations from 'Hooks/useDetectionDestinations';
 
 interface ResourceDetailsInfoProps {
   rule?: RuleDetails;
@@ -36,11 +33,6 @@ interface ResourceDetailsInfoProps {
 
 const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
   const { showModal } = useModal();
-
-  const {
-    detectionDestinations,
-    loading: loadingDetectionDestinations,
-  } = useDetectionDestinations({ rule });
 
   return (
     <React.Fragment>
@@ -63,7 +55,7 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
           </Button>
         </Flex>
       </Breadcrumbs.Actions>
-      <Card as="article" p={6} borderLeft="4px solid" borderColor="cyan-500">
+      <Card as="article" p={6}>
         <Flex as="header" align="center">
           <Heading
             fontWeight="bold"
@@ -75,6 +67,26 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
             mr={100}
           >
             {rule.displayName || rule.id}
+            <Tooltip
+              content={
+                <Flex spacing={3}>
+                  <Flex direction="column" spacing={2}>
+                    <Box id="rule-id-label">Rule ID</Box>
+                    <Box id="log-types-label">Log Types</Box>
+                  </Flex>
+                  <Flex direction="column" spacing={2} fontWeight="bold">
+                    <Box aria-labelledby="rule-id-label">{rule.id}</Box>
+                    <Box aria-labelledby="log-types-label">
+                      {rule.logTypes.map(logType => (
+                        <Box key={logType}>{logType}</Box>
+                      ))}
+                    </Box>
+                  </Flex>
+                </Flex>
+              }
+            >
+              <Icon color="navyblue-200" type="info" size="medium" verticalAlign="unset" ml={2} />
+            </Tooltip>
           </Heading>
           <Flex spacing={2} as="ul" flexShrink={0} ml="auto">
             <Box as="li">
@@ -82,38 +94,6 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
             </Box>
             <Box as="li">
               <SeverityBadge severity={rule.severity} />
-            </Box>
-          </Flex>
-        </Flex>
-        <Flex fontSize="small-medium" pt={5} spacing={8}>
-          <Flex>
-            <Box color="navyblue-100" as="dd" pr={2}>
-              Rule ID
-            </Box>
-            <Box as="dl" fontWeight="bold">
-              {rule.id}
-            </Box>
-          </Flex>
-          <Flex>
-            <Box color="navyblue-100" as="dd" pr={2}>
-              Log Types
-            </Box>
-            <Flex as="dl" align="center" spacing={6}>
-              {rule.logTypes.map(logType => (
-                <BulletedLogType key={logType} logType={logType} />
-              ))}
-            </Flex>
-          </Flex>
-          <Flex>
-            <Box color="navyblue-100" as="dd" pr={2}>
-              Destinations
-            </Box>
-            <Box as="dl">
-              <RelatedDestinations
-                destinations={detectionDestinations}
-                loading={loadingDetectionDestinations}
-                limit={5}
-              />
             </Box>
           </Flex>
         </Flex>
