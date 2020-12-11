@@ -62,7 +62,7 @@ const validationSchema = Yup.object().shape<S3LogSourceWizardValues>({
     )
     .required(),
   kmsKey: Yup.string().matches(getArnRegexForService('KMS'), 'Must be a valid KMS ARN'),
-  managedBucketNotifications: Yup.boolean(),
+  managedBucketNotifications: Yup.boolean().required(),
 });
 
 const S3LogSourceWizard: React.FC<S3LogSourceWizardProps> = ({ initialValues, onSubmit }) => {
