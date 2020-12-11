@@ -24,7 +24,7 @@ import { Wizard } from 'Components/Wizard';
 import { FetchResult } from '@apollo/client';
 import { getArnRegexForService, yupIntegrationLabelValidation } from 'Helpers/utils';
 import { S3PrefixLogTypes } from 'Generated/schema';
-import NotificationsManagementPrompt from './NotificationsManagementPrompt';
+import NotificationsManagementPanel from './NotificationsManagementPanel';
 import StackDeploymentPanel from './StackDeploymentPanel';
 import S3SourceConfigurationPanel from './S3SourceConfigurationPanel';
 import ValidationPanel from './ValidationPanel';
@@ -80,7 +80,7 @@ const S3LogSourceWizard: React.FC<S3LogSourceWizardProps> = ({ initialValues, on
           </Wizard.Step>
           {!initialValues.integrationId && (
             <Wizard.Step title="Notification Management">
-              <NotificationsManagementPrompt />
+              <NotificationsManagementPanel />
             </Wizard.Step>
           )}
           <Wizard.Step title="Setup IAM Roles">

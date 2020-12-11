@@ -24,7 +24,7 @@ import RealTimeNotification from 'Assets/statuses/real-time-notification-green.s
 import { useFormikContext } from 'formik';
 import { S3LogSourceWizardValues } from 'Components/wizards/S3LogSourceWizard/S3LogSourceWizard';
 
-const NotificationsManagementPrompt: React.FC = () => {
+const NotificationsManagementPanel: React.FC = () => {
   const { setFieldValue } = useFormikContext<S3LogSourceWizardValues>();
   const { goToNextStep } = useWizardContext();
   return (
@@ -66,4 +66,4 @@ const NotificationsManagementPrompt: React.FC = () => {
   );
 };
 
-export default NotificationsManagementPrompt;
+export default NotificationsManagementPanel;
