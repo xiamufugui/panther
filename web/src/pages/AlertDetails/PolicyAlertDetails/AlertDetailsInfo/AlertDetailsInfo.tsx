@@ -23,11 +23,12 @@ import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import { AlertSummaryPolicyInfo } from 'Generated/schema';
 import { formatDatetime } from 'Helpers/utils';
-import { AlertDetails, PolicyTeaser } from 'Pages/AlertDetails';
+import { AlertDetails } from 'Pages/AlertDetails';
 import AlertDeliverySection from 'Pages/AlertDetails/common/AlertDeliverySection';
 import RelatedDestinations from 'Components/RelatedDestinations';
 import useAlertDestinations from 'Hooks/useAlertDestinations';
 import { useListComplianceSourceNames } from 'Source/graphql/queries';
+import { PolicyTeaser } from '../graphql/policyTeaser.generated';
 
 interface AlertDetailsInfoProps {
   alert: AlertDetails['alert'];
