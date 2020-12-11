@@ -32,18 +32,18 @@ import AlertDetailsBanner from './AlertDetailsBanner';
 import AlertEvents from './AlertDetailsEvents';
 import AlertDetailsInfo from './AlertDetailsInfo';
 
-interface AlertDetailsPageUrlParams {
+interface RuleAlertDetailsUrlParams {
   section?: 'details' | 'events';
 }
 
-const sectionToTabIndex: Record<AlertDetailsPageUrlParams['section'], number> = {
+const sectionToTabIndex: Record<RuleAlertDetailsUrlParams['section'], number> = {
   details: 0,
   events: 1,
 };
 
 const tabIndexToSection = invert(sectionToTabIndex) as Record<
   number,
-  AlertDetailsPageUrlParams['section']
+  RuleAlertDetailsUrlParams['section']
 >;
 
 interface RuleAlertDetailsProps {
@@ -52,7 +52,7 @@ interface RuleAlertDetailsProps {
 }
 
 const RuleAlertDetails: React.FC<RuleAlertDetailsProps> = ({ alert, fetchMore }) => {
-  const { urlParams, updateUrlParams } = useUrlParams<AlertDetailsPageUrlParams>();
+  const { urlParams, updateUrlParams } = useUrlParams<RuleAlertDetailsUrlParams>();
 
   const alertDetectionInfo = alert.detection as AlertDetailsRuleInfo;
 
