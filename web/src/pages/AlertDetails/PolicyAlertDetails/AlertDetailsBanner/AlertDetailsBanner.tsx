@@ -45,28 +45,28 @@ const AlertDetailsBanner: React.FC<AlertDetailsBannerProps> = ({ alert }) => {
           </Box>
         </Flex>
       </Flex>
-      <Flex fontSize="small-medium" pt={5} spacing={8}>
+      <Flex as="dl" fontSize="small-medium" pt={5} spacing={8}>
         <Flex>
-          <Box color="navyblue-100" as="dd" pr={2}>
+          <Box color="navyblue-100" as="dt" pr={2}>
             Alert Type
           </Box>
-          <Box as="dl" fontWeight="bold" color="cyan-400">
+          <Box as="dd" fontWeight="bold" color="cyan-400">
             Policy Fail
           </Box>
         </Flex>
         <Flex>
-          <Box color="navyblue-100" as="dd" pr={2}>
+          <Box color="navyblue-100" as="dt" pr={2}>
             Alert ID
           </Box>
-          <Box as="dl" fontWeight="bold">
+          <Box as="dd" fontWeight="bold">
             {alert.alertId}
           </Box>
         </Flex>
         <Flex>
-          <Box color="navyblue-100" as="dd" pr={2}>
+          <Box color="navyblue-100" as="dt" pr={2}>
             Resource Types
           </Box>
-          <Flex as="dl" align="center" spacing={6}>
+          <Flex as="dd" align="center" spacing={6}>
             {(alert.detection as AlertSummaryPolicyInfo).resourceTypes.map(resourceType => (
               <BulletedLogType key={resourceType} logType={resourceType} />
             ))}

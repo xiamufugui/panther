@@ -338,46 +338,46 @@ exports[`PolicyAlert - AlertDetailsBanner renders 1`] = `
         </li>
       </ul>
     </header>
-    <div
+    <dl
       class="panther-24"
     >
       <div
         class="panther-14"
       >
-        <dd
+        <dt
           class="panther-12"
         >
           Alert Type
-        </dd>
-        <dl
+        </dt>
+        <dd
           class="panther-13"
         >
           Policy Fail
-        </dl>
+        </dd>
       </div>
       <div
         class="panther-14"
       >
-        <dd
+        <dt
           class="panther-12"
         >
           Alert ID
-        </dd>
-        <dl
+        </dt>
+        <dd
           class="panther-16"
         >
           2c5aa76d-eb43-49f0-a65c-50e4daa756a4
-        </dl>
+        </dd>
       </div>
       <div
         class="panther-14"
       >
-        <dd
+        <dt
           class="panther-12"
         >
           Resource Types
-        </dd>
-        <dl
+        </dt>
+        <dd
           class="panther-22"
         >
           <div
@@ -392,9 +392,9 @@ exports[`PolicyAlert - AlertDetailsBanner renders 1`] = `
               brand
             </span>
           </div>
-        </dl>
+        </dd>
       </div>
-    </div>
+    </dl>
   </article>
   <footer
     id="footer"

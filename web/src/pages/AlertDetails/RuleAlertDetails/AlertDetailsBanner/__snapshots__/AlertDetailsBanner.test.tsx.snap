@@ -352,46 +352,46 @@ exports[`RuleAlert - AlertDetailsBanner renders 1`] = `
         </li>
       </ul>
     </header>
-    <div
+    <dl
       class="panther-24"
     >
       <div
         class="panther-14"
       >
-        <dd
+        <dt
           class="panther-12"
         >
           Alert Type
-        </dd>
-        <dl
+        </dt>
+        <dd
           class="panther-13"
         >
           Rule Match
-        </dl>
+        </dd>
       </div>
       <div
         class="panther-14"
       >
-        <dd
+        <dt
           class="panther-12"
         >
           Alert ID
-        </dd>
-        <dl
+        </dt>
+        <dd
           class="panther-16"
         >
           2c5aa76d-eb43-49f0-a65c-50e4daa756a4
-        </dl>
+        </dd>
       </div>
       <div
         class="panther-14"
       >
-        <dd
+        <dt
           class="panther-12"
         >
           Log Types
-        </dd>
-        <dl
+        </dt>
+        <dd
           class="panther-22"
         >
           <div
@@ -406,9 +406,9 @@ exports[`RuleAlert - AlertDetailsBanner renders 1`] = `
               Baht
             </span>
           </div>
-        </dl>
+        </dd>
       </div>
-    </div>
+    </dl>
   </article>
   <article
     class="panther-51"
@@ -481,46 +481,46 @@ exports[`RuleAlert - AlertDetailsBanner renders 1`] = `
         </li>
       </ul>
     </header>
-    <div
+    <dl
       class="panther-24"
     >
       <div
         class="panther-14"
       >
-        <dd
+        <dt
           class="panther-12"
         >
           Alert Type
-        </dd>
-        <dl
+        </dt>
+        <dd
           class="panther-39"
         >
           Rule Error
-        </dl>
+        </dd>
       </div>
       <div
         class="panther-14"
       >
-        <dd
+        <dt
           class="panther-12"
         >
           Alert ID
-        </dd>
-        <dl
+        </dt>
+        <dd
           class="panther-16"
         >
           2c5aa76d-eb43-49f0-a65c-50e4daa756a4
-        </dl>
+        </dd>
       </div>
       <div
         class="panther-14"
       >
-        <dd
+        <dt
           class="panther-12"
         >
           Log Types
-        </dd>
-        <dl
+        </dt>
+        <dd
           class="panther-22"
         >
           <div
@@ -535,9 +535,9 @@ exports[`RuleAlert - AlertDetailsBanner renders 1`] = `
               Baht
             </span>
           </div>
-        </dl>
+        </dd>
       </div>
-    </div>
+    </dl>
   </article>
   <footer
     id="footer"
