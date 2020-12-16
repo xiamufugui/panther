@@ -29,7 +29,11 @@ type NavGroupProps = {
 
 const NavGroup: React.FC<NavGroupProps> = ({ icon, label, active, onSelect, children }) => {
   return (
-    <Box fontSize="medium" backgroundColor={active ? 'navyblue-500' : 'transparent'}>
+    <Box
+      fontSize="medium"
+      borderRadius="small"
+      backgroundColor={active ? 'navyblue-500' : 'transparent'}
+    >
       <AbstractButton
         px={4}
         py={3}

@@ -88,8 +88,8 @@ const Navigation = () => {
       height="100vh"
       backgroundColor="navyblue-700"
     >
-      <Flex as="nav" direction="column" width={220} height="100%" aria-label="Main">
-        <Box as={RRLink} to="/" pt={7} pb={5}>
+      <Flex as="nav" direction="column" width={220} height="100%" aria-label="Main" pb={2}>
+        <Box as={RRLink} to="/" px={4} pb={5} pt={7}>
           <Img
             src={PantherLogo}
             alt="Panther logo"
@@ -98,8 +98,8 @@ const Navigation = () => {
             display="block"
           />
         </Box>
-        <Divider width="100%" color="navyblue-300" />
         <Flex direction="column" as="ul" flex="1 0 auto" px={4}>
+          <Divider width="100%" color="navyblue-300" />
           <Box as="li" mb={2}>
             <NavLink
               icon="alert-circle"
@@ -151,6 +151,7 @@ const Navigation = () => {
               external
               href={PANTHER_DOCS_LINK}
               fontWeight="normal"
+              borderRadius="small"
               tabIndex={-1}
               px={4}
               py={3}
@@ -173,7 +174,7 @@ const Navigation = () => {
           </Box>
         </Flex>
 
-        <Box p={4} backgroundColor="navyblue-800">
+        <Box p={4} backgroundColor="navyblue-800" mt={4}>
           <ProfileInfo />
         </Box>
       </Flex>

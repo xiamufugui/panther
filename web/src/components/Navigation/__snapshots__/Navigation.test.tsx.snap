@@ -25,26 +25,19 @@ exports[`Navigation renders with active links 1`] = `
   flex-direction: column;
   width: 220px;
   height: 100%;
+  padding-bottom: 8px;
 }
 
 .panther-1 {
-  padding-top: 28px;
+  padding-left: 16px;
+  padding-right: 16px;
   padding-bottom: 20px;
+  padding-top: 28px;
 }
 
 .panther-0 {
   max-width: 100%;
   display: block;
-}
-
-.panther-2 {
-  border: none;
-  opacity: 0.6;
-  border-bottom: 0.0625rem solid;
-  width: 100%;
-  margin-top: 8px;
-  margin-bottom: 8px;
-  border-color: #3e516b;
 }
 
 .panther-35 {
@@ -60,6 +53,16 @@ exports[`Navigation renders with active links 1`] = `
   flex: 1 0 auto;
   padding-left: 16px;
   padding-right: 16px;
+}
+
+.panther-2 {
+  border: none;
+  opacity: 0.6;
+  border-bottom: 0.0625rem solid;
+  width: 100%;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  border-color: #3e516b;
 }
 
 .panther-7 {
@@ -118,6 +121,7 @@ exports[`Navigation renders with active links 1`] = `
 
 .panther-12 {
   font-size: 0.875rem;
+  border-radius: 2px;
   background-color: transparent;
 }
 
@@ -180,6 +184,7 @@ exports[`Navigation renders with active links 1`] = `
   text-decoration: none;
   color: #7fd3ff;
   font-weight: 400;
+  border-radius: 2px;
   padding-left: 16px;
   padding-right: 16px;
   padding-top: 12px;
@@ -249,6 +254,7 @@ exports[`Navigation renders with active links 1`] = `
 .panther-40 {
   padding: 16px;
   background-color: #0f1623;
+  margin-top: 16px;
 }
 
 .panther-39 {
@@ -330,13 +336,13 @@ exports[`Navigation renders with active links 1`] = `
           width="149"
         />
       </a>
-      <hr
-        aria-orientation="horizontal"
-        class="panther-2"
-      />
       <ul
         class="panther-35"
       >
+        <hr
+          aria-orientation="horizontal"
+          class="panther-2"
+        />
         <li
           class="panther-7"
         >
