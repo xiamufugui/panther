@@ -26,35 +26,59 @@ type NavLinkProps = {
   icon: IconProps['type'];
   label: string;
   to: string;
+  isSecondary?: boolean;
+  tabIndex?: number;
 };
 
-const NavLink: React.FC<NavLinkProps> = ({ icon, label, to }) => {
+const NavLink: React.FC<NavLinkProps> = ({ icon, label, to, tabIndex, isSecondary }) => {
   const { location } = useRouter();
   const pathname = addTrailingSlash(location.pathname);
   const destination = addTrailingSlash(getPathnameFromURI(to));
   const isActive = pathname.startsWith(destination);
 
+  const activeColor = React.useMemo(() => {
+    if (isSecondary || isActive) {
+      return 'blue-400';
+    }
+    return 'navyblue-500';
+  }, [isSecondary, isActive]);
+
+  const backgroundColor = React.useMemo(() => {
+    if (isActive) {
+      return 'blue-400';
+    }
+
+    return 'transparent';
+  }, [isActive]);
+
   return (
-    <Box as={RRLink} display="block" to={to} my={1} aria-current={isActive ? 'page' : undefined}>
+    <Box
+      as={RRLink}
+      display="block"
+      to={to}
+      aria-current={isActive ? 'page' : undefined}
+      tabIndex={tabIndex}
+    >
       <Box
+        borderRadius="small"
         color="gray-50"
         fontSize="medium"
-        fontWeight="medium"
-        px={4}
+        display="flex"
+        alignItems="center"
+        px={isSecondary ? 2 : 4}
         py={3}
-        borderRadius="small"
-        backgroundColor={isActive ? 'blue-400' : 'transparent'}
+        backgroundColor={backgroundColor}
         _hover={{
-          backgroundColor: isActive ? 'blue-400' : 'navyblue-500',
+          backgroundColor: activeColor,
         }}
         _focus={{
-          backgroundColor: isActive ? 'blue-400' : 'navyblue-500',
+          backgroundColor: activeColor,
         }}
         transition="background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms"
         truncated
       >
-        <Icon type={icon} size="medium" mr={4} />
-        {label}
+        <Icon type={icon} size={isSecondary ? 'small' : 'medium'} mr={isSecondary ? 4 : 3} />
+        <Box>{label}</Box>
       </Box>
     </Box>
   );
