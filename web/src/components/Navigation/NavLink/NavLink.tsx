@@ -36,20 +36,8 @@ const NavLink: React.FC<NavLinkProps> = ({ icon, label, to, tabIndex, isSecondar
   const destination = addTrailingSlash(getPathnameFromURI(to));
   const isActive = pathname.startsWith(destination);
 
-  const activeColor = React.useMemo(() => {
-    if (isSecondary || isActive) {
-      return 'blue-400';
-    }
-    return 'navyblue-500';
-  }, [isSecondary, isActive]);
-
-  const backgroundColor = React.useMemo(() => {
-    if (isActive) {
-      return 'blue-400';
-    }
-
-    return 'transparent';
-  }, [isActive]);
+  const activeColor = isSecondary || isActive ? 'blue-400' : 'navyblue-500';
+  const backgroundColor = isActive ? 'blue-400' : 'transparent';
 
   return (
     <Box
