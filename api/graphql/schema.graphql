@@ -158,6 +158,7 @@ type GetCustomLogOutput {
 }
 
 type CustomLogRecord {
+  customLogId: ID!
   logType: String!
   revision: Int!
   updatedAt: String!

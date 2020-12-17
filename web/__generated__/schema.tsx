@@ -265,6 +265,7 @@ export enum ComplianceStatusEnum {
 
 export type CustomLogRecord = {
   __typename?: 'CustomLogRecord';
+  customLogId: Scalars['ID'];
   logType: Scalars['String'];
   revision: Scalars['Int'];
   updatedAt: Scalars['String'];
@@ -2172,6 +2173,7 @@ export type CustomLogRecordResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['CustomLogRecord'] = ResolversParentTypes['CustomLogRecord']
 > = {
+  customLogId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   logType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   revision?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;

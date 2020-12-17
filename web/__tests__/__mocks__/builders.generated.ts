@@ -465,6 +465,8 @@ export const buildComplianceStatusCounts = (
 export const buildCustomLogRecord = (overrides: Partial<CustomLogRecord> = {}): CustomLogRecord => {
   return {
     __typename: 'CustomLogRecord',
+    customLogId:
+      'customLogId' in overrides ? overrides.customLogId : '891ac48a-63e2-4c73-90a4-66790becf860',
     logType: 'logType' in overrides ? overrides.logType : 'Towels',
     revision: 'revision' in overrides ? overrides.revision : 674,
     updatedAt: 'updatedAt' in overrides ? overrides.updatedAt : 'Automotive',
