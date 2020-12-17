@@ -89,11 +89,11 @@ const Navigation = () => {
       backgroundColor="navyblue-700"
     >
       <Flex as="nav" direction="column" width={220} height="100%" aria-label="Main" pb={2}>
-        <Box as={RRLink} to="/" px={4} pb={5} pt={7}>
+        <Box as={RRLink} to="/" px={4} pb={3} pt={8}>
           <Img
             src={PantherLogo}
             alt="Panther logo"
-            nativeWidth={149}
+            nativeWidth="auto"
             nativeHeight={32}
             display="block"
           />
@@ -152,7 +152,6 @@ const Navigation = () => {
               href={PANTHER_DOCS_LINK}
               fontWeight="normal"
               borderRadius="small"
-              tabIndex={-1}
               px={4}
               py={3}
               fontSize="medium"
@@ -170,7 +169,7 @@ const Navigation = () => {
           </Box>
 
           <Box as="li">
-            <NavLink icon="help" label="Support" to={urls.account.support()} tabIndex={-1} />
+            <NavLink icon="help" label="Support" to={urls.account.support()} />
           </Box>
         </Flex>
 

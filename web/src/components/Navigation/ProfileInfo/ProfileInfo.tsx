@@ -77,7 +77,7 @@ const ProfileIcon: React.FC = () => {
     <Popover>
       {({ isOpen, close: closePopover }) => (
         <React.Fragment>
-          <PopoverTrigger as={AbstractButton} aria-label="Toggle User Menu">
+          <PopoverTrigger as={AbstractButton} aria-label="Toggle User Menu" width="100%">
             <Flex spacing={2} align="center">
               <Box
                 width={40}
@@ -90,11 +90,14 @@ const ProfileIcon: React.FC = () => {
                 fontWeight="bold"
                 height={40}
                 backgroundColor={isOpen ? 'violet-400' : 'violet-500'}
+                flexShrink={0}
                 _hover={{ backgroundColor: 'violet-400' }}
               >
                 {getUserInitials(userInfo).toUpperCase()}
               </Box>
-              <Box fontWeight="bold">{getUserName(userInfo)}</Box>
+              <Box fontWeight="bold" truncated>
+                {getUserName(userInfo)}
+              </Box>
             </Flex>
           </PopoverTrigger>
           <PopoverContent alignment="right-bottom">

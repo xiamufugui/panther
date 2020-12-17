@@ -31,8 +31,8 @@ exports[`Navigation renders with active links 1`] = `
 .panther-1 {
   padding-left: 16px;
   padding-right: 16px;
-  padding-bottom: 20px;
-  padding-top: 28px;
+  padding-bottom: 12px;
+  padding-top: 32px;
 }
 
 .panther-0 {
@@ -258,6 +258,7 @@ exports[`Navigation renders with active links 1`] = `
 }
 
 .panther-39 {
+  width: 100%;
   cursor: pointer;
   color: #f6f6f6;
   -webkit-text-decoration: none;
@@ -303,6 +304,9 @@ exports[`Navigation renders with active links 1`] = `
   font-weight: 700;
   height: 40px;
   background-color: #5a508a;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
 }
 
 .panther-36:hover {
@@ -311,6 +315,9 @@ exports[`Navigation renders with active links 1`] = `
 
 .panther-37 {
   font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 <div>
@@ -333,7 +340,7 @@ exports[`Navigation renders with active links 1`] = `
           class="panther-0"
           height="32"
           src="test-file-stub"
-          width="149"
+          width="auto"
         />
       </a>
       <ul
@@ -504,7 +511,6 @@ exports[`Navigation renders with active links 1`] = `
           <a
             class="panther-28"
             href="https://docs.runpanther.io/v/release-1.2"
-            tabindex="-1"
           >
             <svg
               class="panther-3"
@@ -528,7 +534,6 @@ exports[`Navigation renders with active links 1`] = `
           <a
             class="panther-6"
             href="/support"
-            tabindex="-1"
           >
             <div
               class="panther-32"

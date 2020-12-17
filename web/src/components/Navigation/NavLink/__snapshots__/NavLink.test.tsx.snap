@@ -8,7 +8,7 @@ exports[`NavLink could render a secondary navigation link 1`] = `
 .panther-2 {
   border-radius: 2px;
   color: #f6f6f6;
-  font-size: 0.875rem;
+  font-size: 0.813rem;
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;

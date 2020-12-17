@@ -27,10 +27,9 @@ type NavLinkProps = {
   label: string;
   to: string;
   isSecondary?: boolean;
-  tabIndex?: number;
 };
 
-const NavLink: React.FC<NavLinkProps> = ({ icon, label, to, tabIndex, isSecondary }) => {
+const NavLink: React.FC<NavLinkProps> = ({ icon, label, to, isSecondary }) => {
   const { location } = useRouter();
   const pathname = addTrailingSlash(location.pathname);
   const destination = addTrailingSlash(getPathnameFromURI(to));
@@ -40,17 +39,11 @@ const NavLink: React.FC<NavLinkProps> = ({ icon, label, to, tabIndex, isSecondar
   const backgroundColor = isActive ? 'blue-400' : 'transparent';
 
   return (
-    <Box
-      as={RRLink}
-      display="block"
-      to={to}
-      aria-current={isActive ? 'page' : undefined}
-      tabIndex={tabIndex}
-    >
+    <Box as={RRLink} display="block" to={to} aria-current={isActive ? 'page' : undefined}>
       <Box
         borderRadius="small"
         color="gray-50"
-        fontSize="medium"
+        fontSize={isSecondary ? 'small-medium' : 'medium'}
         display="flex"
         alignItems="center"
         px={isSecondary ? 2 : 4}
