@@ -51,6 +51,7 @@ type tableItem struct {
 	CreatedAt                 time.Time         `json:"createdAt"`
 	CreatedBy                 string            `json:"createdBy"`
 	DedupPeriodMinutes        int               `json:"dedupPeriodMinutes,omitempty"`
+	DetectionQuery            []string          `json:"detectionQuery,omitempty"`
 	Threshold                 int               `json:"threshold,omitempty"`
 	Description               string            `json:"description,omitempty"`
 	DisplayName               string            `json:"displayName,omitempty"`
@@ -67,6 +68,7 @@ type tableItem struct {
 	// For log analysis rules, these are actually log types
 	ResourceTypes []string `json:"resourceTypes,omitempty" dynamodbav:"resourceTypes,stringset,omitempty"`
 
+	Managed      bool                      `json:"managed,omitempty"`
 	Mappings     []models.DataModelMapping `json:"mappings,omitempty"`
 	OutputIDs    []string                  `json:"outputIds,omitempty" dynamodbav:"outputIds,stringset,omitempty"`
 	Reference    string                    `json:"reference,omitempty"`
@@ -77,8 +79,9 @@ type tableItem struct {
 	Tags         []string                  `json:"tags,omitempty" dynamodbav:"tags,stringset,omitempty"`
 	Tests        []models.UnitTest         `json:"tests,omitempty"`
 
-	Type      models.DetectionType `json:"type"`
-	VersionID string               `json:"versionId,omitempty"`
+	Type            models.DetectionType `json:"type"`
+	UpdateAvailable bool                 `json:"updateAvailable,omitempty"`
+	VersionID       string               `json:"versionId,omitempty"`
 }
 
 // Add extra internal filtering fields before serializing to Dynamo
@@ -190,6 +193,27 @@ func (r *tableItem) DataModel() *models.DataModel {
 		LogTypes:       r.ResourceTypes,
 		Mappings:       r.Mappings,
 		VersionID:      r.VersionID,
+	}
+	genericapi.ReplaceMapSliceNils(result)
+	return result
+}
+
+// Pack converts a Dynamo row into a Pack external model.
+func (r *tableItem) Pack() *models.Pack {
+	r.normalize()
+	result := &models.Pack{
+		CreatedAt:       r.CreatedAt,
+		CreatedBy:       r.CreatedBy,
+		Description:     r.Description,
+		DetectionQuery:  r.detectionQuery,
+		DisplayName:     r.DisplayName,
+		Enabled:         r.Enabled,
+		ID:              r.ID,
+		LastModified:    r.LastModified,
+		LastModifiedBy:  r.LastModifiedBy,
+		Managed:         r.Managed,
+		UpdateAvailable: r.UpdateAvailable,
+		VersionID:       r.VersionID,
 	}
 	genericapi.ReplaceMapSliceNils(result)
 	return result
