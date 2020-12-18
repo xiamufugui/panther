@@ -29,14 +29,14 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 )
 
 func TestUpdateAlert(t *testing.T) {
-	tableMock := &tableMock{}
+	t.Parallel()
+	api := initTestAPI()
 
 	status := "OPEN"
 	userID := "userId"
@@ -74,10 +74,10 @@ func TestUpdateAlert(t *testing.T) {
 			DedupString:       aws.String(""),
 			LogTypes:          nil,
 			Severity:          aws.String("INFO"),
+			DeliveryResponses: make([]*models.DeliveryResponse, 0),
 			Status:            "CLOSED",
 			LastUpdatedBy:     userID,
 			LastUpdatedByTime: timeNow,
-			DeliveryResponses: []*models.DeliveryResponse{},
 			CreationTime:      aws.Time(timeNow),
 			UpdateTime:        aws.Time(timeNow),
 			EventsMatched:     aws.Int(0),
@@ -89,14 +89,11 @@ func TestUpdateAlert(t *testing.T) {
 	// We need to mimic the mock's true payload as it will happen in chunks
 	for page := 0; page < pages; page++ {
 		pageSize := int(math.Min(float64((page+1)*maxDDBPageSize), float64(alertCount)))
-		tableMock.On("UpdateAlertStatus", mock.Anything).Return(output[page*maxDDBPageSize:pageSize], nil).Once()
+		api.mockTable.On("UpdateAlertStatus", mock.Anything).Return(output[page*maxDDBPageSize:pageSize], nil).Once()
 	}
 
-	api := API{
-		alertsDB: tableMock,
-	}
 	results, err := api.UpdateAlertStatus(input)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	// The results will sometimes be out-of-order due to the concurrency
 	// We sort them here to compare against the original set
@@ -107,4 +104,6 @@ func TestUpdateAlert(t *testing.T) {
 	})
 
 	assert.Equal(t, expectedSummaries, results)
+
+	api.AssertExpectations(t)
 }

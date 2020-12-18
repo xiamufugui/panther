@@ -24,7 +24,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
@@ -32,7 +31,6 @@ import (
 
 var (
 	timeInTest = time.Now()
-
 	alertItems = []*table.AlertItem{
 		{
 			RuleID:            "ruleId",
@@ -76,7 +74,7 @@ var (
 )
 
 func TestListAlertsForRule(t *testing.T) {
-	tableMock := &tableMock{}
+	api := initTestAPI()
 
 	input := &models.ListAlertsInput{
 		RuleID:            aws.String("ruleId"),
@@ -86,22 +84,20 @@ func TestListAlertsForRule(t *testing.T) {
 		Severity:          []string{"INFO"},
 	}
 
-	tableMock.On("ListAll", input).
-		Return(alertItems, aws.String("lastKey"), nil)
-	api := API{
-		alertsDB: tableMock,
-	}
+	api.mockTable.On("ListAll", input).Return(alertItems, aws.String("lastKey"), nil)
+
 	result, err := api.ListAlerts(input)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, &models.ListAlertsOutput{
 		Alerts:           expectedAlertSummary,
 		LastEvaluatedKey: aws.String("lastKey"),
 	}, result)
+	api.AssertExpectations(t)
 }
 
 func TestListAllAlerts(t *testing.T) {
-	tableMock := &tableMock{}
+	api := initTestAPI()
 
 	input := &models.ListAlertsInput{
 		PageSize:          aws.Int(10),
@@ -115,25 +111,22 @@ func TestListAllAlerts(t *testing.T) {
 		CreatedAtBefore:   aws.Time(time.Now()),
 		SortDir:           aws.String("ascending"),
 	}
+	api.mockTable.On("ListAll", input).Return(alertItems, aws.String("lastKey"), nil)
 
-	tableMock.On("ListAll", input).
-		Return(alertItems, aws.String("lastKey"), nil)
-	api := API{
-		alertsDB: tableMock,
-	}
 	result, err := api.ListAlerts(input)
-	require.NoError(t, err)
-
+	assert.NoError(t, err)
 	assert.Equal(t, &models.ListAlertsOutput{
 		Alerts:           expectedAlertSummary,
 		LastEvaluatedKey: aws.String("lastKey"),
 	}, result)
+	api.AssertExpectations(t)
 }
 
 // Verifies backwards compatibility
 // Verifies that API returns correct results when alert title is not specified
 func TestListAllAlertsWithoutTitle(t *testing.T) {
-	tableMock := &tableMock{}
+	t.Parallel()
+	api := initTestAPI()
 
 	alertItems := []*table.AlertItem{
 		{
@@ -212,16 +205,15 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 		ExclusiveStartKey: aws.String("startKey"),
 	}
 
-	tableMock.On("ListAll", input).
-		Return(alertItems, aws.String("lastKey"), nil)
-	api := API{
-		alertsDB: tableMock,
-	}
-	result, err := api.ListAlerts(input)
-	require.NoError(t, err)
+	// Mock what is returned from DDB
+	api.mockTable.On("ListAll", input).Return(alertItems, aws.String("lastKey"), nil)
 
+	result, err := api.ListAlerts(input)
+	assert.NoError(t, err)
 	assert.Equal(t, &models.ListAlertsOutput{
 		Alerts:           expectedAlertSummary,
 		LastEvaluatedKey: aws.String("lastKey"),
 	}, result)
+
+	api.AssertExpectations(t)
 }
