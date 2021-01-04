@@ -83,3 +83,7 @@ func (API) DeleteGlobals(input *models.DeleteGlobalsInput) *events.APIGatewayPro
 
 	return &events.APIGatewayProxyResponse{StatusCode: http.StatusOK}
 }
+
+func (api API) DeletePacks(input *models.DeletePacksInput) *events.APIGatewayProxyResponse {
+	return api.DeleteRules(input)
+}

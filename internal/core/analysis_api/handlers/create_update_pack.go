@@ -19,6 +19,7 @@ package handlers
  */
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -28,18 +29,61 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-func (API) UpdatePack(input *models.PatchPackInput) *events.APIGatewayProxyResponse {
-	return patchPack(input, false)
+func (API) CreatePack(input *models.UpdatePackInput) *events.APIGatewayProxyResponse {
+	return writePack(input, true)
 }
 
-func patchPack(input *models.PatchPackInput) *events.APIGatewayProxyResponse {
+func (API) PatchPack(input *models.PatchPackInput) *events.APIGatewayProxyResponse {
+	// This is a partial update, so lookup existing item values
+	var item *tableItem
+	item, err := dynamoGet(input.ID, false)
+	if err != nil {
+		return &events.APIGatewayProxyResponse{
+			Body:       fmt.Sprintf("Internal error finding %s (%s)", input.ID, models.TypePack),
+			StatusCode: http.StatusInternalServerError,
+		}
+	}
+	if item == nil || item.Type != models.TypePack {
+		return &events.APIGatewayProxyResponse{
+			Body:       fmt.Sprintf("Cannot find %s (%s)", input.ID, models.TypePack),
+			StatusCode: http.StatusNotFound,
+		}
+	}
+	// Update the enabled status if it has changed
+	if item.Enabled != input.Enabled {
+		updateInput := models.UpdatePackInput{
+			Description:     item.Description,
+			DetectionQuery:  item.DetectionQuery,
+			DisplayName:     item.DisplayName,
+			Enabled:         input.Enabled,
+			Release:         item.Release,
+			Source:          item.Source,
+			UpdateAvailable: item.UpdateAvailable,
+		}
+		return writePack(&updateInput, false)
+	}
+	// Nothing to update, report success
+	return gatewayapi.MarshalResponse(item.Pack(), http.StatusOK)
+}
+
+func (API) UpdatePack(input *models.UpdatePackInput) *events.APIGatewayProxyResponse {
+	return writePack(input, false)
+}
+
+func (API) UpdatePackDetections(input *models.UpdatePackDetectionsInput) *events.APIGatewayProxyResponse {
+	// TODO: update pack detections
 
 }
 
 func writePack(input *models.UpdatePackInput, create bool) *events.APIGatewayProxyResponse {
 	item := &tableItem{
-		Enabled:   input.Enabled,
-		VersionID: input.VersionID,
+		Description:     input.Description,
+		DetectionQuery:  input.DetectionQuery,
+		DisplayName:     input.DisplayName,
+		Enabled:         input.Enabled,
+		Release:         input.Release,
+		Source:          input.Source,
+		UpdateAvailable: input.UpdateAvailable,
 	}
 
 	var statusCode int
@@ -47,7 +91,10 @@ func writePack(input *models.UpdatePackInput, create bool) *events.APIGatewayPro
 	if create {
 		if _, err := writeItem(item, input.UserID, aws.Bool(false)); err != nil {
 			if err == errExists {
-				return &events.APIGatewayProxyResponse{StatusCode: http.StatusConflict}
+				return &events.APIGatewayProxyResponse{
+					Body:       err.Error(),
+					StatusCode: http.StatusConflict,
+				}
 			}
 			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 		}

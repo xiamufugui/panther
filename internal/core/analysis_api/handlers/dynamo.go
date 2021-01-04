@@ -51,7 +51,7 @@ type tableItem struct {
 	CreatedAt                 time.Time         `json:"createdAt"`
 	CreatedBy                 string            `json:"createdBy"`
 	DedupPeriodMinutes        int               `json:"dedupPeriodMinutes,omitempty"`
-	DetectionQuery            []string          `json:"detectionQuery,omitempty"`
+	DetectionQuery            string            `json:"detectionQuery,omitempty"`
 	Threshold                 int               `json:"threshold,omitempty"`
 	Description               string            `json:"description,omitempty"`
 	DisplayName               string            `json:"displayName,omitempty"`
@@ -68,20 +68,21 @@ type tableItem struct {
 	// For log analysis rules, these are actually log types
 	ResourceTypes []string `json:"resourceTypes,omitempty" dynamodbav:"resourceTypes,stringset,omitempty"`
 
-	Managed      bool                      `json:"managed,omitempty"`
-	Mappings     []models.DataModelMapping `json:"mappings,omitempty"`
-	OutputIDs    []string                  `json:"outputIds,omitempty" dynamodbav:"outputIds,stringset,omitempty"`
-	Reference    string                    `json:"reference,omitempty"`
-	Reports      map[string][]string       `json:"reports,omitempty"`
-	Runbook      string                    `json:"runbook,omitempty"`
-	Severity     compliancemodels.Severity `json:"severity"`
-	Suppressions []string                  `json:"suppressions,omitempty" dynamodbav:"suppressions,stringset,omitempty"`
-	Tags         []string                  `json:"tags,omitempty" dynamodbav:"tags,stringset,omitempty"`
-	Tests        []models.UnitTest         `json:"tests,omitempty"`
-
-	Type            models.DetectionType `json:"type"`
-	UpdateAvailable bool                 `json:"updateAvailable,omitempty"`
-	VersionID       string               `json:"versionId,omitempty"`
+	Managed         bool                      `json:"managed,omitempty"`
+	Mappings        []models.DataModelMapping `json:"mappings,omitempty"`
+	OutputIDs       []string                  `json:"outputIds,omitempty" dynamodbav:"outputIds,stringset,omitempty"`
+	Reference       string                    `json:"reference,omitempty"`
+	Release         string                    `json:"release,omitempty"`
+	Reports         map[string][]string       `json:"reports,omitempty"`
+	Runbook         string                    `json:"runbook,omitempty"`
+	Severity        compliancemodels.Severity `json:"severity"`
+	Source          string                    `json:"source"`
+	Suppressions    []string                  `json:"suppressions,omitempty" dynamodbav:"suppressions,stringset,omitempty"`
+	Tags            []string                  `json:"tags,omitempty" dynamodbav:"tags,stringset,omitempty"`
+	Tests           []models.UnitTest         `json:"tests,omitempty"`
+	Type            models.DetectionType      `json:"type"`
+	UpdateAvailable bool                      `json:"updateAvailable,omitempty"`
+	VersionID       string                    `json:"versionId,omitempty"`
 }
 
 // Add extra internal filtering fields before serializing to Dynamo
@@ -205,13 +206,14 @@ func (r *tableItem) Pack() *models.Pack {
 		CreatedAt:       r.CreatedAt,
 		CreatedBy:       r.CreatedBy,
 		Description:     r.Description,
-		DetectionQuery:  r.detectionQuery,
+		DetectionQuery:  r.DetectionQuery,
 		DisplayName:     r.DisplayName,
 		Enabled:         r.Enabled,
 		ID:              r.ID,
 		LastModified:    r.LastModified,
 		LastModifiedBy:  r.LastModifiedBy,
 		Managed:         r.Managed,
+		Release:         r.Release,
 		UpdateAvailable: r.UpdateAvailable,
 		VersionID:       r.VersionID,
 	}

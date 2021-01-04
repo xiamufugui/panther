@@ -45,6 +45,10 @@ func (API) GetDataModel(input *models.GetDataModelInput) *events.APIGatewayProxy
 	return handleGet(input.ID, input.VersionID, models.TypeDataModel)
 }
 
+func (API) GetPack(input *models.GetPackInput) *events.APIGatewayProxyResponse {
+	return handleGet(input.ID, input.VersionID, models.TypePack)
+}
+
 // Handle GET request for GetPolicy, GetRule, and GetGlobal
 func handleGet(itemID, versionID string, codeType models.DetectionType) *events.APIGatewayProxyResponse {
 	var err error
@@ -101,6 +105,9 @@ func handleGet(itemID, versionID string, codeType models.DetectionType) *events.
 
 	case models.TypeDataModel:
 		return gatewayapi.MarshalResponse(item.DataModel(), http.StatusOK)
+
+	case models.TypePack:
+		return gatewayapi.MarshalResponse(item.Pack(), http.StatusOK)
 
 	default:
 		panic("unexpected codeType " + codeType)
