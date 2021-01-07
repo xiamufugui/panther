@@ -31,6 +31,7 @@ require (
 	github.com/tidwall/sjson v1.1.2
 	github.com/valyala/fasttemplate v1.2.1
 	github.com/xeipuuv/gojsonschema v1.2.0
+	go.starlark.net v0.0.0-20201210151846-e81fc95f7bd5
 	go.uber.org/multierr v1.6.0
 	go.uber.org/zap v1.16.0
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
