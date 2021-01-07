@@ -111,7 +111,7 @@ func updatePack(input *models.UpdatePackInput, create bool) *events.APIGatewayPr
 	var statusCode int
 
 	if create {
-		if _, err := writePack(item, input.UserID, aws.Bool(false)); err != nil {
+		if err := writePack(item, input.UserID, aws.Bool(false)); err != nil {
 			if err == errExists {
 				return &events.APIGatewayProxyResponse{
 					Body:       err.Error(),
@@ -122,7 +122,7 @@ func updatePack(input *models.UpdatePackInput, create bool) *events.APIGatewayPr
 		}
 		statusCode = http.StatusCreated
 	} else { // update
-		if _, err := writePack(item, input.UserID, aws.Bool(true)); err != nil {
+		if err := writePack(item, input.UserID, aws.Bool(true)); err != nil {
 			if err == errNotExists || err == errWrongType {
 				// errWrongType means we tried to modify a pack that is actually a different detection type.
 				// In this case return 404 - the pack you tried to modify does not exist.
@@ -136,9 +136,9 @@ func updatePack(input *models.UpdatePackInput, create bool) *events.APIGatewayPr
 	return gatewayapi.MarshalResponse(item.Pack(), statusCode)
 }
 
-func retrieveDetectionUpdates(release string) (map[string]*tableItem, error) {
-	// This is to be implemented in another task / PR but here is the basic outline:
-	// retrieve the release version of detections from panther-analysis and return them as a slice
-	// of table items
-	return nil, nil
-}
+//func retrieveDetectionUpdates(release string) (map[string]*tableItem, error) {
+// This is to be implemented in another task / PR but here is the basic outline:
+// retrieve the release version of detections from panther-analysis and return them as a slice
+// of table items
+//	return nil, nil
+//}

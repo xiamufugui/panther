@@ -248,39 +248,34 @@ func writeItem(item *tableItem, userID string, mustExist *bool) (int, error) {
 // To allow either an update or a create,   mustExist = nil (neither)
 //
 // The first return value indicates what kind of change took place (none, new item, updated item).
-func writePack(item *packTableItem, userID string, mustExist *bool) (int, error) {
+func writePack(item *packTableItem, userID string, mustExist *bool) error {
 	oldItem, err := dynamoGetPack(item.ID, true)
-	changeType := noChange
 	if err != nil {
-		return changeType, err
+		return err
 	}
 
 	if mustExist != nil {
 		if *mustExist && oldItem == nil {
-			return changeType, errNotExists // item should exist but does not (update)
+			return errNotExists // item should exist but does not (update)
 		}
 		if !*mustExist && oldItem != nil {
-			return changeType, errExists // item exists but should not (create)
+			return errExists // item exists but should not (create)
 		}
 	}
 
 	if oldItem == nil {
 		item.CreatedAt = time.Now()
 		item.CreatedBy = userID
-		changeType = newItem
 	} else {
 		if equal := packUpdated(oldItem, item); equal {
 			zap.L().Info("no changes necessary", zap.String("packId", item.ID))
-			return changeType, nil
+			return nil
 		}
 		// If there was an error evaluating equality, just assume they are not equal and continue
 		// with the update as normal.
 
 		item.CreatedAt = oldItem.CreatedAt
 		item.CreatedBy = oldItem.CreatedBy
-		if packUpdated(oldItem, item) {
-			changeType = updatedItem
-		}
 	}
 
 	item.LastModified = time.Now()
@@ -294,10 +289,10 @@ func writePack(item *packTableItem, userID string, mustExist *bool) (int, error)
 
 	// Write to Dynamo (with version ID)
 	if err := dynamoPutPack(item); err != nil {
-		return changeType, err
+		return err
 	}
 
-	return changeType, nil
+	return nil
 }
 
 // itemUpdated checks if ANY field has been changed between the old and new item. Only used to inform users whether the

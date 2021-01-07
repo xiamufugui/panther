@@ -64,11 +64,10 @@ type LambdaInput struct {
 	UpdateDataModel  *UpdateDataModelInput  `json:"updateDataModel,omitempty"`
 
 	// Detection Packs
-	CreatePack  *CreatePackInput  `json:"createPack,omitempty"`
 	DeletePacks *DeletePacksInput `json:"deletePacks,omitempty"`
 	GetPack     *GetPackInput     `json:"getPack,omitempty"`
 	ListPacks   *ListPacksInput   `json:"listPacks,omitempty"`
-	UpdatePack  *UpdatePackInput  `json:"updatePack,omitempty"`
+	PatchPack   *PatchPackInput   `json:"updatePack,omitempty"`
 	PollPacks   *PollPacksInput   `json:"pollPacks,omitempty"`
 }
 

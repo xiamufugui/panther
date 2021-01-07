@@ -105,34 +105,34 @@ type PollPacksInput struct {
 
 // This struct is used to build a new Pack or used by Patch operation to update certain fields
 type UpdatePackInput struct {
-	AvailableReleases []string `json:"availableReleases"`
+	Enabled           bool     `json:"enabled"`
+	UpdateAvailable   bool     `json:"updateAvailable"`
 	Description       string   `json:"description"`
-	DetectionIDs      []string `json:"detectionIds"`
 	DetectionQuery    string   `json:"detectionQuery"`
 	DisplayName       string   `json:"displayName"`
-	Enabled           bool     `json:"enabled"`
 	EnabledRelease    string   `json:"enabledRelease"`
 	ID                string   `json:"id" validate:"required,max=1000,excludesall='<>&\""`
 	Source            string   `json:"source"`
 	UserID            string   `json:"userId" validate:"required"`
-	UpdateAvailable   bool     `json:"updateAvailable"`
+	AvailableReleases []string `json:"availableReleases"`
+	DetectionIDs      []string `json:"detectionIds"`
 }
 
 type Pack struct {
-	AvailableReleases []string  `json:"availableReleases"`
+	Enabled           bool      `json:"enabled"`
+	Managed           bool      `json:"managed"`
+	UpdateAvailable   bool      `json:"updateAvailable"`
 	CreatedAt         time.Time `json:"createdAt"`
 	CreatedBy         string    `json:"createdBy"`
 	Description       string    `json:"description"`
-	DetectionIDs      []string  `json:"detectionIds"`
 	DetectionQuery    string    `json:"detectionQuery"`
 	DisplayName       string    `json:"displayName"`
-	Enabled           bool      `json:"enabled"`
 	EnabledRelease    string    `json:"enabledRelease"`
 	ID                string    `json:"id" validate:"required,max=1000,excludesall='<>&\""`
 	LastModified      time.Time `json:"lastModified"`
 	LastModifiedBy    string    `json:"lastModifiedBy"`
-	Managed           bool      `json:"managed"`
 	Source            string    `json:"source"`
-	UpdateAvailable   bool      `json:"updateAvailable"`
 	VersionID         string    `json:"versionId"` // TODO: VersionID ? (will this be in S3?)
+	AvailableReleases []string  `json:"availableReleases"`
+	DetectionIDs      []string  `json:"detectionIds"`
 }

@@ -93,17 +93,17 @@ type packTableItem struct {
 	DetectionQuery    string    `json:"detectionQuery,omitempty"`
 	DisplayName       string    `json:"displayName,omitempty"`
 	EnabledRelease    string    `json:"enabledRelease,omitempty"`
-	Enabled           bool      `json:"enabled"`
 	ID                string    `json:"id"`
 	LastModified      time.Time `json:"lastModified"`
 	LastModifiedBy    string    `json:"lastModifiedBy"`
+	Source            string    `json:"source"`
 
 	// Lowercase versions of string fields for easy filtering
 	LowerDisplayName string `json:"lowerDisplayName,omitempty"`
 	LowerID          string `json:"lowerId,omitempty"`
 
+	Enabled         bool   `json:"enabled"`
 	Managed         bool   `json:"managed,omitempty"`
-	Source          string `json:"source"`
 	UpdateAvailable bool   `json:"updateAvailable,omitempty"`
 	VersionID       string `json:"versionId,omitempty"`
 }
@@ -401,7 +401,7 @@ func dynamoPut(policy *tableItem) error {
 
 // Write a single policy to Dynamo.
 func dynamoPutPack(pack *packTableItem) error {
-	body, err := dynamodbattribute.MarshalMap(pagePackItems)
+	body, err := dynamodbattribute.MarshalMap(pack)
 	if err != nil {
 		zap.L().Error("dynamodbattribute.MarshalMap failed", zap.Error(err))
 		return err
