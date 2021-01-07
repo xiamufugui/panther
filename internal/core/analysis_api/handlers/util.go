@@ -238,6 +238,68 @@ func writeItem(item *tableItem, userID string, mustExist *bool) (int, error) {
 	return changeType, nil
 }
 
+// Create/update a pack
+//
+// The following fields are set automatically (need not be set by the caller):
+//     CreatedAt, CreatedBy, LastModified, LastModifiedBy, VersionID
+//
+// To update an existing item,              mustExist = aws.Bool(true)
+// To create a new item (with a unique ID), mustExist = aws.Bool(false)
+// To allow either an update or a create,   mustExist = nil (neither)
+//
+// The first return value indicates what kind of change took place (none, new item, updated item).
+func writePack(item *packTableItem, userID string, mustExist *bool) (int, error) {
+	oldItem, err := dynamoGetPack(item.ID, true)
+	changeType := noChange
+	if err != nil {
+		return changeType, err
+	}
+
+	if mustExist != nil {
+		if *mustExist && oldItem == nil {
+			return changeType, errNotExists // item should exist but does not (update)
+		}
+		if !*mustExist && oldItem != nil {
+			return changeType, errExists // item exists but should not (create)
+		}
+	}
+
+	if oldItem == nil {
+		item.CreatedAt = time.Now()
+		item.CreatedBy = userID
+		changeType = newItem
+	} else {
+		if equal := packUpdated(oldItem, item); equal {
+			zap.L().Info("no changes necessary", zap.String("packId", item.ID))
+			return changeType, nil
+		}
+		// If there was an error evaluating equality, just assume they are not equal and continue
+		// with the update as normal.
+
+		item.CreatedAt = oldItem.CreatedAt
+		item.CreatedBy = oldItem.CreatedBy
+		if packUpdated(oldItem, item) {
+			changeType = updatedItem
+		}
+	}
+
+	item.LastModified = time.Now()
+	item.LastModifiedBy = userID
+
+	// TODO: should pack data be stored in S3?
+	// Write to S3 first so we can get the versionID
+	//if err := s3Upload(item); err != nil {
+	//	return changeType, err
+	//
+
+	// Write to Dynamo (with version ID)
+	if err := dynamoPutPack(item); err != nil {
+		return changeType, err
+	}
+
+	return changeType, nil
+}
+
 // itemUpdated checks if ANY field has been changed between the old and new item. Only used to inform users whether the
 // result of a BulkUpload operation actually changed something or not.
 //
@@ -331,6 +393,23 @@ func mappingEquality(oldItem, newItem *tableItem) bool {
 		}
 	}
 	return true
+}
+
+// packUpdated checks if ANY field has been changed between the old and new pack item
+//
+// DO NOT use this for situations the items MUST be exactly equal, this is a "good enough" approximation for the
+// purpose it serves, which is informing users that their bulk operation did or did not change something.
+func packUpdated(oldItem, newItem *packTableItem) bool {
+	itemsEqual := setEquality(oldItem.AvailableReleases, newItem.AvailableReleases) &&
+		oldItem.Description == newItem.Description &&
+		setEquality(oldItem.DetectionIDs, newItem.DetectionIDs) &&
+		oldItem.DetectionQuery == newItem.DetectionQuery &&
+		oldItem.DisplayName == newItem.DisplayName &&
+		oldItem.Enabled == newItem.Enabled && oldItem.Managed == newItem.Managed &&
+		oldItem.EnabledRelease == newItem.EnabledRelease && oldItem.Source == newItem.Source &&
+		oldItem.UpdateAvailable == newItem.UpdateAvailable
+
+	return !itemsEqual
 }
 
 // Sort a slice of strings ignoring case when possible

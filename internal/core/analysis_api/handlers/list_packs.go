@@ -40,12 +40,12 @@ func (API) ListPacks(input *models.ListPacksInput) *events.APIGatewayProxyRespon
 	if input.PageSize == 0 {
 		input.PageSize = defaultPageSize
 	}
-	if input.SortBy == "" {
-		input.SortBy = "id"
-	}
-	if input.SortDir == "" {
-		input.SortDir = defaultSortDir
-	}
+	//if input.SortBy == "" {
+	//	input.SortBy = "id"
+	//}
+	//if input.SortDir == "" {
+	//	input.SortDir = defaultSortDir
+	//}
 
 	// Scan dynamo
 	scanInput, err := packScanInput(input)
@@ -54,8 +54,8 @@ func (API) ListPacks(input *models.ListPacksInput) *events.APIGatewayProxyRespon
 			Body: err.Error(), StatusCode: http.StatusInternalServerError}
 	}
 
-	var items []tableItem
-	err = scanPages(scanInput, func(item tableItem) error {
+	var items []packTableItem
+	err = scanPackPages(scanInput, func(item packTableItem) error {
 		items = append(items, item)
 		return nil
 	})
@@ -65,9 +65,17 @@ func (API) ListPacks(input *models.ListPacksInput) *events.APIGatewayProxyRespon
 	}
 
 	// Sort and page
-	sortItems(items, "id", input.SortDir, nil)
+	// TODO: no sorting logic implemented yet... I wanted to re-use the logic that was already there, but couldn't
+	// think of a good way to do it because the sorting funcs take in a detection table item (vs a
+	// pack table entry)
+	// Here are a few options I thought of, but didn't like any of them:
+	// wrap the sort functions so they could take pack entry OR detection entry?
+	// wrap the packItem / tableItem in a higher level struct to use in each func, check which one is non-null?
+	// - is there a better way?
+	//sortItems(items, "id", input.SortDir, nil)
+
 	var paging models.Paging
-	paging, items = pageItems(items, input.Page, input.PageSize)
+	paging, items = pagePackItems(items, input.Page, input.PageSize)
 
 	// Convert to output struct
 	result := models.ListPacksOutput{
@@ -94,6 +102,11 @@ func packScanInput(input *models.ListPacksInput) (*dynamodb.ScanInput, error) {
 			expression.Name("enabled"), expression.Value(*input.Enabled)))
 	}
 
+	if input.EnabledRelease != "" {
+		filters = append(filters, expression.Equal(expression.Name("enabledRelease"),
+			expression.Value(input.EnabledRelease)))
+	}
+
 	if input.LastModifiedBy != "" {
 		filters = append(filters, expression.Equal(expression.Name("lastModifiedBy"),
 			expression.Value(input.LastModifiedBy)))
@@ -116,5 +129,37 @@ func packScanInput(input *models.ListPacksInput) (*dynamodb.ScanInput, error) {
 		filters = append(filters, expression.Equal(expression.Name("updateAvailable"), expression.Value(*input.UpdateAvailable)))
 	}
 
+	if len(input.AvailableReleases) > 0 {
+		// a data model with no resource types applies to all of them
+		releaseFilter := expression.AttributeNotExists(expression.Name("availableReleases"))
+		for _, releaseTag := range input.AvailableReleases {
+			releaseFilter = releaseFilter.Or(expression.Contains(expression.Name("availableReleases"), releaseTag))
+		}
+		filters = append(filters, releaseFilter)
+	}
+
 	return buildScanInput(models.TypePack, []string{}, filters...)
+}
+
+// Truncate list of items to the requested page
+func pagePackItems(items []packTableItem, page, pageSize int) (models.Paging, []packTableItem) {
+	if len(items) == 0 {
+		return models.Paging{}, nil
+	}
+
+	totalPages := len(items) / pageSize
+	if len(items)%pageSize > 0 {
+		totalPages++ // Add one more to page count if there is an incomplete page at the end
+	}
+
+	paging := models.Paging{
+		ThisPage:   page,
+		TotalItems: len(items),
+		TotalPages: totalPages,
+	}
+
+	// Truncate to just the requested page
+	lowerBound := intMin((page-1)*pageSize, len(items))
+	upperBound := intMin(page*pageSize, len(items))
+	return paging, items[lowerBound:upperBound]
 }

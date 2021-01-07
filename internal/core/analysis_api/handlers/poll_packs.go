@@ -19,15 +19,19 @@ package handlers
  */
 
 import (
-	"net/http"
-
 	"github.com/aws/aws-lambda-go/events"
-
-	"github.com/panther-labs/panther/api/lambda/analysis/models"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-func (API) PollPacks(input *models.PollPacksInput) *events.APIGatewayProxyResponse {
-	// TODO: poll for new packs / new detections in existing packs
-	return gatewayapi.MarshalResponse(nil, http.StatusOK)
+func (API) PollPacks() *events.APIGatewayProxyResponse {
+	// TODO: this work will be done in another PR / task, but here is an outline
+	// First, retrieve & validate all the packs in the panther-analysis repo
+
+	// Second, lookup existing item values to determine if updates are available
+
+	// Finally, loop through each pack and CHECK if update is available / create a new pack:
+	// update fields: availableReleases and updateAvailable status of the detections in the pack
+	// AND create any _new_ packs (default to disabled status)
+
+	// If there is nothing to update, report success
+	return nil
 }

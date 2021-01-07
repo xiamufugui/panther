@@ -52,6 +52,7 @@ type envConfig struct {
 	Bucket               string `required:"true" split_words:"true"`
 	LayerManagerQueueURL string `required:"true" split_words:"true"`
 	RulesEngine          string `required:"true" split_words:"true"`
+	PackTable            string `required:"true" split_words:"true"`
 	PolicyEngine         string `required:"true" split_words:"true"`
 	ResourceQueueURL     string `required:"true" split_words:"true"`
 	Table                string `required:"true" split_words:"true"`

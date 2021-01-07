@@ -28,16 +28,22 @@ type DeletePacksInput = DeletePoliciesInput
 
 type GetPackInput struct {
 	ID        string `json:"id" validate:"required,max=1000,excludesall='<>&\""`
-	VersionID string `json:"versionId" validate:"omitempty,len=32"`
+	VersionID string `json:"versionId" validate:"omitempty,len=32"` // TODO: will this be in S3?
 }
 
 type ListPacksInput struct {
 	// ----- Filtering -----
+	// Only include packs who have one of these available release
+	AvailableReleases []string `json:"availableReleases"`
+
 	// Only include packs whose creator matches this user ID (which need not be a uuid)
 	CreatedBy string `json:"createdBy"`
 
 	// Only include packs which are enabled or disabled
 	Enabled *bool `json:"enabled"`
+
+	// Only include packs which have this enabledRelease
+	EnabledRelease string `json:"enabledRelease"`
 
 	// Only include packs which were last modified by this user ID
 	LastModifiedBy string `json:"lastModifiedBy"`
@@ -58,9 +64,9 @@ type ListPacksInput struct {
 	// Fields to return in the response (default: all)
 	Fields []string `json:"fields" validate:"max=20,dive,required,max=100"`
 
-	// ----- Sorting -----
-	SortBy  string `json:"sortBy" validate:"omitempty,oneof=displayName enabled id lastModified logTypes severity"`
-	SortDir string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
+	// ----- Sorting ----- TODO see notes in "list_packs.go"
+	//SortBy  string `json:"sortBy" validate:"omitempty,oneof=displayName enabled id lastModified logTypes severity"`
+	//SortDir string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
 
 	// ----- Paging -----
 	PageSize int `json:"pageSize" validate:"min=0,max=1000"`
@@ -73,12 +79,14 @@ type ListPacksOutput struct {
 }
 
 type PatchPackInput struct {
-	// This is a partial update (vs complete overwrite in the `UpdatePackInput`)
-	Enabled bool   `json:"enabled"`
-	ID      string `json:"id" validate:"required,max=1000,excludesall='<>&\""`
-	UserID  string `json:"userId" validate:"required"`
+	// This is a partial update
+	Enabled        bool   `json:"enabled"`
+	EnabledRelease string `json:"enabledRelease"`
+	ID             string `json:"id" validate:"required,max=1000,excludesall='<>&\""`
+	UserID         string `json:"userId" validate:"required"`
 }
 
+// PollPacksInput will also update the pack metadata: "availableReleases" and "updateAvailable"
 type PollPacksInput struct {
 	// PollPacksInput will be similar to ListPacksInput, in that there are several
 	// ways to specify which packs you would like to poll for updates
@@ -95,48 +103,36 @@ type PollPacksInput struct {
 	Source string `json:"source"`
 }
 
-type RevertPackInput struct {
-	ID        string `json:"id" validate:"required,max=1000,excludesall='<>&\""`
-	VersionID string `json:"versionId"` // TODO: VersionID vs Version (in github release)
-}
-
+// This struct is used to build a new Pack or used by Patch operation to update certain fields
 type UpdatePackInput struct {
-	// in the UI will will only allow users to update enabled/disabled status and "revert to previous"
-	// BUT should we expose other ways to update packs here for in the future?
-	// e.g. if a user want to define their own pack using the UI, this would be the
-	// the way to update it?
-	Description     string `json:"description"`
-	DetectionQuery  string `json:"detectionQuery"`
-	DisplayName     string `json:"displayName"`
-	Enabled         bool   `json:"enabled"`
-	ID              string `json:"id" validate:"required,max=1000,excludesall='<>&\""`
-	Release         string `json:"release"`
-	Source          string `json:"source"`
-	UserID          string `json:"userId" validate:"required"`
-	UpdateAvailable bool   `json:"updateAvailable"`
-}
-
-type UpdatePackDetectionsInput struct {
-	// in the UI will will only allow users to update enabled/disabled status and "revert to previous"
-	// BUT should we expose other ways to update packs here for in the future?
-	// e.g. if a user want to define their own pack using the UI, this would be the
-	// the way to update it?
-	ID string `json:"id" validate:"required,max=1000,excludesall='<>&\""`
+	AvailableReleases []string `json:"availableReleases"`
+	Description       string   `json:"description"`
+	DetectionIDs      []string `json:"detectionIds"`
+	DetectionQuery    string   `json:"detectionQuery"`
+	DisplayName       string   `json:"displayName"`
+	Enabled           bool     `json:"enabled"`
+	EnabledRelease    string   `json:"enabledRelease"`
+	ID                string   `json:"id" validate:"required,max=1000,excludesall='<>&\""`
+	Source            string   `json:"source"`
+	UserID            string   `json:"userId" validate:"required"`
+	UpdateAvailable   bool     `json:"updateAvailable"`
 }
 
 type Pack struct {
-	CreatedAt       time.Time `json:"createdAt"`
-	CreatedBy       string    `json:"createdBy"`
-	Description     string    `json:"description"`
-	DetectionQuery  string    `json:"detectionQuery"`
-	DisplayName     string    `json:"displayName"`
-	Enabled         bool      `json:"enabled"`
-	ID              string    `json:"id" validate:"required,max=1000,excludesall='<>&\""`
-	LastModified    time.Time `json:"lastModified"`
-	LastModifiedBy  string    `json:"lastModifiedBy"`
-	Managed         bool      `json:"managed"`
-	Release         string    `json:"release"`
-	Source          string    `json:"source"`
-	UpdateAvailable bool      `json:"updateAvailable"`
-	VersionID       string    `json:"versionId"` // TODO: VersionID vs Version (in github release)
+	AvailableReleases []string  `json:"availableReleases"`
+	CreatedAt         time.Time `json:"createdAt"`
+	CreatedBy         string    `json:"createdBy"`
+	Description       string    `json:"description"`
+	DetectionIDs      []string  `json:"detectionIds"`
+	DetectionQuery    string    `json:"detectionQuery"`
+	DisplayName       string    `json:"displayName"`
+	Enabled           bool      `json:"enabled"`
+	EnabledRelease    string    `json:"enabledRelease"`
+	ID                string    `json:"id" validate:"required,max=1000,excludesall='<>&\""`
+	LastModified      time.Time `json:"lastModified"`
+	LastModifiedBy    string    `json:"lastModifiedBy"`
+	Managed           bool      `json:"managed"`
+	Source            string    `json:"source"`
+	UpdateAvailable   bool      `json:"updateAvailable"`
+	VersionID         string    `json:"versionId"` // TODO: VersionID ? (will this be in S3?)
 }

@@ -46,7 +46,34 @@ func (API) GetDataModel(input *models.GetDataModelInput) *events.APIGatewayProxy
 }
 
 func (API) GetPack(input *models.GetPackInput) *events.APIGatewayProxyResponse {
-	return handleGet(input.ID, input.VersionID, models.TypePack)
+	itemID, err := url.QueryUnescape(input.ID)
+	if err != nil {
+		return &events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: http.StatusBadRequest}
+	}
+
+	var item *packTableItem
+	item, err = dynamoGetPack(itemID, false)
+	// TODO: do packs need to be in S3?
+	//if versionID == "" {
+	// Get latest version from Dynamo
+	//} else {
+	// Get specific version from S3
+	//item, err = s3Get(itemID, versionID)
+	//}
+
+	if err != nil {
+		return &events.APIGatewayProxyResponse{
+			Body:       fmt.Sprintf("Internal error finding %s (%s)", itemID, models.TypePack),
+			StatusCode: http.StatusInternalServerError,
+		}
+	}
+	if item == nil {
+		return &events.APIGatewayProxyResponse{
+			Body:       fmt.Sprintf("Cannot find %s (%s)", itemID, models.TypePack),
+			StatusCode: http.StatusNotFound,
+		}
+	}
+	return gatewayapi.MarshalResponse(item.Pack(), http.StatusOK)
 }
 
 // Handle GET request for GetPolicy, GetRule, and GetGlobal
@@ -105,9 +132,6 @@ func handleGet(itemID, versionID string, codeType models.DetectionType) *events.
 
 	case models.TypeDataModel:
 		return gatewayapi.MarshalResponse(item.DataModel(), http.StatusOK)
-
-	case models.TypePack:
-		return gatewayapi.MarshalResponse(item.Pack(), http.StatusOK)
 
 	default:
 		panic("unexpected codeType " + codeType)

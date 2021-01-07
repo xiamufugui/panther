@@ -51,7 +51,6 @@ type tableItem struct {
 	CreatedAt                 time.Time         `json:"createdAt"`
 	CreatedBy                 string            `json:"createdBy"`
 	DedupPeriodMinutes        int               `json:"dedupPeriodMinutes,omitempty"`
-	DetectionQuery            string            `json:"detectionQuery,omitempty"`
 	Threshold                 int               `json:"threshold,omitempty"`
 	Description               string            `json:"description,omitempty"`
 	DisplayName               string            `json:"displayName,omitempty"`
@@ -68,21 +67,45 @@ type tableItem struct {
 	// For log analysis rules, these are actually log types
 	ResourceTypes []string `json:"resourceTypes,omitempty" dynamodbav:"resourceTypes,stringset,omitempty"`
 
-	Managed         bool                      `json:"managed,omitempty"`
-	Mappings        []models.DataModelMapping `json:"mappings,omitempty"`
-	OutputIDs       []string                  `json:"outputIds,omitempty" dynamodbav:"outputIds,stringset,omitempty"`
-	Reference       string                    `json:"reference,omitempty"`
-	Release         string                    `json:"release,omitempty"`
-	Reports         map[string][]string       `json:"reports,omitempty"`
-	Runbook         string                    `json:"runbook,omitempty"`
-	Severity        compliancemodels.Severity `json:"severity"`
-	Source          string                    `json:"source"`
-	Suppressions    []string                  `json:"suppressions,omitempty" dynamodbav:"suppressions,stringset,omitempty"`
-	Tags            []string                  `json:"tags,omitempty" dynamodbav:"tags,stringset,omitempty"`
-	Tests           []models.UnitTest         `json:"tests,omitempty"`
-	Type            models.DetectionType      `json:"type"`
-	UpdateAvailable bool                      `json:"updateAvailable,omitempty"`
-	VersionID       string                    `json:"versionId,omitempty"`
+	Mappings     []models.DataModelMapping `json:"mappings,omitempty"`
+	OutputIDs    []string                  `json:"outputIds,omitempty" dynamodbav:"outputIds,stringset,omitempty"`
+	Reference    string                    `json:"reference,omitempty"`
+	Reports      map[string][]string       `json:"reports,omitempty"`
+	Runbook      string                    `json:"runbook,omitempty"`
+	Severity     compliancemodels.Severity `json:"severity"`
+	Suppressions []string                  `json:"suppressions,omitempty" dynamodbav:"suppressions,stringset,omitempty"`
+	Tags         []string                  `json:"tags,omitempty" dynamodbav:"tags,stringset,omitempty"`
+	Tests        []models.UnitTest         `json:"tests,omitempty"`
+	Type         models.DetectionType      `json:"type"`
+	VersionID    string                    `json:"versionId,omitempty"`
+}
+
+// The pack struct stored in Dynamo isn't quite the same as the pack struct returned in the API.
+//
+// optional values can be omitted from the table if they are empty,
+// and extra fields are added for more efficient filtering.
+type packTableItem struct {
+	AvailableReleases []string  `json:"availableReleases"`
+	CreatedAt         time.Time `json:"createdAt"`
+	CreatedBy         string    `json:"createdBy"`
+	Description       string    `json:"description,omitempty"`
+	DetectionIDs      []string  `json:"detectionIds,omitempty"`
+	DetectionQuery    string    `json:"detectionQuery,omitempty"`
+	DisplayName       string    `json:"displayName,omitempty"`
+	EnabledRelease    string    `json:"enabledRelease,omitempty"`
+	Enabled           bool      `json:"enabled"`
+	ID                string    `json:"id"`
+	LastModified      time.Time `json:"lastModified"`
+	LastModifiedBy    string    `json:"lastModifiedBy"`
+
+	// Lowercase versions of string fields for easy filtering
+	LowerDisplayName string `json:"lowerDisplayName,omitempty"`
+	LowerID          string `json:"lowerId,omitempty"`
+
+	Managed         bool   `json:"managed,omitempty"`
+	Source          string `json:"source"`
+	UpdateAvailable bool   `json:"updateAvailable,omitempty"`
+	VersionID       string `json:"versionId,omitempty"`
 }
 
 // Add extra internal filtering fields before serializing to Dynamo
@@ -200,22 +223,23 @@ func (r *tableItem) DataModel() *models.DataModel {
 }
 
 // Pack converts a Dynamo row into a Pack external model.
-func (r *tableItem) Pack() *models.Pack {
-	r.normalize()
+func (r *packTableItem) Pack() *models.Pack {
 	result := &models.Pack{
-		CreatedAt:       r.CreatedAt,
-		CreatedBy:       r.CreatedBy,
-		Description:     r.Description,
-		DetectionQuery:  r.DetectionQuery,
-		DisplayName:     r.DisplayName,
-		Enabled:         r.Enabled,
-		ID:              r.ID,
-		LastModified:    r.LastModified,
-		LastModifiedBy:  r.LastModifiedBy,
-		Managed:         r.Managed,
-		Release:         r.Release,
-		UpdateAvailable: r.UpdateAvailable,
-		VersionID:       r.VersionID,
+		AvailableReleases: r.AvailableReleases,
+		CreatedAt:         r.CreatedAt,
+		CreatedBy:         r.CreatedBy,
+		Description:       r.Description,
+		DetectionIDs:      r.DetectionIDs,
+		DetectionQuery:    r.DetectionQuery,
+		DisplayName:       r.DisplayName,
+		EnabledRelease:    r.EnabledRelease,
+		Enabled:           r.Enabled,
+		ID:                r.ID,
+		LastModified:      r.LastModified,
+		LastModifiedBy:    r.LastModifiedBy,
+		Managed:           r.Managed,
+		UpdateAvailable:   r.UpdateAvailable,
+		VersionID:         r.VersionID,
 	}
 	genericapi.ReplaceMapSliceNils(result)
 	return result
@@ -229,6 +253,14 @@ func tableKey(policyID string) map[string]*dynamodb.AttributeValue {
 
 // Batch delete multiple entries from the Dynamo table.
 func dynamoBatchDelete(input *models.DeletePoliciesInput) error {
+	return dynamoBatchDeleteItems(env.Table, input)
+}
+
+func dynamoBatchDeletePacks(input *models.DeletePacksInput) error {
+	return dynamoBatchDeleteItems(env.PackTable, input)
+}
+
+func dynamoBatchDeleteItems(table string, input *models.DeletePoliciesInput) error {
 	deleteRequests := make([]*dynamodb.WriteRequest, len(input.Entries))
 	for i, entry := range input.Entries {
 		deleteRequests[i] = &dynamodb.WriteRequest{
@@ -237,7 +269,7 @@ func dynamoBatchDelete(input *models.DeletePoliciesInput) error {
 	}
 
 	batchInput := &dynamodb.BatchWriteItemInput{
-		RequestItems: map[string][]*dynamodb.WriteRequest{env.Table: deleteRequests},
+		RequestItems: map[string][]*dynamodb.WriteRequest{table: deleteRequests},
 	}
 	if err := dynamodbbatch.BatchWriteItem(dynamoClient, maxDynamoBackoff, batchInput); err != nil {
 		zap.L().Error("dynamodbbatch.BatchWriteItem (delete) failed", zap.Error(err))
@@ -251,20 +283,13 @@ func dynamoBatchDelete(input *models.DeletePoliciesInput) error {
 //
 // Returns (nil, nil) if the item doesn't exist.
 func dynamoGet(policyID string, consistentRead bool) (*tableItem, error) {
-	response, err := dynamoClient.GetItem(&dynamodb.GetItemInput{
-		ConsistentRead: &consistentRead,
-		Key:            tableKey(policyID),
-		TableName:      &env.Table,
-	})
+	response, err := dynamoGetItem(env.Table, policyID, consistentRead)
 	if err != nil {
-		zap.L().Error("dynamoClient.GetItem failed", zap.Error(err))
 		return nil, err
 	}
-
 	if len(response.Item) == 0 {
 		return nil, nil
 	}
-
 	var policy tableItem
 	if err = dynamodbattribute.UnmarshalMap(response.Item, &policy); err != nil {
 		zap.L().Error("dynamodbattribute.UnmarshalMap failed", zap.Error(err))
@@ -272,6 +297,38 @@ func dynamoGet(policyID string, consistentRead bool) (*tableItem, error) {
 	}
 
 	return &policy, nil
+}
+
+// Load a detection pack
+func dynamoGetPack(packID string, consistentRead bool) (*packTableItem, error) {
+	response, err := dynamoGetItem(env.PackTable, packID, consistentRead)
+	if err != nil {
+		return nil, err
+	}
+	if len(response.Item) == 0 {
+		return nil, nil
+	}
+	var pack packTableItem
+	if err = dynamodbattribute.UnmarshalMap(response.Item, &pack); err != nil {
+		zap.L().Error("dynamodbattribute.UnmarshalMap failed", zap.Error(err))
+		return nil, err
+	}
+
+	return &pack, nil
+}
+
+func dynamoGetItem(table string, id string, consistentRead bool) (*dynamodb.GetItemOutput, error) {
+	response, err := dynamoClient.GetItem(&dynamodb.GetItemInput{
+		ConsistentRead: &consistentRead,
+		Key:            tableKey(id),
+		TableName:      &table,
+	})
+	zap.L().Error("table", zap.Any("table", &table), zap.Any("key", tableKey(id)))
+	if err != nil {
+		zap.L().Error("dynamoClient.GetItem failed", zap.Error(err))
+		return nil, err
+	}
+	return response, nil
 }
 
 type stringSet []string
@@ -339,7 +396,23 @@ func dynamoPut(policy *tableItem) error {
 		return err
 	}
 
-	if _, err = dynamoClient.PutItem(&dynamodb.PutItemInput{Item: body, TableName: &env.Table}); err != nil {
+	return dynamoPutItem(env.Table, body)
+}
+
+// Write a single policy to Dynamo.
+func dynamoPutPack(pack *packTableItem) error {
+	body, err := dynamodbattribute.MarshalMap(pagePackItems)
+	if err != nil {
+		zap.L().Error("dynamodbattribute.MarshalMap failed", zap.Error(err))
+		return err
+	}
+
+	return dynamoPutItem(env.PackTable, body)
+}
+
+// Write a single policy to Dynamo.
+func dynamoPutItem(table string, body map[string]*dynamodb.AttributeValue) error {
+	if _, err := dynamoClient.PutItem(&dynamodb.PutItemInput{Item: body, TableName: &table}); err != nil {
 		zap.L().Error("dynamoClient.PutItem failed", zap.Error(err))
 		return err
 	}
@@ -353,6 +426,43 @@ func scanPages(input *dynamodb.ScanInput, handler func(tableItem) error) error {
 
 	err := dynamoClient.ScanPages(input, func(page *dynamodb.ScanOutput, lastPage bool) bool {
 		var items []tableItem
+		if unmarshalErr = dynamodbattribute.UnmarshalListOfMaps(page.Items, &items); unmarshalErr != nil {
+			return false // stop paginating
+		}
+
+		for _, entry := range items {
+			if handlerErr = handler(entry); handlerErr != nil {
+				return false // stop paginating
+			}
+		}
+
+		return true // keep paging
+	})
+
+	if handlerErr != nil {
+		zap.L().Error("query item handler failed", zap.Error(handlerErr))
+		return handlerErr
+	}
+
+	if unmarshalErr != nil {
+		zap.L().Error("dynamodbattribute.UnmarshalListOfMaps failed", zap.Error(unmarshalErr))
+		return unmarshalErr
+	}
+
+	if err != nil {
+		zap.L().Error("dynamoClient.QueryPages failed", zap.Error(err))
+		return err
+	}
+
+	return nil
+}
+
+// Wrapper around dynamoClient.ScanPages that accepts a handler function to process each item.
+func scanPackPages(input *dynamodb.ScanInput, handler func(packTableItem) error) error {
+	var handlerErr, unmarshalErr error
+
+	err := dynamoClient.ScanPages(input, func(page *dynamodb.ScanOutput, lastPage bool) bool {
+		var items []packTableItem
 		if unmarshalErr = dynamodbattribute.UnmarshalListOfMaps(page.Items, &items); unmarshalErr != nil {
 			return false // stop paginating
 		}
