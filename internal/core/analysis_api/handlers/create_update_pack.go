@@ -52,6 +52,9 @@ func (API) PatchPack(input *models.PatchPackInput) *events.APIGatewayProxyRespon
 	// Note: currently only support `enabled` and `enabledRelease` updates from the `patch` operation
 	if input.Enabled != item.Enabled || input.EnabledRelease != item.EnabledRelease {
 		detections, err := detectionLookup(item.DetectionPatterns)
+		if err != nil {
+			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+		}
 		// If we are updating the detections themselves, do both updates at the same time
 		if input.EnabledRelease != item.EnabledRelease {
 			// TODO: this will be implemented in another PR / Task, basic outline:
@@ -61,10 +64,10 @@ func (API) PatchPack(input *models.PatchPackInput) *events.APIGatewayProxyRespon
 		} else {
 			// Otherwise, we are simply updating the enablement status of the detections
 			// in this pack
-			for _, detection := range detections {
+			for i, detection := range detections {
 				if detection.Enabled != input.Enabled {
 					detection.Enabled = input.Enabled
-					_, err = writeItem(&detection, input.UserID, aws.Bool(true))
+					_, err = writeItem(&detections[i], input.UserID, aws.Bool(true))
 					if err != nil {
 						return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 					}

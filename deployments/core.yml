@@ -463,6 +463,14 @@ Resources:
       # * Updates or rollbacks to enabled detection packs could be delayed
       # </cfndoc>
 
+  AnalysisPackTableAlarms:
+    Type: Custom::DynamoDBAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      TableName: panther-analysis-packs
+
   ##### Outputs API #####
   OutputsTable:
     Type: AWS::DynamoDB::Table
