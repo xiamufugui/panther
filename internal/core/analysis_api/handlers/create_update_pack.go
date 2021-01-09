@@ -24,6 +24,8 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
@@ -49,6 +51,7 @@ func (API) PatchPack(input *models.PatchPackInput) *events.APIGatewayProxyRespon
 	// Update the enabled status and enabledRelease if it has changed
 	// Note: currently only support `enabled` and `enabledRelease` updates from the `patch` operation
 	if input.Enabled != item.Enabled || input.EnabledRelease != item.EnabledRelease {
+		detections, err := detectionLookup(item.DetectionPatterns)
 		// If we are updating the detections themselves, do both updates at the same time
 		if input.EnabledRelease != item.EnabledRelease {
 			// TODO: this will be implemented in another PR / Task, basic outline:
@@ -58,21 +61,10 @@ func (API) PatchPack(input *models.PatchPackInput) *events.APIGatewayProxyRespon
 		} else {
 			// Otherwise, we are simply updating the enablement status of the detections
 			// in this pack
-			for _, detectionID := range item.DetectionIDs {
-				// Lookup each detection
-				var detection *tableItem
-				detection, err = dynamoGet(detectionID, false)
-				// TODO: how should errors be handled? Do we want to fail the entire operation
-				// midway?
-				if err != nil {
-					return &events.APIGatewayProxyResponse{
-						Body:       fmt.Sprintf("Internal error finding %s", detectionID),
-						StatusCode: http.StatusInternalServerError,
-					}
-				}
+			for _, detection := range detections {
 				if detection.Enabled != input.Enabled {
 					detection.Enabled = input.Enabled
-					_, err = writeItem(detection, input.UserID, aws.Bool(true))
+					_, err = writeItem(&detection, input.UserID, aws.Bool(true))
 					if err != nil {
 						return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 					}
@@ -81,13 +73,13 @@ func (API) PatchPack(input *models.PatchPackInput) *events.APIGatewayProxyRespon
 		}
 		// Then, Update the enablement status and enabledRelease of the pack itself
 		updateInput := models.UpdatePackInput{
-			Description:     item.Description,
-			DetectionQuery:  item.DetectionQuery,
-			DisplayName:     item.DisplayName,
-			Enabled:         input.Enabled,
-			EnabledRelease:  input.EnabledRelease,
-			Source:          item.Source,
-			UpdateAvailable: item.UpdateAvailable,
+			Description:       item.Description,
+			DetectionPatterns: item.DetectionPatterns,
+			DisplayName:       item.DisplayName,
+			Enabled:           input.Enabled,
+			EnabledRelease:    input.EnabledRelease,
+			Source:            item.Source,
+			UpdateAvailable:   item.UpdateAvailable,
 		}
 		return updatePack(&updateInput, false)
 	}
@@ -99,8 +91,7 @@ func updatePack(input *models.UpdatePackInput, create bool) *events.APIGatewayPr
 	item := &packTableItem{
 		AvailableReleases: input.AvailableReleases,
 		Description:       input.Description,
-		DetectionIDs:      input.DetectionIDs,
-		DetectionQuery:    input.DetectionQuery,
+		DetectionPatterns: input.DetectionPatterns,
 		DisplayName:       input.DisplayName,
 		Enabled:           input.Enabled,
 		EnabledRelease:    input.EnabledRelease,
@@ -134,6 +125,40 @@ func updatePack(input *models.UpdatePackInput, create bool) *events.APIGatewayPr
 	}
 
 	return gatewayapi.MarshalResponse(item.Pack(), statusCode)
+}
+
+func detectionLookup(input []models.DetectionPattern) ([]tableItem, error) {
+	var items []tableItem
+
+	for _, pattern := range input {
+		var filters []expression.ConditionBuilder
+
+		// Currently only support specifying IDs
+		if len(pattern.IDs) > 0 {
+			idFilter := expression.AttributeNotExists(expression.Name("lowerId"))
+			for _, id := range pattern.IDs {
+				idFilter = idFilter.Or(expression.Contains(expression.Name("lowerId"), id))
+			}
+			filters = append(filters, idFilter)
+		}
+
+		// Build the scan input
+		scanInput, err := buildScanInput(models.TypePack, []string{}, filters...)
+		if err != nil {
+			return nil, err
+		}
+
+		// scan for all detections
+		err = scanPages(scanInput, func(item tableItem) error {
+			items = append(items, item)
+			return nil
+		})
+		if err != nil {
+			zap.L().Error("failed to scan detections", zap.Error(err))
+			return nil, err
+		}
+	}
+	return items, nil
 }
 
 //func retrieveDetectionUpdates(release string) (map[string]*tableItem, error) {

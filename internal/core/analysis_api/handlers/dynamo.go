@@ -85,18 +85,19 @@ type tableItem struct {
 // optional values can be omitted from the table if they are empty,
 // and extra fields are added for more efficient filtering.
 type packTableItem struct {
-	AvailableReleases []string  `json:"availableReleases"`
-	CreatedAt         time.Time `json:"createdAt"`
-	CreatedBy         string    `json:"createdBy"`
-	Description       string    `json:"description,omitempty"`
-	DetectionIDs      []string  `json:"detectionIds,omitempty"`
-	DetectionQuery    string    `json:"detectionQuery,omitempty"`
-	DisplayName       string    `json:"displayName,omitempty"`
-	EnabledRelease    string    `json:"enabledRelease,omitempty"`
-	ID                string    `json:"id"`
-	LastModified      time.Time `json:"lastModified"`
-	LastModifiedBy    string    `json:"lastModifiedBy"`
-	Source            string    `json:"source"`
+	AvailableReleases []string                  `json:"availableReleases"`
+	CreatedAt         time.Time                 `json:"createdAt"`
+	CreatedBy         string                    `json:"createdBy"`
+	Description       string                    `json:"description,omitempty"`
+	DetectionPatterns []models.DetectionPattern `json:"detectionPatterns,omitempty"`
+	DisplayName       string                    `json:"displayName,omitempty"`
+	EnabledRelease    string                    `json:"enabledRelease,omitempty"`
+	ID                string                    `json:"id"`
+	LastModified      time.Time                 `json:"lastModified"`
+	LastModifiedBy    string                    `json:"lastModifiedBy"`
+	Source            string                    `json:"source"`
+	SourceType        string                    `json:"sourceType"`
+	Type              string                    `json:"type"`
 
 	// Lowercase versions of string fields for easy filtering
 	LowerDisplayName string `json:"lowerDisplayName,omitempty"`
@@ -229,8 +230,7 @@ func (r *packTableItem) Pack() *models.Pack {
 		CreatedAt:         r.CreatedAt,
 		CreatedBy:         r.CreatedBy,
 		Description:       r.Description,
-		DetectionIDs:      r.DetectionIDs,
-		DetectionQuery:    r.DetectionQuery,
+		DetectionPatterns: r.DetectionPatterns,
 		DisplayName:       r.DisplayName,
 		EnabledRelease:    r.EnabledRelease,
 		Enabled:           r.Enabled,
