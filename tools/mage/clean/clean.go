@@ -37,7 +37,7 @@ func Clean() error {
 	rmPaths = append(rmPaths, util.GatherPyCacheFiles(util.PyTargets)...)
 
 	// Remove files (checks paths are sub-paths of PantherRoot)
-	return cleanPantherPathSet(rmPaths, false)
+	return cleanPantherPathSet(rmPaths, true)
 }
 
 // Removes files at paths in set (if they are descendents of PantherRoot).
@@ -47,7 +47,7 @@ func cleanPantherPathSet(pathSet []string, enableRM bool) error {
 	rmCount := 0
 	errCount := 0
 	pantherRoot := util.PantherRoot()
-	log.Info("Clean: ", len(pathSet))
+	log.Info("Clean: ", len(pathSet), ", remove enabled: ", enableRM)
 
 	for _, target := range pathSet {
 		// Normalize target to abs path if it is not an abs path
