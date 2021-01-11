@@ -110,36 +110,37 @@ type PollPacksInput struct {
 
 // This struct is used to build a new Pack or used by Patch operation to update certain fields
 type UpdatePackInput struct {
-	Enabled           bool               `json:"enabled"`
-	UpdateAvailable   bool               `json:"updateAvailable"`
-	Description       string             `json:"description"`
-	DetectionPatterns []DetectionPattern `json:"detectionPattern"`
-	DisplayName       string             `json:"displayName"`
-	EnabledRelease    string             `json:"enabledRelease"`
-	ID                string             `json:"id" validate:"required,max=1000,excludesall='<>&\""`
-	Source            string             `json:"source"`
-	UserID            string             `json:"userId" validate:"required"`
-	AvailableReleases []string           `json:"availableReleases"`
+	Enabled           bool             `json:"enabled"`
+	UpdateAvailable   bool             `json:"updateAvailable"`
+	Description       string           `json:"description"`
+	DetectionPatterns DetectionPattern `json:"detectionPattern"`
+	DisplayName       string           `json:"displayName"`
+	EnabledRelease    string           `json:"enabledRelease"`
+	ID                string           `json:"id" validate:"required,max=1000,excludesall='<>&\""`
+	Source            string           `json:"source"`
+	SourceType        string           `json:"sourceType" validate:"oneof=github"`
+	UserID            string           `json:"userId" validate:"required"`
+	AvailableReleases []string         `json:"availableReleases"`
 }
 
 type Pack struct {
-	Enabled           bool               `json:"enabled"`
-	Managed           bool               `json:"managed"`
-	UpdateAvailable   bool               `json:"updateAvailable"`
-	CreatedBy         string             `json:"createdBy"`
-	Description       string             `json:"description"`
-	DisplayName       string             `json:"displayName"`
-	EnabledRelease    string             `json:"enabledRelease"`
-	ID                string             `json:"id" validate:"required,max=1000,excludesall='<>&\""`
-	LastModifiedBy    string             `json:"lastModifiedBy"`
-	Source            string             `json:"source"`
-	SourceType        string             `json:"sourceType" validate:"oneof=github"`
-	Type              string             `json:"type"`
-	VersionID         string             `json:"versionId"` // TODO: VersionID ? (will this be in S3?)
-	CreatedAt         time.Time          `json:"createdAt"`
-	LastModified      time.Time          `json:"lastModified"`
-	AvailableReleases []string           `json:"availableReleases"`
-	DetectionPatterns []DetectionPattern `json:"detectionPatterns"`
+	Enabled           bool             `json:"enabled"`
+	Managed           bool             `json:"managed"`
+	UpdateAvailable   bool             `json:"updateAvailable"`
+	CreatedBy         string           `json:"createdBy"`
+	Description       string           `json:"description"`
+	DisplayName       string           `json:"displayName"`
+	EnabledRelease    string           `json:"enabledRelease"`
+	ID                string           `json:"id" validate:"required,max=1000,excludesall='<>&\""`
+	LastModifiedBy    string           `json:"lastModifiedBy"`
+	Source            string           `json:"source"`
+	SourceType        string           `json:"sourceType" validate:"oneof=github"`
+	Type              string           `json:"type"`
+	VersionID         string           `json:"versionId"` // TODO: VersionID ? (will this be in S3?)
+	CreatedAt         time.Time        `json:"createdAt"`
+	LastModified      time.Time        `json:"lastModified"`
+	AvailableReleases []string         `json:"availableReleases"`
+	DetectionPatterns DetectionPattern `json:"detectionPatterns"`
 }
 
 type DetectionPattern struct {

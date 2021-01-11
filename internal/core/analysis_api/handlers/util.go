@@ -397,12 +397,15 @@ func mappingEquality(oldItem, newItem *tableItem) bool {
 func packUpdated(oldItem, newItem *packTableItem) bool {
 	itemsEqual := setEquality(oldItem.AvailableReleases, newItem.AvailableReleases) &&
 		oldItem.Description == newItem.Description &&
-		len(oldItem.DetectionPatterns) == len(newItem.DetectionPatterns) &&
 		oldItem.DisplayName == newItem.DisplayName &&
 		oldItem.Enabled == newItem.Enabled && oldItem.Managed == newItem.Managed &&
 		oldItem.EnabledRelease == newItem.EnabledRelease && oldItem.Source == newItem.Source &&
 		oldItem.UpdateAvailable == newItem.UpdateAvailable
-
+	if !itemsEqual {
+		return true
+	}
+	// check detection patterns, which currently only cover IDs
+	itemsEqual = itemsEqual && !setEquality(oldItem.DetectionPatterns.IDs, newItem.DetectionPatterns.IDs)
 	return !itemsEqual
 }
 

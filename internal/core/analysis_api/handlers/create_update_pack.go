@@ -21,6 +21,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
@@ -130,37 +131,36 @@ func updatePack(input *models.UpdatePackInput, create bool) *events.APIGatewayPr
 	return gatewayapi.MarshalResponse(item.Pack(), statusCode)
 }
 
-func detectionLookup(input []models.DetectionPattern) ([]tableItem, error) {
+func detectionLookup(input models.DetectionPattern) ([]tableItem, error) {
 	var items []tableItem
 
-	for _, pattern := range input {
-		var filters []expression.ConditionBuilder
+	var filters []expression.ConditionBuilder
 
-		// Currently only support specifying IDs
-		if len(pattern.IDs) > 0 {
-			idFilter := expression.AttributeNotExists(expression.Name("lowerId"))
-			for _, id := range pattern.IDs {
-				idFilter = idFilter.Or(expression.Contains(expression.Name("lowerId"), id))
-			}
-			filters = append(filters, idFilter)
+	// Currently only support specifying IDs
+	if len(input.IDs) > 0 {
+		idFilter := expression.AttributeNotExists(expression.Name("lowerId"))
+		for _, id := range input.IDs {
+			idFilter = idFilter.Or(expression.Contains(expression.Name("lowerId"), strings.ToLower(id)))
 		}
-
-		// Build the scan input
-		scanInput, err := buildScanInput(models.TypePack, []string{}, filters...)
-		if err != nil {
-			return nil, err
-		}
-
-		// scan for all detections
-		err = scanPages(scanInput, func(item tableItem) error {
-			items = append(items, item)
-			return nil
-		})
-		if err != nil {
-			zap.L().Error("failed to scan detections", zap.Error(err))
-			return nil, err
-		}
+		filters = append(filters, idFilter)
 	}
+
+	// Build the scan input
+	scanInput, err := buildScanInput(models.TypePack, []string{}, filters...)
+	if err != nil {
+		return nil, err
+	}
+
+	// scan for all detections
+	err = scanPages(scanInput, func(item tableItem) error {
+		items = append(items, item)
+		return nil
+	})
+	if err != nil {
+		zap.L().Error("failed to scan detections", zap.Error(err))
+		return nil, err
+	}
+
 	return items, nil
 }
 
