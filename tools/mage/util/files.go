@@ -23,6 +23,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
+	"regexp"
 )
 
 const (
@@ -60,6 +62,7 @@ func MustWalk(root string, handler func(string, os.FileInfo) error) {
 		}
 		return handler(path, info)
 	})
+
 	if err != nil {
 		panic(fmt.Errorf("couldn't traverse %s: %v", root, err))
 	}
@@ -83,4 +86,74 @@ func MustWriteFile(path string, data []byte) {
 	if err := ioutil.WriteFile(path, data, 0600); err != nil {
 		panic(fmt.Errorf("failed to write file %s: %v", path, err))
 	}
+}
+
+
+
+
+
+// Returns the root project path
+func PantherRoot() string {
+	// Get project root - needs validation checks
+	wd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	return wd
+}
+
+// Returns Join(PantherRoot, rel) if rel is a relative path
+func PantherFullPath(rel string) string {
+	if filepath.IsAbs(rel) {
+		return rel
+	}
+	return filepath.Join(PantherRoot(), rel)
+}
+
+// Returns path relative to PantherRoot
+func PantherRelPath(fp string) (string, error) {
+	relPath, err := filepath.Rel(PantherRoot(), fp)
+	if err != nil {
+		return "", err
+	}
+	return relPath, nil
+}
+
+// Search the given filepath for files whose names are postfixed by postfix
+func DirFilesWithNameSuffix(dirpath string, postfix string) []string {
+	resultFileSet := []string{}
+	MustWalk(dirpath, func(path string, info os.FileInfo) error {
+		if strings.HasSuffix(path, postfix) {
+			resultFileSet = append(resultFileSet, path)
+		}
+		return nil
+	})
+	return resultFileSet
+}
+
+// Returns true if isDescendantPath is a descendent of ancestorPath
+func IsPathDescendantOf(isDescendantPath string, ancestorPath string) (bool, error) {
+	// PathDescendentOf
+	relPath, err := filepath.Rel(ancestorPath, isDescendantPath)
+	if err != nil {
+		return false, err
+	}
+	matched, err := regexp.MatchString(`\.\.`, relPath)
+	if err != nil {
+		return false, err
+	}
+	return !matched, nil
+}
+
+// Check if file/directory exists at sysFilePath
+func FilePathExists(sysFilePath string) bool {
+	_, err := os.Stat(sysFilePath)
+	if err == nil { return true }
+	if os.IsNotExist(err) { return false }
+	panic(err)
+}
+
+// Remove a file
+func RmPath(sysFilePath string) error {
+	return os.RemoveAll(sysFilePath);
 }
