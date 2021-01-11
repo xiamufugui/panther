@@ -23,11 +23,9 @@ import (
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
-// Remove dev libraries and build/test artifacts
 func Clean() error {
-	log := logger.Build("[clean]")
 
-	// Set of static paths to remove (paths relative to panther repo root)
+	// Set of paths to remove = init with static remove paths
 	rmPaths := []string{
 		util.SetupDir,
 		util.NpmDir,
@@ -35,56 +33,60 @@ func Clean() error {
 		"internal/core/analysis_api/main/bulk_upload.zip",
 	}
 
-	// Add __pycache__ files
-	log.Info("Adding __pycache__ files to clean set")
-	for _, target := range util.PyTargets {
-		rmPaths = append(rmPaths, gatherPyCacheFiles(target)...)
-	}
+	// Add Dynamic Paths to remove paths set:
+	rmPaths = append(rmPaths, util.GatherPyCacheFiles(util.PyTargets)...)
 
-	log.Info("Clean: ", len(rmPaths))
-
-	// Remove files found at paths in rmPaths.
-	// Only remove files that are descendants of the repository root
-	rmCount, errCount := cleanPantherPathSet(rmPaths)
-
-	log.Info("Clean Panther Paths Completed")
-	log.Info("removed: ", rmCount, "/", len(rmPaths), ", errors: ", errCount)
-	return nil
+	// Remove files (checks paths are sub-paths of PantherRoot)
+	return cleanPantherPathSet(rmPaths, false)
 }
 
-// Gather all files with __pycache__ suffix relative to target path
-func gatherPyCacheFiles(target string) []string {
-	// adjust target path if target is not an absolute path
-	searchTarget := util.PantherFullPath(target)
-	return util.DirFilesWithNameSuffix(searchTarget, "__pycache__")
-}
-
-// Removes files at paths in set (if they are descendents of PantherRoot)
-func cleanPantherPathSet(pathSet []string) (rmCount int, errCount int) {
+// Removes files at paths in set (if they are descendents of PantherRoot).
+// Dry run by setting enableRM to false
+func cleanPantherPathSet(pathSet []string, enableRM bool) error {
 	log := logger.Build("[clean]")
+	rmCount := 0
+	errCount := 0
 	pantherRoot := util.PantherRoot()
-	// for _, target := range pathSet {
+	log.Info("Clean: ", len(pathSet))
+
 	for _, target := range pathSet {
 		// Normalize target to abs path if it is not an abs path
 		rmSystemPath := util.PantherFullPath(target)
-		// log.Info("rm path: ", rmSystemPath)
-		if isf, _ := util.IsPathDescendantOf(rmSystemPath, pantherRoot); isf {
-			if util.FilePathExists(rmSystemPath) {
-				if err := util.RmPath(rmSystemPath); err == nil {
-					rel, _ := util.PantherRelPath(rmSystemPath)
-					log.Info("rm -r ", rel)
-					rmCount += 1
-				} else {
-					log.Error("rm path: ", rmSystemPath, ", error: ", err)
-					errCount += 1
-				}
-			} else {
-				log.Warn("No file: ", rmSystemPath)
-			}
-		} else {
+
+		// Skip paths that are not sub-paths of PantherRoot
+		if isf, _ := util.IsPathDescendantOf(rmSystemPath, pantherRoot); !isf {
 			log.Error("attempted rm on non-panther path: ", rmSystemPath)
 			errCount += 1
+			continue
 		}
+
+		// Get the pantherRoot relative path
+		rel, err := util.PantherRelPath(rmSystemPath)
+		if err != nil {
+			log.Error("util.PantherRelPath error: ", err)
+			errCount += 1
+			continue
+		}
+
+		// Skip paths that don't point to an existing file
+		if !util.FilePathExists(rmSystemPath) {
+			log.Warn("no file: ", rel)
+			continue
+		}
+
+		// Actually Attempt to remove item located at rmSystemPath
+		log.Info("rm -r ", rel)
+		if !enableRM { continue }
+
+		if err := util.RmPath(rmSystemPath); err != nil {
+			log.Error("rm path: ", rel, ", error: ", err)
+			errCount += 1
+			continue
+		}
+
+		rmCount += 1
 	}
-	return
+
+	log.Info("removed: ", rmCount, "/", len(pathSet), ", errors: ", errCount)
+	return nil
 }

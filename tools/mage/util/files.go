@@ -157,3 +157,14 @@ func FilePathExists(sysFilePath string) bool {
 func RmPath(sysFilePath string) error {
 	return os.RemoveAll(sysFilePath)
 }
+
+// Gather all files with __pycache__ suffix names nested in directories passed in targets
+func GatherPyCacheFiles(targets []string) []string {
+	cachePaths := []string{}
+	for _, target := range targets {
+		// adjust target path if target is not an absolute path
+		searchTarget := PantherFullPath(target)
+		cachePaths = append(cachePaths, DirFilesWithNameSuffix(searchTarget, "__pycache__")...)
+	}
+	return cachePaths
+}
