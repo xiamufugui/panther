@@ -23,8 +23,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 	"regexp"
+	"strings"
 )
 
 const (
@@ -88,10 +88,6 @@ func MustWriteFile(path string, data []byte) {
 	}
 }
 
-
-
-
-
 // Returns the root project path
 func PantherRoot() string {
 	// Get project root - needs validation checks
@@ -148,12 +144,16 @@ func IsPathDescendantOf(isDescendantPath string, ancestorPath string) (bool, err
 // Check if file/directory exists at sysFilePath
 func FilePathExists(sysFilePath string) bool {
 	_, err := os.Stat(sysFilePath)
-	if err == nil { return true }
-	if os.IsNotExist(err) { return false }
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
 	panic(err)
 }
 
 // Remove a file
 func RmPath(sysFilePath string) error {
-	return os.RemoveAll(sysFilePath);
+	return os.RemoveAll(sysFilePath)
 }

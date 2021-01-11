@@ -25,7 +25,6 @@ import (
 
 // Remove dev libraries and build/test artifacts
 func Clean() error {
-
 	log := logger.Build("[clean]")
 
 	// Set of static paths to remove (paths relative to panther repo root)
@@ -34,20 +33,22 @@ func Clean() error {
 		util.NpmDir,
 		"out",
 		"internal/core/analysis_api/main/bulk_upload.zip",
-		// "../demo",
 	}
 
 	// Add __pycache__ files
 	log.Info("Adding __pycache__ files to clean set")
-	rmPaths = append(rmPaths, gatherPyCacheFiles("internal/compliance/remediation_aws")...)
-	rmPaths = append(rmPaths, gatherPyCacheFiles("internal/compliance/policy_engine")...)
-	rmPaths = append(rmPaths, gatherPyCacheFiles("internal/log_analysis/rules_engine")...)
+	for _, target := range util.PyTargets {
+		rmPaths = append(rmPaths, gatherPyCacheFiles(target)...)
+	}
 
 	log.Info("Clean: ", len(rmPaths))
+
+	// Remove files found at paths in rmPaths.
+	// Only remove files that are descendants of the repository root
 	rmCount, errCount := cleanPantherPathSet(rmPaths)
+
 	log.Info("Clean Panther Paths Completed")
 	log.Info("removed: ", rmCount, "/", len(rmPaths), ", errors: ", errCount)
-
 	return nil
 }
 
@@ -87,41 +88,3 @@ func cleanPantherPathSet(pathSet []string) (rmCount int, errCount int) {
 	}
 	return
 }
-
-
-
-
-
-
-
-
-// fmt.Printf(" rm %s\n", rmSystemPath)
-
-// "sort"
-// Sort by length - readability / potential future rm requirements
-// sort.Slice(rmPaths, func(i, j int) bool { return len(rmPaths[i]) > len(rmPaths[j])})
-// sort.Strings(rmPaths) // Sort alphabetically
-
-/*
-func CleanRelative(relPath string) error {
-	// Remove a set of full paths
-	// paths are relative to the root of the panther repository
-	// rm success count (includes rm on paths that do not exist)
-	// rm error count
-	errCount := 0
-	//
-	for _, rmPath := range rmPaths {
-		if err := os.RemoveAll(rmPath); err != nil {
-			errCount += 1
-			log.Error("rm -r ", rmPath, " error: ", err)
-		} else {
-			rmCount += 1
-			log.Info("rm -r ", rmPath)
-		}
-	}
-
-	log.Info("success: ", rmCount, ", errors: ", errCount)
-	log.Info("CLEANED: ", rmCount, "/", len(rmPaths))
-	return nil
-}
-*/
