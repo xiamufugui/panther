@@ -37,6 +37,7 @@ func Clean() error {
 	rmPaths = append(rmPaths, util.GatherPyCacheFiles(util.PyTargets)...)
 
 	// Remove files (checks paths are sub-paths of PantherRoot)
+	// Dry run (skip actually removing things) with 2nd argument 'enableRm'
 	return cleanPantherPathSet(rmPaths, true)
 }
 
@@ -76,7 +77,9 @@ func cleanPantherPathSet(pathSet []string, enableRM bool) error {
 
 		// Actually Attempt to remove item located at rmSystemPath
 		log.Info("rm -r ", rel)
-		if !enableRM { continue }
+		if !enableRM {
+			continue
+		}
 
 		if err := util.RmPath(rmSystemPath); err != nil {
 			log.Error("rm path: ", rel, ", error: ", err)
