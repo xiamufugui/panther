@@ -18,9 +18,14 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "github.com/panther-labs/panther/api/lambda/system_status/models"
+import (
+	"context"
 
-func (api *API) GetSystemStatus(_ *models.GetSystemStatusInput) (*models.GetSystemStatusOutput, error) {
+	"github.com/panther-labs/panther/api/lambda/system_status/models"
+)
+
+func (api *API) GetSystemStatus(_ context.Context, _ *models.GetSystemStatusInput) (*models.GetSystemStatusOutput, error) {
+	// TODO Return correct health messages
 	return &models.GetSystemStatusOutput{
 		models.ComponentAlertDelivery:  models.ComponentStatus{Status: models.StatusOK},
 		models.ComponentClassification: models.ComponentStatus{Status: models.StatusOK},
