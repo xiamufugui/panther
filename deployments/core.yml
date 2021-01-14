@@ -1250,20 +1250,20 @@ Resources:
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
 
-  SystemStatusAPILogGroup:
+  SystemStatusApiLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/lambda/panther-system-status-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
-  SystemStatusAPIMetricFilters:
+  SystemStatusMetricFilters:
     Type: Custom::LambdaMetricFilters
     Properties:
       CustomResourceVersion: !Ref CustomResourceVersion
-      LogGroupName: !Ref SystemStatusAPIAlarms
+      LogGroupName: !Ref SystemStatusApiLogGroup
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
-  SystemStatusAPIAlarms:
+  SystemStatusApiAlarms:
     Type: Custom::LambdaAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
@@ -1277,7 +1277,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: ../out/bin/internal/core/system_status/main
-      Description: Implements logtypes API to manage logtypes.
+      Description: Implements API to retrieve System status
       Environment:
         Variables:
           DEBUG: !Ref Debug
