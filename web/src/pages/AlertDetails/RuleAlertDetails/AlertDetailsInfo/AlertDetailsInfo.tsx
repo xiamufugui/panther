@@ -31,7 +31,7 @@ import { RuleTeaser } from '../graphql/ruleTeaser.generated';
 
 interface AlertDetailsInfoProps {
   alert: AlertDetails['alert'];
-  rule: RuleTeaser['rule'];
+  rule?: RuleTeaser['rule'];
 }
 
 const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {

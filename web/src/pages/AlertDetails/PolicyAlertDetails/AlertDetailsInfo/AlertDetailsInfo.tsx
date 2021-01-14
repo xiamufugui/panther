@@ -32,7 +32,7 @@ import { PolicyTeaser } from '../graphql/policyTeaser.generated';
 
 interface AlertDetailsInfoProps {
   alert: AlertDetails['alert'];
-  policy: PolicyTeaser['policy'];
+  policy?: PolicyTeaser['policy'];
 }
 
 const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, policy }) => {
