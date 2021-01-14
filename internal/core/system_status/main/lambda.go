@@ -31,12 +31,12 @@ import (
 
 var router *genericapi.Router
 
-func lambdaHandler(ctx context.Context, request *models.LambdaInput) (interface{}, error) {
-	lambdalogger.ConfigureGlobal(ctx, nil)
-	return router.HandleWithContext(ctx, request)
-}
-
 func main() {
 	router = genericapi.NewRouter("core", "system_status", nil, api.NewAPI())
 	lambda.Start(lambdaHandler)
+}
+
+func lambdaHandler(ctx context.Context, request *models.LambdaInput) (interface{}, error) {
+	lambdalogger.ConfigureGlobal(ctx, nil)
+	return router.HandleWithContext(ctx, request)
 }
