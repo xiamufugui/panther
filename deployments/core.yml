@@ -142,6 +142,9 @@ Mappings:
     LogTypesAPI:
       Memory: 128
       Timeout: 60
+    SystemStatusAPI:
+      Memory: 128
+      Timeout: 30
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
@@ -1246,3 +1249,48 @@ Resources:
                 - kms:Decrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
+
+  SystemStatusAPILogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-system-status-api
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  SystemStatusAPIMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
+      LogGroupName: !Ref SystemStatusAPIAlarms
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  SystemStatusAPIAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
+      FunctionMemoryMB: !FindInMap [Functions, SystemStatusAPI, Memory]
+      FunctionName: panther-system-status-api
+      FunctionTimeoutSec: !FindInMap [Functions, SystemStatusAPI, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  SystemStatusAPIFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../out/bin/internal/core/system_status/main
+      Description: Implements logtypes API to manage logtypes.
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+      FunctionName: panther-system-status-api
+      # <cfndoc>
+      # The `panther-system-status-api` reports the status of different parts of the system.
+      #
+      # Failure Impact
+      # * Failure of this lambda will prevent System Status from being updated
+      # </cfndoc>
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref AWS::NoValue]
+      MemorySize: !FindInMap [Functions, SystemStatusAPI, Memory]
+      Runtime: go1.x
+      Timeout: !FindInMap [Functions, SystemStatusAPI, Timeout]
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref AWS::NoValue]
