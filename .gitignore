@@ -19,6 +19,7 @@ keys/
 
 # MacOS files
 .DS_Store
+.icloud
 
 # Terraform
 .terraform
