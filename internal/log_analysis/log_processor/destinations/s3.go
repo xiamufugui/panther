@@ -346,20 +346,26 @@ func (bs *s3EventBufferSet) writeEvent(event *parsers.Result) (sendBuffers []*s3
 	stream := bs.stream
 	stream.Reset(nil)
 	stream.WriteVal(event)
-	// By now if the event has event time defined then event.PantherEventTime will be a non-zero value
-	err, stream.Error = stream.Error, nil
-	if err != nil {
+	// Finish processing, write JSON and notify observers the result is now fully processed.
+	if err := stream.Error; err != nil {
 		return nil, errors.Wrap(err, "failed to serialize event to JSON")
 	}
+
+	// By now if the event has event time defined then event.PantherEventTime will be a non-zero value
+	// This updates parser stats
+	event.Done()
+
 	// Just in case something was amiss elsewhere `getBuffer` checks again and uses PantherParseTime and Time.Now() as fallbacks.
-	buf := bs.getBuffer(event)
+	buf := bs.getBuffer(event.PantherLogType, event.PantherEventTime)
 	if buf == nil {
 		return nil, errors.New(`could not resolve a buffer for the event`)
 	}
+
 	n, err := buf.addEvent(stream.Buffer())
 	if err != nil {
 		return nil, err
 	}
+
 	bs.totalBufferedMemBytes += uint64(n)
 
 	// update the rank so we can find largest quickly
@@ -396,16 +402,7 @@ func (bs *s3EventBufferSet) writeEvent(event *parsers.Result) (sendBuffers []*s3
 	return sendBuffers, nil
 }
 
-func (bs *s3EventBufferSet) getBuffer(event *parsers.Result) *s3EventBuffer {
-	// Make sure we have a valid time to set the event partition
-	// If the event had no event time we use PantherParseTime and time.Now as fallbacks
-	eventTime := event.PantherEventTime
-	if eventTime.IsZero() {
-		eventTime = event.PantherParseTime
-		if eventTime.IsZero() {
-			return nil
-		}
-	}
+func (bs *s3EventBufferSet) getBuffer(logType string, eventTime time.Time) *s3EventBuffer {
 	// bin by hour (this is our partition size)
 	// We convert to UTC here so truncation does not affect the partition in the weird half-hour timezones if for
 	// some reason (bug) a non-UTC timestamp got through.
@@ -417,7 +414,6 @@ func (bs *s3EventBufferSet) getBuffer(event *parsers.Result) *s3EventBuffer {
 		bs.set[hour] = logTypeToBuffer
 	}
 
-	logType := event.PantherLogType
 	buffer, ok := logTypeToBuffer[logType]
 	if !ok {
 		buffer = newS3EventBuffer(logType, hour)

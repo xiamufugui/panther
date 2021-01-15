@@ -95,6 +95,9 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 		}
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
+		for _, event := range result.Events {
+			event.Done()
+		}
 	}
 
 	// skipping specifically validating the times
@@ -137,7 +140,7 @@ func TestClassifyNoMatch(t *testing.T) {
 
 	require.Equal(t, &ClassifierResult{NumMiss: 1}, result)
 	failingParser.AssertNumberOfCalls(t, "Parse", 1)
-	require.Nil(t, classifier.ParserStats()["failure"])
+	require.Equal(t, &ParserStats{LogType: "failure"}, classifier.ParserStats()["failure"])
 }
 
 func TestClassifyParserPanic(t *testing.T) {
@@ -249,6 +252,9 @@ func testSkipClassify(logLine string, t *testing.T) {
 		result, err := classifier.Classify(logLine)
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
+		for _, e := range result.Events {
+			e.Done()
+		}
 	}
 
 	// skipping specifically validating the times
@@ -256,6 +262,6 @@ func testSkipClassify(logLine string, t *testing.T) {
 	require.Equal(t, expectedStats, classifier.Stats())
 
 	failingParser1.RequireLessOrEqualNumberOfCalls(t, "Parse", 1)
-	require.Nil(t, classifier.ParserStats()["failure1"])
-	require.Nil(t, classifier.ParserStats()["failure2"])
+	require.Equal(t, &ParserStats{LogType: "failure1"}, classifier.ParserStats()["failure1"])
+	require.Equal(t, &ParserStats{LogType: "failure2"}, classifier.ParserStats()["failure2"])
 }

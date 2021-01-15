@@ -39,6 +39,24 @@ type Result struct {
 	// This field is normally nil throughout the lifetime of results.
 	// It is populated temporarily by the custom jsoniter encoder for *Result to collect all indicator field values.
 	values *ValueBuffer
+
+	// A listener to observe the result once it's fully processed
+	Observer ResultObserver
+}
+
+// ResultObserver observes the result once it's fully processed
+type ResultObserver interface {
+	ObserveResult(r *Result)
+}
+
+// This should be called when a result is fully processed
+func (r *Result) Done() {
+	var observer ResultObserver
+	// Use swap assignment to unlink reference for GC
+	observer, r.Observer = r.Observer, nil
+	if observer != nil {
+		observer.ObserveResult(r)
+	}
 }
 
 // WriteValues implements ValueWriter interface

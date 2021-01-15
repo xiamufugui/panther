@@ -26,6 +26,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
@@ -53,9 +54,13 @@ type ClassifierResult struct {
 
 // NewClassifier returns a new instance of a ClassifierAPI implementation
 func NewClassifier(parsers map[string]parsers.Interface) ClassifierAPI {
+	stats := make(map[string]*ParserStats, len(parsers))
+	for name := range parsers {
+		stats[name] = &ParserStats{LogType: name}
+	}
 	return &Classifier{
 		parsers:     NewParserPriorityQueue(parsers),
-		parserStats: make(map[string]*ParserStats),
+		parserStats: stats,
 	}
 }
 
@@ -150,21 +155,14 @@ func (c *Classifier) Classify(log string) (*ClassifierResult, error) {
 		result.Events = parsedEvents
 
 		// update per-parser stats
-		var parserStat *ParserStats
-		var parserStatExists bool
-		// lazy create
-		if parserStat, parserStatExists = c.parserStats[logType]; !parserStatExists {
-			parserStat = &ParserStats{
-				LogType: logType,
-			}
-			c.parserStats[logType] = parserStat
-		}
-		parserStat.ParserTimeMicroseconds += uint64(endParseTime.Sub(startParseTime).Microseconds())
-		parserStat.BytesProcessedCount += uint64(len(log))
-		parserStat.LogLineCount++
-		parserStat.EventCount += uint64(len(result.Events))
-		for _, event := range parsedEvents {
-			parserStat.CombinedLatency += uint64(event.PantherParseTime.Sub(event.PantherEventTime).Milliseconds())
+		stats := c.parserStats[logType]
+		stats.ParserTimeMicroseconds += uint64(endParseTime.Sub(startParseTime).Microseconds())
+		stats.BytesProcessedCount += uint64(len(log))
+		stats.LogLineCount++
+		// Attach the stats as an observer to be able to properly track latency
+		// This will update latency once the event is fully processed and event time is set
+		for _, event := range result.Events {
+			event.Observer = stats
 		}
 		break
 	}
@@ -208,6 +206,12 @@ type ParserStats struct {
 	LogType                string
 }
 
+func (s *ParserStats) ObserveResult(result *pantherlog.Result) {
+	s.EventCount++
+	s.CombinedLatency += uint64(result.PantherParseTime.Sub(result.PantherEventTime).Milliseconds())
+}
+
+// Add adds a the stats from other onto s
 func (s *ParserStats) Add(other *ParserStats) {
 	s.ParserTimeMicroseconds += other.ParserTimeMicroseconds
 	s.BytesProcessedCount += other.BytesProcessedCount

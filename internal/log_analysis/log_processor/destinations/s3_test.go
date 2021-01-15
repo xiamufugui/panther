@@ -470,14 +470,14 @@ func TestBufferSetLargest(t *testing.T) {
 
 	bs := destination.newS3EventBufferSet()
 	result := newSimpleTestEvent().Result()
-	expectedLargest := bs.getBuffer(result)
+	expectedLargest := bs.getBuffer(result.PantherLogType, result.PantherEventTime)
 
 	const size = 100
 	expectedLargest.bytes = size
 	for i := 0; i < size-1; i++ {
 		// incr hour so we get new buffers
 		result.PantherEventTime = result.PantherEventTime.Add(time.Hour)
-		buffer := bs.getBuffer(result)
+		buffer := bs.getBuffer(result.PantherLogType, result.PantherEventTime)
 		buffer.bytes = i
 	}
 	assert.Equal(t, size, len(bs.set))
