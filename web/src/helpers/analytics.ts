@@ -52,9 +52,11 @@ export enum PageViewEnum {
   ListRules = 'List Rules',
   ListAlerts = 'List Alerts',
   ListLogSources = 'List Log Sources',
+  ListDataModels = 'List Data Models',
   Home = 'Home',
   Support = 'Support',
   CustomLogDetails = 'Custom Log Details Screen',
+  CustomLogEditing = 'Custom Log Edit Screen',
 }
 
 interface TrackPageViewProps {
@@ -72,7 +74,10 @@ export enum EventEnum {
   SignedIn = 'Signed in successfully',
   AddedCustomLog = 'Added Custom Log',
   AddedDataModel = 'Added Data Model',
+  UpdatedDataModel = 'Updated Data Model',
   DeletedCustomLog = 'Deleted Custom Log',
+  DeletedDataModel = 'Deleted Data Model',
+  UpdatedCustomLog = 'Update Custom Log',
   AddedRule = 'Added Rule',
   AddedPolicy = 'Added Policy',
   AddedComplianceSource = 'Added Compliance Source',
@@ -117,6 +122,20 @@ interface AddedCustomLogEvent {
 
 interface AddedDataModelEvent {
   event: EventEnum.AddedDataModel;
+  src: SrcEnum.DataModels;
+}
+interface UpdatedCustomLogEvent {
+  event: EventEnum.UpdatedCustomLog;
+  src: SrcEnum.CustomLogs;
+}
+
+interface UpdatedDataModelEvent {
+  event: EventEnum.UpdatedDataModel;
+  src: SrcEnum.DataModels;
+}
+
+interface DeleteDataModelEvent {
+  event: EventEnum.DeletedDataModel;
   src: SrcEnum.DataModels;
 }
 
@@ -215,6 +234,8 @@ interface BulkUpdatedAlertStatus extends AlertStatusEvents {
 type TrackEvent =
   | AddedDestinationEvent
   | AddedDataModelEvent
+  | UpdatedDataModelEvent
+  | DeleteDataModelEvent
   | SignInEvent
   | AddedRuleEvent
   | AddedPolicyEvent
@@ -228,6 +249,7 @@ type TrackEvent =
   | UpdatedAlertStatus
   | BulkUpdatedAlertStatus
   | AddedCustomLogEvent
+  | UpdatedCustomLogEvent
   | DeletedCustomLogEvent
   | TestedDestination
   | TestedDestinationSuccessfully
@@ -247,7 +269,10 @@ export enum TrackErrorEnum {
   FailedToAddRule = 'Failed to create Rule',
   FailedToAddCustomLog = 'Failed to create a Custom Log',
   FailedToAddDataModel = 'Failed to create a Data Model',
+  FailedToUpdateDataModel = 'Failed to update a Data Model',
+  FailedToEditCustomLog = 'Failed to edit a Custom Log',
   FailedToDeleteCustomLog = 'Failed to delete a Custom Log',
+  FailedToDeleteDataModel = 'Failed to delete a Data Model',
   FailedToAddLogSource = 'Failed to add log source',
   FailedToUpdateLogSource = 'Failed to update log source',
   FailedToAddComplianceSource = 'Failed to add compliance source',
@@ -286,6 +311,16 @@ interface AddDataModelError {
   src: SrcEnum.DataModels;
 }
 
+interface UpdateDataModelError {
+  event: TrackErrorEnum.FailedToUpdateDataModel;
+  src: SrcEnum.DataModels;
+}
+
+interface DeleteDataModelError {
+  event: TrackErrorEnum.FailedToDeleteDataModel;
+  src: SrcEnum.DataModels;
+}
+
 interface UpdateComplianceSourceError {
   event: TrackErrorEnum.FailedToUpdateComplianceSource;
   src: SrcEnum.ComplianceSources;
@@ -307,11 +342,18 @@ interface AddLogSourceError {
 }
 
 interface CustomLogError {
-  event: TrackErrorEnum.FailedToAddCustomLog | TrackErrorEnum.FailedToDeleteCustomLog;
+  event:
+    | TrackErrorEnum.FailedToAddCustomLog
+    | TrackErrorEnum.FailedToDeleteCustomLog
+    | TrackErrorEnum.FailedToUpdateLogSource;
   src: SrcEnum.CustomLogs;
 }
 interface DeleteCustomLogError extends CustomLogError {
   event: TrackErrorEnum.FailedToDeleteCustomLog;
+}
+
+interface UpdateCustomLogError extends CustomLogError {
+  event: TrackErrorEnum.FailedToUpdateLogSource;
 }
 interface AddCustomLogError extends CustomLogError {
   event: TrackErrorEnum.FailedToAddCustomLog;
@@ -320,6 +362,8 @@ interface AddCustomLogError extends CustomLogError {
 type TrackError =
   | AddDestinationError
   | AddDataModelError
+  | UpdateDataModelError
+  | DeleteDataModelError
   | TestDestinationError
   | AddRuleError
   | MfaError
@@ -327,6 +371,7 @@ type TrackError =
   | DeleteCustomLogError
   | AddLogSourceError
   | UpdateLogSourceError
+  | UpdateCustomLogError
   | AddComplianceSourceError
   | UpdateComplianceSourceError;
 

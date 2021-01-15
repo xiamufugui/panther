@@ -23,7 +23,7 @@ import { Formik, Form, Field, FieldArray, FastField } from 'formik';
 import { DataModelMapping } from 'Generated/schema';
 import Breadcrumbs from 'Components/Breadcrumbs';
 import LinkButton from 'Components/buttons/LinkButton';
-import SubmitButton from 'Components/buttons/SubmitButton';
+import SaveButton from 'Components/buttons/SaveButton';
 import urls from 'Source/urls';
 import Panel from 'Components/Panel';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -85,22 +85,39 @@ const validationSchema = Yup.object<DataModelFormValues>({
 });
 
 const DataModelForm: React.FC<DataModelFormProps> = ({ initialValues, onSubmit }) => {
-  const [isPythonEditorOpen, setPythonEditorVisibility] = React.useState(!!initialValues.body);
+  const [isPythonEditorOpen, setPythonEditorVisibility] = React.useState(false);
 
   const { pushSnackbar } = useSnackbar();
   const { data } = useListAvailableLogTypes({
     onError: () => pushSnackbar({ title: "Couldn't fetch your available log types" }),
   });
 
+  React.useEffect(() => {
+    setPythonEditorVisibility(!!initialValues.body);
+  }, [initialValues.body]);
+
   return (
     <Panel title="New Data Model">
       <Formik<DataModelFormValues>
+        enableReinitialize
         initialValues={initialValues}
         onSubmit={onSubmit}
         validationSchema={validationSchema}
       >
         {({ values }) => (
           <Form>
+            <Breadcrumbs.Actions>
+              <Flex justify="flex-end" spacing={4}>
+                <LinkButton
+                  icon="close-circle"
+                  variantColor="darkgray"
+                  to={urls.logAnalysis.dataModels.list()}
+                >
+                  Cancel
+                </LinkButton>
+                <SaveButton>Save</SaveButton>
+              </Flex>
+            </Breadcrumbs.Actions>
             <Box as="section" mb={8}>
               <Text color="navyblue-100" mb={6}>
                 Settings
@@ -207,6 +224,7 @@ const DataModelForm: React.FC<DataModelFormProps> = ({ initialValues, onSubmit }
                     variant="ghost"
                     active={isPythonEditorOpen}
                     variantColor="navyblue"
+                    variantBorderStyle="circle"
                     icon={isPythonEditorOpen ? 'caret-up' : 'caret-down'}
                     onClick={() => setPythonEditorVisibility(v => !v)}
                     size="medium"
@@ -230,20 +248,6 @@ const DataModelForm: React.FC<DataModelFormProps> = ({ initialValues, onSubmit }
                 )}
               </Card>
             </Box>
-            <Breadcrumbs.Actions>
-              <Flex justify="flex-end" spacing={4}>
-                <LinkButton
-                  icon="close-circle"
-                  variantColor="darkgray"
-                  to={urls.logAnalysis.dataModels.list()}
-                >
-                  Cancel
-                </LinkButton>
-                <SubmitButton icon="check-outline" variantColor="green">
-                  Save
-                </SubmitButton>
-              </Flex>
-            </Breadcrumbs.Actions>
           </Form>
         )}
       </Formik>
