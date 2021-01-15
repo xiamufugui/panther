@@ -42,17 +42,13 @@ func (API) ListPacks(input *models.ListPacksInput) *events.APIGatewayProxyRespon
 	}
 
 	// Scan dynamo
-	scanInput, err := packScanInput(input)
+	scanInput, err := scanPackInput(input)
 	if err != nil {
 		return &events.APIGatewayProxyResponse{
 			Body: err.Error(), StatusCode: http.StatusInternalServerError}
 	}
 
-	var items []packTableItem
-	err = scanPackPages(scanInput, func(item packTableItem) error {
-		items = append(items, item)
-		return nil
-	})
+	items, err := getPackItems(scanInput)
 	if err != nil {
 		zap.L().Error("failed to scan packs", zap.Error(err))
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
@@ -75,31 +71,18 @@ func (API) ListPacks(input *models.ListPacksInput) *events.APIGatewayProxyRespon
 	return gatewayapi.MarshalResponse(&result, http.StatusOK)
 }
 
-func packScanInput(input *models.ListPacksInput) (*dynamodb.ScanInput, error) {
+func scanPackInput(input *models.ListPacksInput) (*dynamodb.ScanInput, error) {
 	var filters []expression.ConditionBuilder
-
-	if input.CreatedBy != "" {
-		filters = append(filters, expression.Equal(expression.Name("createdBy"),
-			expression.Value(input.CreatedBy)))
-	}
 
 	if input.Enabled != nil {
 		filters = append(filters, expression.Equal(
 			expression.Name("enabled"), expression.Value(*input.Enabled)))
 	}
 
-	if input.EnabledRelease != "" {
+	// does this work with a struct like this?
+	if input.EnabledRelease.Version != "" {
 		filters = append(filters, expression.Equal(expression.Name("enabledRelease"),
 			expression.Value(input.EnabledRelease)))
-	}
-
-	if input.LastModifiedBy != "" {
-		filters = append(filters, expression.Equal(expression.Name("lastModifiedBy"),
-			expression.Value(input.LastModifiedBy)))
-	}
-
-	if input.Managed != nil {
-		filters = append(filters, expression.Equal(expression.Name("managed"), expression.Value(*input.Managed)))
 	}
 
 	if input.NameContains != "" {
@@ -107,28 +90,20 @@ func packScanInput(input *models.ListPacksInput) (*dynamodb.ScanInput, error) {
 			Or(expression.Contains(expression.Name("lowerDisplayName"), input.NameContains)))
 	}
 
-	if input.Source != "" {
-		filters = append(filters, expression.Contains(expression.Name("source"), input.Source))
-	}
-
-	if input.SourceType != "" {
-		filters = append(filters, expression.Contains(expression.Name("sourceType"), input.Source))
-	}
-
 	if input.UpdateAvailable != nil {
 		filters = append(filters, expression.Equal(expression.Name("updateAvailable"), expression.Value(*input.UpdateAvailable)))
 	}
 
-	if len(input.AvailableReleases) > 0 {
-		// a pack with no available releases should always be returned in this case
-		releaseFilter := expression.AttributeNotExists(expression.Name("availableReleases"))
-		for _, releaseTag := range input.AvailableReleases {
-			releaseFilter = releaseFilter.Or(expression.Contains(expression.Name("availableReleases"), releaseTag))
-		}
-		filters = append(filters, releaseFilter)
-	}
-
 	return buildScanInput(models.TypePack, input.Fields, filters...)
+}
+
+func getPackItems(scanInput *dynamodb.ScanInput) ([]packTableItem, error) {
+	var items []packTableItem
+	err := scanPackPages(scanInput, func(item packTableItem) error {
+		items = append(items, item)
+		return nil
+	})
+	return items, err
 }
 
 // Truncate list of items to the requested page

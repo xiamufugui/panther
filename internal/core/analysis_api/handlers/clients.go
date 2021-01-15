@@ -22,6 +22,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
+	"github.com/aws/aws-sdk-go/service/kms"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
@@ -40,6 +41,7 @@ var (
 
 	awsSession       *session.Session
 	dynamoClient     dynamodbiface.DynamoDBAPI
+	kmsClient        *kms.KMS
 	s3Client         s3iface.S3API
 	sqsClient        sqsiface.SQSAPI
 	complianceClient gatewayapi.API
@@ -68,6 +70,7 @@ func Setup() {
 
 	awsSession = session.Must(session.NewSession())
 	dynamoClient = dynamodb.New(awsSession)
+	kmsClient = kms.New(awsSession)
 	s3Client = s3.New(awsSession)
 	sqsClient = sqs.New(awsSession)
 	lambdaClient := lambda.New(awsSession)

@@ -83,15 +83,3 @@ func (API) DeleteGlobals(input *models.DeleteGlobalsInput) *events.APIGatewayPro
 
 	return &events.APIGatewayProxyResponse{StatusCode: http.StatusOK}
 }
-
-func (api API) DeletePacks(input *models.DeletePacksInput) *events.APIGatewayProxyResponse {
-	if err := dynamoBatchDeletePacks(input); err != nil {
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
-	}
-
-	//if err := s3BatchDelete(input); err != nil {
-	//	return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
-	//}
-
-	return &events.APIGatewayProxyResponse{StatusCode: http.StatusOK}
-}

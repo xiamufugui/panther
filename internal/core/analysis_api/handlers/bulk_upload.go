@@ -158,7 +158,10 @@ func extractZipFile(input *models.BulkUploadInput) (map[string]*tableItem, error
 	if err != nil {
 		return nil, fmt.Errorf("base64 decoding failed: %s", err)
 	}
+	return extractZipFileBytes(content)
+}
 
+func extractZipFileBytes(content []byte) (map[string]*tableItem, error) {
 	// Unzip in memory (the max request size is only 6 MB, so this should easily fit)
 	zipReader, err := zip.NewReader(bytes.NewReader(content), int64(len(content)))
 	if err != nil {

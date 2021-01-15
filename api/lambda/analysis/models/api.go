@@ -64,11 +64,10 @@ type LambdaInput struct {
 	UpdateDataModel  *UpdateDataModelInput  `json:"updateDataModel,omitempty"`
 
 	// Detection Packs
-	DeletePacks *DeletePacksInput `json:"deletePacks,omitempty"`
-	GetPack     *GetPackInput     `json:"getPack,omitempty"`
-	ListPacks   *ListPacksInput   `json:"listPacks,omitempty"`
-	PatchPack   *PatchPackInput   `json:"updatePack,omitempty"`
-	PollPacks   *PollPacksInput   `json:"pollPacks,omitempty"`
+	GetPack   *GetPackInput   `json:"getPack,omitempty"`
+	ListPacks *ListPacksInput `json:"listPacks,omitempty"`
+	PatchPack *PatchPackInput `json:"updatePack,omitempty"`
+	PollPacks *PollPacksInput `json:"pollPacks,omitempty"`
 }
 
 type UnitTest struct {
@@ -98,4 +97,12 @@ type BulkUploadOutput struct {
 	TotalDataModels    int `json:"totalDataModels"`
 	NewDataModels      int `json:"newDataModels"`
 	ModifiedDataModels int `json:"modifiedDataModels"`
+}
+
+type DeleteEntriesInput struct {
+	Entries []DeleteEntry `json:"entries" validate:"min=1,max=1000,dive"`
+}
+
+type DeleteEntry struct {
+	ID string `json:"id" validate:"required,max=1000"`
 }

@@ -395,17 +395,16 @@ func mappingEquality(oldItem, newItem *tableItem) bool {
 // DO NOT use this for situations the items MUST be exactly equal, this is a "good enough" approximation for the
 // purpose it serves, which is informing users that their bulk operation did or did not change something.
 func packUpdated(oldItem, newItem *packTableItem) bool {
-	itemsEqual := setEquality(oldItem.AvailableReleases, newItem.AvailableReleases) &&
-		oldItem.Description == newItem.Description &&
+	itemsEqual := oldItem.Description == newItem.Description &&
 		oldItem.DisplayName == newItem.DisplayName &&
-		oldItem.Enabled == newItem.Enabled && oldItem.Managed == newItem.Managed &&
-		oldItem.EnabledRelease == newItem.EnabledRelease && oldItem.Source == newItem.Source &&
+		oldItem.Enabled == newItem.Enabled &&
+		oldItem.EnabledRelease.ID == newItem.EnabledRelease.ID &&
 		oldItem.UpdateAvailable == newItem.UpdateAvailable
 	if !itemsEqual {
 		return true
 	}
 	// check detection patterns, which currently only cover IDs
-	itemsEqual = itemsEqual && !setEquality(oldItem.DetectionPatterns.IDs, newItem.DetectionPatterns.IDs)
+	itemsEqual = itemsEqual && !setEquality(oldItem.DetectionPattern.IDs, newItem.DetectionPattern.IDs)
 	return !itemsEqual
 }
 

@@ -83,28 +83,24 @@ type tableItem struct {
 // The pack struct stored in Dynamo isn't quite the same as the pack struct returned in the API.
 //
 // optional values can be omitted from the table if they are empty,
-// and extra fields are added for more efficient filtering.
 type packTableItem struct {
-	AvailableReleases []string                `json:"availableReleases"`
+	AvailableReleases []models.Release        `json:"availableReleases"`
 	CreatedAt         time.Time               `json:"createdAt"`
 	CreatedBy         string                  `json:"createdBy"`
 	Description       string                  `json:"description,omitempty"`
-	DetectionPatterns models.DetectionPattern `json:"detectionPatterns,omitempty"`
+	DetectionPattern  models.DetectionPattern `json:"detectionPattern,omitempty"`
 	DisplayName       string                  `json:"displayName,omitempty"`
-	EnabledRelease    string                  `json:"enabledRelease,omitempty"`
+	EnabledRelease    models.Release          `json:"enabledRelease,omitempty"`
 	ID                string                  `json:"id"`
 	LastModified      time.Time               `json:"lastModified"`
 	LastModifiedBy    string                  `json:"lastModifiedBy"`
-	Source            string                  `json:"source"`
-	SourceType        string                  `json:"sourceType"`
-	Type              string                  `json:"type"`
+	Type              models.DetectionType    `json:"type"`
 
 	// Lowercase versions of string fields for easy filtering
 	LowerDisplayName string `json:"lowerDisplayName,omitempty"`
 	LowerID          string `json:"lowerId,omitempty"`
 
 	Enabled         bool   `json:"enabled"`
-	Managed         bool   `json:"managed,omitempty"`
 	UpdateAvailable bool   `json:"updateAvailable,omitempty"`
 	VersionID       string `json:"versionId,omitempty"`
 }
@@ -230,14 +226,13 @@ func (r *packTableItem) Pack() *models.Pack {
 		CreatedAt:         r.CreatedAt,
 		CreatedBy:         r.CreatedBy,
 		Description:       r.Description,
-		DetectionPatterns: r.DetectionPatterns,
+		DetectionPattern:  r.DetectionPattern,
 		DisplayName:       r.DisplayName,
 		EnabledRelease:    r.EnabledRelease,
 		Enabled:           r.Enabled,
 		ID:                r.ID,
 		LastModified:      r.LastModified,
 		LastModifiedBy:    r.LastModifiedBy,
-		Managed:           r.Managed,
 		UpdateAvailable:   r.UpdateAvailable,
 		VersionID:         r.VersionID,
 	}
@@ -260,7 +255,7 @@ func dynamoBatchDeletePacks(input *models.DeletePacksInput) error {
 	return dynamoBatchDeleteItems(env.PackTable, input)
 }
 
-func dynamoBatchDeleteItems(table string, input *models.DeletePoliciesInput) error {
+func dynamoBatchDeleteItems(table string, input *models.DeleteEntriesInput) error {
 	deleteRequests := make([]*dynamodb.WriteRequest, len(input.Entries))
 	for i, entry := range input.Entries {
 		deleteRequests[i] = &dynamodb.WriteRequest{
@@ -283,7 +278,7 @@ func dynamoBatchDeleteItems(table string, input *models.DeletePoliciesInput) err
 //
 // Returns (nil, nil) if the item doesn't exist.
 func dynamoGet(policyID string, consistentRead bool) (*tableItem, error) {
-	response, err := dynamoGetItem(env.Table, policyID, consistentRead)
+	response, err := dynamoGetItemFromTable(env.Table, policyID, consistentRead)
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +296,7 @@ func dynamoGet(policyID string, consistentRead bool) (*tableItem, error) {
 
 // Load a detection pack
 func dynamoGetPack(packID string, consistentRead bool) (*packTableItem, error) {
-	response, err := dynamoGetItem(env.PackTable, packID, consistentRead)
+	response, err := dynamoGetItemFromTable(env.PackTable, packID, consistentRead)
 	if err != nil {
 		return nil, err
 	}
@@ -317,7 +312,7 @@ func dynamoGetPack(packID string, consistentRead bool) (*packTableItem, error) {
 	return &pack, nil
 }
 
-func dynamoGetItem(table string, id string, consistentRead bool) (*dynamodb.GetItemOutput, error) {
+func dynamoGetItemFromTable(table string, id string, consistentRead bool) (*dynamodb.GetItemOutput, error) {
 	response, err := dynamoClient.GetItem(&dynamodb.GetItemInput{
 		ConsistentRead: &consistentRead,
 		Key:            tableKey(id),
@@ -457,7 +452,6 @@ func scanPages(input *dynamodb.ScanInput, handler func(tableItem) error) error {
 	return nil
 }
 
-// Wrapper around dynamoClient.ScanPages that accepts a handler function to process each item.
 func scanPackPages(input *dynamodb.ScanInput, handler func(packTableItem) error) error {
 	var handlerErr, unmarshalErr error
 

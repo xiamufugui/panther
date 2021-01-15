@@ -26,13 +26,7 @@ import (
 
 type CreatePolicyInput = UpdatePolicyInput
 
-type DeletePoliciesInput struct {
-	Entries []DeleteEntry `json:"entries" validate:"min=1,max=1000,dive"`
-}
-
-type DeleteEntry struct {
-	ID string `json:"id" validate:"required,max=1000"`
-}
+type DeletePoliciesInput = DeleteEntriesInput
 
 type GetPolicyInput struct {
 	ID        string `json:"id" validate:"required,max=1000"`
@@ -67,7 +61,7 @@ type ListPoliciesInput struct {
 	Fields []string `json:"fields" validate:"max=20,dive,required,max=100"`
 
 	// ----- Sorting -----
-	SortBy  string `json:"sortBy" validate:"omitempty,oneof=complianceStatus enabled id lastModified resourceTypes severity"`
+	SortBy  string `json:"sortBy" validate:"omitempty,oneof=id"`
 	SortDir string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
 
 	// ----- Paging -----

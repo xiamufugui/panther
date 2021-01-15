@@ -22,7 +22,7 @@ import "time"
 
 type CreateGlobalInput = UpdateGlobalInput
 
-type DeleteGlobalsInput = DeletePoliciesInput
+type DeleteGlobalsInput = DeleteEntriesInput
 
 type GetGlobalInput struct {
 	ID        string `json:"id" validate:"required,max=1000"`

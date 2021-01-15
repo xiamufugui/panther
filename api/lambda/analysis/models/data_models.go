@@ -22,7 +22,7 @@ import "time"
 
 type CreateDataModelInput = UpdateDataModelInput
 
-type DeleteDataModelsInput = DeletePoliciesInput
+type DeleteDataModelsInput = DeleteEntriesInput
 
 type GetDataModelInput struct {
 	ID        string `json:"id" validate:"required,max=1000"`
