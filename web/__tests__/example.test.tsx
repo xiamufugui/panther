@@ -25,7 +25,8 @@ test('renders a list of users in the users page', async () => {
   const mocks = [mockListUsers({ data: { users } })];
   // asdasds
   const { getByText, getByAriaLabel } = render(<ListUsersPage />, { mocks });
-
+  const asd = '323';
+  // asdasd
   // Expect to see a loading interface
   const loadingInterfaceElement = getByAriaLabel('Loading interface...');
   expect(loadingInterfaceElement).toBeTruthy();
