@@ -250,7 +250,7 @@ func buildEksClusterSnapshot(
 
 	// Check if ResourceID matches the integration's regex filter
 	if pollerInput != nil {
-		if ignore := pollerInput.ShouldIgnoreResource(*details.Arn); ignore {
+		if pollerInput.ShouldIgnoreResource(*details.Arn) {
 			return nil, nil
 		}
 	}

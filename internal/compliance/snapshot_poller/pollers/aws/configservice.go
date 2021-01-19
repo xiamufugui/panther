@@ -157,7 +157,7 @@ func buildConfigServiceSnapshot(
 	}
 	if pollerInput != nil {
 		// Check if ResourceID matches the integration's regex filter
-		if ignore := pollerInput.ShouldIgnoreResource(*recorder.Name); ignore {
+		if pollerInput.ShouldIgnoreResource(*recorder.Name) {
 			return nil, nil
 		}
 	}

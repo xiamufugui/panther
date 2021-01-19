@@ -152,7 +152,7 @@ func buildGuardDutyDetectorSnapshot(
 
 	// Check if ResourceID matches the integration's regex filter
 	if pollerInput != nil {
-		if ignore := pollerInput.ShouldIgnoreResource(*detectorSnapshot.ID); ignore {
+		if pollerInput.ShouldIgnoreResource(*detectorSnapshot.ID) {
 			return nil, nil
 		}
 	}
