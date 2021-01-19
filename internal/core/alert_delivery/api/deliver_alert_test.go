@@ -53,12 +53,12 @@ func TestGetAlert(t *testing.T) {
 		TimePartitionCreationTimeIndexName: "timePartitionCreationTimeIndexName",
 	}
 
-	alertID := "alert-id"
+	alertID := aws.String("alert-id")
 	timeNow := time.Now().UTC()
 	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
 
 	alert := &deliveryModels.Alert{
-		AlertID:             &alertID,
+		AlertID:             alertID,
 		AnalysisDescription: "A test alert",
 		AnalysisID:          "Test.Analysis.ID",
 		AnalysisName:        aws.String("Test Analysis Name"),
@@ -88,7 +88,7 @@ func TestGetAlert(t *testing.T) {
 
 	expectedGetItemRequest := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
-			"id": {S: &alertID},
+			"id": {S: alertID},
 		},
 		TableName: aws.String(alertsTableClient.AlertsTableName),
 	}
@@ -98,7 +98,7 @@ func TestGetAlert(t *testing.T) {
 
 	mockDdbClient.On("GetItem", expectedGetItemRequest).Return(&dynamodb.GetItemOutput{Item: item}, nil)
 
-	result, err := alertsTableClient.GetAlert(alertID)
+	result, err := alertsTableClient.GetAlert(*alertID)
 	require.NoError(t, err)
 	require.Equal(t, expectedResult, result)
 
@@ -218,16 +218,19 @@ func TestGetAlertOutputMapping(t *testing.T) {
 			OutputID:           aws.String(outputIds[0]),
 			OutputType:         aws.String("slack"),
 			DefaultForSeverity: []*string{aws.String("INFO")},
+			AlertTypes:         []string{deliveryModels.RuleType, deliveryModels.RuleErrorType, deliveryModels.PolicyType},
 		},
 		{
 			OutputID:           aws.String(outputIds[1]),
 			OutputType:         aws.String("customwebhook"),
 			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM")},
+			AlertTypes:         []string{deliveryModels.RuleType, deliveryModels.RuleErrorType, deliveryModels.PolicyType},
 		},
 		{
 			OutputID:           aws.String(outputIds[2]),
 			OutputType:         aws.String("asana"),
 			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM"), aws.String("CRITICAL")},
+			AlertTypes:         []string{deliveryModels.RuleType, deliveryModels.RuleErrorType, deliveryModels.PolicyType},
 		},
 	}
 

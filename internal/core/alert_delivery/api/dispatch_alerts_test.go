@@ -114,15 +114,18 @@ func TestGetAlertOutputMap(t *testing.T) {
 			OutputID:           aws.String(outputIds[0]),
 			OutputType:         aws.String("slack"),
 			DefaultForSeverity: []*string{aws.String("INFO")},
+			AlertTypes:         []string{deliveryModels.RuleType},
 		},
 		{
 			OutputID:           aws.String(outputIds[1]),
 			OutputType:         aws.String("customwebhook"),
+			AlertTypes:         []string{deliveryModels.RuleType},
 			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM")},
 		},
 		{
 			OutputID:           aws.String(outputIds[2]),
 			OutputType:         aws.String("asana"),
+			AlertTypes:         []string{deliveryModels.RuleType},
 			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM"), aws.String("CRITICAL")},
 		},
 	}

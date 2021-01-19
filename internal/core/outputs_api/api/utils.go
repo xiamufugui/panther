@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	jsoniter "github.com/json-iterator/go"
 
+	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
 	"github.com/panther-labs/panther/internal/core/outputs_api/table"
@@ -43,6 +44,7 @@ func AlertOutputToItem(input *models.AlertOutput) (*table.AlertOutputItem, error
 		OutputID:           input.OutputID,
 		OutputType:         input.OutputType,
 		DefaultForSeverity: input.DefaultForSeverity,
+		AlertTypes:         input.AlertTypes,
 	}
 
 	if input.OutputConfig != nil {
@@ -67,6 +69,7 @@ func ItemToAlertOutput(input *table.AlertOutputItem) (alertOutput *models.AlertO
 		OutputID:           input.OutputID,
 		OutputType:         input.OutputType,
 		DefaultForSeverity: input.DefaultForSeverity,
+		AlertTypes:         input.AlertTypes,
 	}
 
 	// Decrypt the output before returning to the caller
@@ -106,10 +109,13 @@ func redactOutput(outputConfig *models.OutputConfig) {
 	}
 }
 
-func configureOutputFallbacks(outputConfig *models.OutputConfig) {
-	if outputConfig.Opsgenie != nil {
-		if outputConfig.Opsgenie.ServiceRegion == "" {
-			outputConfig.Opsgenie.ServiceRegion = outputs.OpsgenieServiceRegionUS
+func configureOutputFallbacks(alertOutput *models.AlertOutput) {
+	if len(alertOutput.AlertTypes) == 0 {
+		alertOutput.AlertTypes = []string{deliveryModels.RuleType, deliveryModels.RuleErrorType, deliveryModels.PolicyType}
+	}
+	if alertOutput.OutputConfig.Opsgenie != nil {
+		if alertOutput.OutputConfig.Opsgenie.ServiceRegion == "" {
+			alertOutput.OutputConfig.Opsgenie.ServiceRegion = outputs.OpsgenieServiceRegionUS
 		}
 	}
 }

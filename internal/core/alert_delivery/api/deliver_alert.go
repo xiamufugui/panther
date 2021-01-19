@@ -20,6 +20,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -55,7 +56,6 @@ func (API) DeliverAlert(ctx context.Context, input *deliveryModels.DeliverAlertI
 
 	// Get our Alert -> Output mappings. We determine which destinations an alert should be sent.
 	alertOutputMap, err := getAlertOutputMapping(alert, input.OutputIds)
-
 	if err != nil {
 		return nil, err
 	}
@@ -196,32 +196,64 @@ func getAlertOutputMapping(alert *deliveryModels.Alert, outputIds []string) (Ale
 		return alertOutputMap, errors.Wrapf(err, "Failed to fetch outputIds")
 	}
 
-	// Check the provided the input outputIds and generate a list of valid outputs
+	// Check the provided the input outputIds and generate a list of valid outputs. Ends up getting a unique list as well!
 	validOutputIds := intersection(outputIds, outputs)
 	if len(validOutputIds) == 0 {
 		return alertOutputMap, &genericapi.InvalidInputError{
 			Message: "Invalid destination(s) specified: " + strings.Join(outputIds, ", ")}
 	}
 
+	// Next, we filter out any outputs that don't match the Alert Type setting
+	filteredOutputs := filterOutputsByAlertType(alert, validOutputIds)
+
+	// If there's a difference, return an error message with the IDs that failed
+	diffOutputs := difference(validOutputIds, filteredOutputs)
+	if len(diffOutputs) > 0 {
+		diffOutputIds := []string{}
+		for _, out := range diffOutputs {
+			diffOutputIds = append(diffOutputIds, *out.OutputID)
+		}
+
+		return alertOutputMap, &genericapi.InvalidInputError{
+			Message: fmt.Sprintf("The destination(s) specified do not accept this Alert's Type: [%v])", strings.Join(diffOutputIds, ", "))}
+	}
+
 	// Map the outputs
-	alertOutputMap[alert] = validOutputIds
+	alertOutputMap[alert] = filteredOutputs
 	return alertOutputMap, nil
 }
 
-// intersection - Finds the intersection O(M + N) of panther outputs and the provided input list of outputIds
-func intersection(inputs []string, outputs []*outputModels.AlertOutput) []*outputModels.AlertOutput {
+// intersection - Finds the intersection O(M + N) of a list of strings and outputs: A ∩ B
+func intersection(a []string, b []*outputModels.AlertOutput) []*outputModels.AlertOutput {
 	m := make(map[string]struct{})
 
-	for _, item := range inputs {
+	for _, item := range a {
 		m[item] = struct{}{}
 	}
 
-	valid := make([]*outputModels.AlertOutput, 0, len(outputs))
-	for _, item := range outputs {
+	res := make([]*outputModels.AlertOutput, 0, len(b))
+	for _, item := range b {
 		if _, ok := m[*item.OutputID]; ok {
-			valid = append(valid, item)
+			res = append(res, item)
 		}
 	}
 
-	return valid
+	return res
+}
+
+// difference - Finds the difference O(M = N) of outputs: A - B
+func difference(a, b []*outputModels.AlertOutput) []*outputModels.AlertOutput {
+	m := make(map[string]struct{})
+
+	for _, item := range a {
+		m[*item.OutputID] = struct{}{}
+	}
+
+	res := make([]*outputModels.AlertOutput, 0, len(b))
+	for _, item := range b {
+		if _, ok := m[*item.OutputID]; !ok {
+			res = append(res, item)
+		}
+	}
+	return res
 }

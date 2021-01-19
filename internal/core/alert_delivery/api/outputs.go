@@ -33,7 +33,7 @@ const alertOutputSkip = "SKIP"
 
 // getAlertOutputs - Get output ids for an alert by dynmaic destinations, destination overrides, or default severity
 func getAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, error) {
-	// fetch available panther outputs
+	// fetch all available panther outputs
 	outputs, err := getOutputs()
 	if err != nil {
 		return nil, err
@@ -46,18 +46,18 @@ func getAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, 
 		return alertOutputs, nil
 	}
 
-	// Next, prioritize dynamic destinations (set in the detection's python body)
-	if alertOutputs, ok := getDynamicDestinations(alert, outputs); ok {
+	// Next, use any dynamic destinations specified (set in the detection's python body)
+	if alertOutputs, ok := getOutputsByDynamicDestinations(alert, outputs); ok {
 		return alertOutputs, nil
 	}
 
-	// Then, destination overrides (set in the detection's form)
-	if alertOutputs, ok := getDestinationOverrides(alert, outputs); ok {
+	// Then, use any destination overrides specified (set in the detection's form)
+	if alertOutputs, ok := getOutputsByDestinationOverrides(alert, outputs); ok {
 		return alertOutputs, nil
 	}
 
-	// Finally, the use the severity rating (default)
-	return getDefaultOutputs(alert, outputs), nil
+	// If no other dynamic/overrides were set, we calculate based on the severity rating (default)
+	return getOutputsBySeverity(alert, outputs), nil
 }
 
 // getOutputs - Gets a list of outputs from panther (using a cache)
@@ -82,7 +82,7 @@ func shouldSkip(alert *deliveryModels.Alert) bool {
 	return false
 }
 
-func getDynamicDestinations(alert *deliveryModels.Alert, outputs []*outputModels.AlertOutput) ([]*outputModels.AlertOutput, bool) {
+func getOutputsByDynamicDestinations(alert *deliveryModels.Alert, outputs []*outputModels.AlertOutput) ([]*outputModels.AlertOutput, bool) {
 	alertOutputs := []*outputModels.AlertOutput{}
 	if len(alert.Destinations) == 0 {
 		return alertOutputs, false
@@ -99,7 +99,11 @@ func getDynamicDestinations(alert *deliveryModels.Alert, outputs []*outputModels
 	return alertOutputs, len(alertOutputs) > 0
 }
 
-func getDestinationOverrides(alert *deliveryModels.Alert, outputs []*outputModels.AlertOutput) ([]*outputModels.AlertOutput, bool) {
+func getOutputsByDestinationOverrides(
+	alert *deliveryModels.Alert,
+	outputs []*outputModels.AlertOutput,
+) ([]*outputModels.AlertOutput, bool) {
+
 	alertOutputs := []*outputModels.AlertOutput{}
 	if len(alert.OutputIds) == 0 {
 		return alertOutputs, false
@@ -116,11 +120,23 @@ func getDestinationOverrides(alert *deliveryModels.Alert, outputs []*outputModel
 	return alertOutputs, len(alertOutputs) > 0
 }
 
-func getDefaultOutputs(alert *deliveryModels.Alert, outputs []*outputModels.AlertOutput) []*outputModels.AlertOutput {
+func getOutputsBySeverity(alert *deliveryModels.Alert, outputs []*outputModels.AlertOutput) []*outputModels.AlertOutput {
 	alertOutputs := []*outputModels.AlertOutput{}
 	for _, output := range outputs {
 		for _, outputSeverity := range output.DefaultForSeverity {
 			if alert.Severity == *outputSeverity {
+				alertOutputs = append(alertOutputs, output)
+			}
+		}
+	}
+	return alertOutputs
+}
+
+func filterOutputsByAlertType(alert *deliveryModels.Alert, outputs []*outputModels.AlertOutput) []*outputModels.AlertOutput {
+	alertOutputs := []*outputModels.AlertOutput{}
+	for _, output := range outputs {
+		for _, alertType := range output.AlertTypes {
+			if alert.Type == alertType {
 				alertOutputs = append(alertOutputs, output)
 			}
 		}

@@ -89,11 +89,19 @@ func getAlertOutputMap(alerts []*deliveryModels.Alert) (AlertOutputMap, error) {
 	// Create our Alert -> Output mappings
 	alertOutputMap := make(AlertOutputMap)
 	for _, alert := range alerts {
-		validOutputIds, err := getAlertOutputs(alert)
+		// We get a list of outputs depending on several dynamic factors
+		outputs, err := getAlertOutputs(alert)
 		if err != nil {
 			return alertOutputMap, errors.Wrapf(err, "Failed to fetch outputIds")
 		}
-		uniqueOutputs := getUniqueOutputs(validOutputIds)
+
+		// Next, we filter out any outputs that don't match the Alert Type setting
+		filteredOutputs := filterOutputsByAlertType(alert, outputs)
+
+		// Then, we obtain a list of unique outputs
+		uniqueOutputs := getUniqueOutputs(filteredOutputs)
+
+		// Finally, assign the alert to the set of unique outputs
 		alertOutputMap[alert] = uniqueOutputs
 	}
 	return alertOutputMap, nil
