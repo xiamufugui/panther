@@ -152,8 +152,8 @@ func buildGuardDutyDetectorSnapshot(
 
 	// Check if ResourceID matches the integration's regex filter
 	if pollerInput != nil {
-		if ignore, err := pollerInput.ShouldIgnoreResource(*detectorSnapshot.ID); ignore || err != nil {
-			return nil, err
+		if ignore := pollerInput.ShouldIgnoreResource(*detectorSnapshot.ID); ignore {
+			return nil, nil
 		}
 	}
 	detectorSnapshot.FindingPublishingFrequency = detectorDetails.FindingPublishingFrequency
