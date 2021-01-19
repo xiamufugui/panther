@@ -155,9 +155,11 @@ func buildConfigServiceSnapshot(
 		RecordingGroup: recorder.RecordingGroup,
 		RoleARN:        recorder.RoleARN,
 	}
-	// Check if ResourceID matches the integration's regex filter
-	if ignore := pollerInput.ShouldIgnoreResource(*recorder.Name); ignore {
-		return nil, nil
+	if pollerInput != nil {
+		// Check if ResourceID matches the integration's regex filter
+		if ignore := pollerInput.ShouldIgnoreResource(*recorder.Name); ignore {
+			return nil, nil
+		}
 	}
 
 	status, err := describeConfigurationRecorderStatus(configServiceSvc, recorder.Name)
