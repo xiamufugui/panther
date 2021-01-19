@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
+
 	resourcesapimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 )
 
