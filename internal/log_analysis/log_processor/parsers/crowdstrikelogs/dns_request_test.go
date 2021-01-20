@@ -67,7 +67,8 @@ func TestDNSRequestParser(t *testing.T) {
 		"p_any_ip_addresses": ["154.61.65.189"],
 		"p_any_domain_names": ["spclient.wg.spotify.com"],
 		"p_log_type": "%s",
-		"p_event_time": "%s"
+		"p_event_time": "%s",
+		"p_any_trace_ids": ["307dc41ce39744f060622095f2805249"]
 }`,
 		TypeDNSRequest,
 		ts.UTC().Format(time.RFC3339Nano),

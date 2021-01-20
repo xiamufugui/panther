@@ -100,7 +100,8 @@ func TestProcessRollup2Parser(t *testing.T) {
 		"p_any_ip_addresses": ["98.207.249.49"],
 		"p_any_sha1_hashes": ["0000000000000000000000000000000000000000"],
 		"p_any_md5_hashes": ["6f4176c6e24b186038c27648aa56c305"],
-		"p_any_sha256_hashes": ["143c6f74b215152b729425dbd18c864ef3ad674f89ed69bc006728a476e903b9"]
+		"p_any_sha256_hashes": ["143c6f74b215152b729425dbd18c864ef3ad674f89ed69bc006728a476e903b9"],
+		"p_any_trace_ids": ["496cd4d2319145834d69b9e2bf0fbef2"]
 	}`,
 		TypeProcessRollup2,
 		ts.UTC().Format(time.RFC3339Nano),
@@ -182,7 +183,8 @@ func TestSyntheticProcessRollup2Parser(t *testing.T) {
 		"p_any_ip_addresses": ["8.18.220.189"],
 		"p_any_sha1_hashes": ["0000000000000000000000000000000000000000"],
 		"p_any_md5_hashes": ["972fc22071d3449bfab5f4b4cd87580f"],
-		"p_any_sha256_hashes": ["2e06816fee18729501ca0b878782cc29cf5ddb042d980a94a5dee1473fdcbe93"]
+		"p_any_sha256_hashes": ["2e06816fee18729501ca0b878782cc29cf5ddb042d980a94a5dee1473fdcbe93"],
+		"p_any_trace_ids": ["8b1b0112aa274d344284ee4693150de4"]
 	}`,
 		TypeSyntheticProcessRollup2,
 		ts.UTC().Format(time.RFC3339Nano),
