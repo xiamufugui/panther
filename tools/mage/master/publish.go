@@ -87,7 +87,7 @@ func Publish() error {
 		return err
 	}
 
-	dockerImageID, err := buildAssets(log)
+	dockerImageID, err := buildAssets(log, nil) // TODO
 	if err != nil {
 		return err
 	}

@@ -26,36 +26,39 @@ import (
 
 	"github.com/panther-labs/panther/tools/mage/build"
 	"github.com/panther-labs/panther/tools/mage/deploy"
-	"github.com/panther-labs/panther/tools/mage/gen"
-	"github.com/panther-labs/panther/tools/mage/srcfmt"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
-// Build lambda functions, python layer, and docker image.
+// Build lambda functions, python layer, and docker image in parallel.
 //
 // Returns docker image ID.
-func buildAssets(log *zap.SugaredLogger) (string, error) {
-	if err := gen.Gen(); err != nil {
-		return "", err
-	}
-	if err := srcfmt.Fmt(); err != nil {
+func buildAssets(log *zap.SugaredLogger, pipLayer []string) (string, error) {
+	results := make(chan util.TaskResult)
+	count := 0
+	var imageID string
+
+	count++
+	go func(c chan util.TaskResult) {
+		c <- util.TaskResult{Summary: "build:lambda", Err: build.Lambda()}
+	}(results)
+
+	count++
+	go func(c chan util.TaskResult) {
+		c <- util.TaskResult{Summary: "pip install layer", Err: build.Layer(log, pipLayer)}
+	}(results)
+
+	count++
+	go func(c chan util.TaskResult) {
+		var err error
+		imageID, err = deploy.DockerBuild()
+		c <- util.TaskResult{Summary: "docker build", Err: err}
+	}(results)
+
+	if err := util.WaitForTasks(log, results, 1, count, count); err != nil {
 		return "", err
 	}
 
-	if err := build.Lambda(); err != nil {
-		return "", err
-	}
-
-	// Use the pip libraries in the default settings file when building the layer.
-	defaultConfig, err := deploy.Settings()
-	if err != nil {
-		return "", err
-	}
-	if err := build.Layer(log, defaultConfig.Infra.PipLayer); err != nil {
-		return "", err
-	}
-
-	return deploy.DockerBuild()
+	return imageID, nil
 }
 
 // Package assets needed for the master template.

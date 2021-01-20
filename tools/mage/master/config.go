@@ -19,6 +19,7 @@ package master
  */
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -34,11 +35,13 @@ const defaultRootStackName = "panther"
 
 const rootConfigHeader = "# Root stack configuration - edit to configure your own parameter overrides\n\n"
 
+var defaultPipLayer = []string{"jsonpath-ng==1.5.2", "policyuniverse==1.3.2.2", "requests==2.23.0"}
 var rootConfigPath = filepath.Join("deployments", "root_config.yml")
 
 // Developer configuration for the root stack
 type RootConfig struct {
 	RootStackName      string            `yaml:"RootStackName"`
+	PipLayer           []string          `yaml:"PipLayer"`
 	ParameterOverrides map[string]string `yaml:"ParameterOverrides"`
 }
 
@@ -54,6 +57,7 @@ func (c *RootConfig) Load() error {
 // Generate a default root config for developers - the user will be prompted for their email.
 func (c *RootConfig) Gen(imgRegistry string) error {
 	c.RootStackName = defaultRootStackName
+	c.PipLayer = defaultPipLayer
 
 	email := prompt.Read("First user email: ", prompt.EmailValidator)
 	dev, err := user.Current()
@@ -94,7 +98,9 @@ func (c *RootConfig) Save() error {
 func buildRootConfig(log *zap.SugaredLogger, imgRegistry string) (*RootConfig, error) {
 	config := new(RootConfig)
 	if err := config.Load(); err == nil {
-		// TODO - check if config actually has a stack name defined
+		if config.RootStackName == "" {
+			return nil, fmt.Errorf("%s is not valid: RootStackName is empty", rootConfigPath)
+		}
 		log.Infof("loaded root stack config from %s", rootConfigPath)
 		return config, nil
 	} else if os.IsNotExist(err) {

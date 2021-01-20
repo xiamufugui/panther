@@ -72,7 +72,7 @@ func LambdaPackage(pkg string) (string, error) {
 	if err := os.MkdirAll(targetDir, 0700); err != nil {
 		return binary, fmt.Errorf("failed to create %s directory: %v", targetDir, err)
 	}
-	if err := sh.RunWith(buildEnv, "go", "build", "-p", "1", "-ldflags", "-s -w", "-o", targetDir, "./"+pkg); err != nil {
+	if err := sh.RunWith(buildEnv, "go", "build", "-ldflags", "-s -w", "-o", targetDir, "./"+pkg); err != nil {
 		return binary, fmt.Errorf("go build %s failed: %v", binary, err)
 	}
 

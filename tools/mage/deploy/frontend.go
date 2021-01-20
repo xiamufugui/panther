@@ -27,6 +27,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/joho/godotenv"
+	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 
 	"github.com/panther-labs/panther/tools/cfnstacks"
@@ -90,7 +91,13 @@ func deployFrontend(bootstrapOutputs map[string]string, settings *PantherConfig)
 // Returns local image ID
 func DockerBuild() (string, error) {
 	log.Info("docker build web server (deployments/Dockerfile)")
-	dockerBuildOutput, err := sh.Output("docker", "build", "--file", "deployments/Dockerfile", "--quiet", ".")
+	args := []string{"build", "--file", "deployments/Dockerfile"}
+	if !mg.Verbose() {
+		args = append(args, "--quiet")
+	}
+	args = append(args, ".")
+
+	dockerBuildOutput, err := sh.Output("docker", args...)
 	if err != nil {
 		return "", fmt.Errorf("docker build failed: %v", err)
 	}

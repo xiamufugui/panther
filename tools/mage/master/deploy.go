@@ -45,44 +45,35 @@ func Deploy() error {
 		return err
 	}
 
+	// Deploy panther-dev stack to initialize S3 bucket and ECR repo
 	outputs, err := deploy.Stack(devTemplate, "", devStackName, nil)
 	if err != nil {
 		return err
 	}
 
-	// TODO - mage clean should remove the root_config.yml file
-	_, err = buildRootConfig(log, outputs["ImageRegistryUri"])
+	config, err := buildRootConfig(log, outputs["ImageRegistryUri"])
+	if err != nil {
+		return err
+	}
+
+	_, err = buildAssets(log, config.PipLayer)
 	if err != nil {
 		return err
 	}
 
 	return nil
 
-	/*
-		1. Deploy panther-dev
-		2. go build / docker build in parallel
-		3. package assets
-		4. Deploy root stack
-	*/
+	// TODO - package assets (in parallel)
+	// TODO - embed version directly in final template
+	// TODO - deploy root stack
 
 	//log.Infof("deploying %s %s (%s) to %s (%s) as stack '%s'", rootTemplate,
 	//	util.Semver(), util.CommitSha(), clients.AccountID(), clients.Region(), stack)
 	//email := prompt.Read("First user email: ", prompt.EmailValidator)
 	//
-	//dockerImageID, err := buildAssets(log)
-	//if err != nil {
-	//	return err
-	//}
-	//
 	//pkg, err := pkgAssets(log, clients.ECR(), clients.Region(), bucket, registryURI, dockerImageID)
 	//if err != nil {
 	//	return err
-	//}
-	//
-	//params := []string{"FirstUserEmail=" + email, "ImageRegistry=" + registryURI}
-	//if p := os.Getenv("PARAMS"); p != "" {
-	//	// Assume no spaces in the parameter values
-	//	params = append(params, strings.Split(p, " ")...)
 	//}
 	//
 	//return util.SamDeploy(stack, pkg, params...)

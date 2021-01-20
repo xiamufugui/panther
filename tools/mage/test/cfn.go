@@ -64,7 +64,7 @@ func Cfn() error {
 func testCfnLint() error {
 	var templates []string
 	util.MustWalk("deployments", func(path string, info os.FileInfo) error {
-		if !info.IsDir() && filepath.Ext(path) == ".yml" && filepath.Base(path) != "panther_config.yml" {
+		if !info.IsDir() && filepath.Ext(path) == ".yml" && !strings.HasSuffix(path, "_config.yml") {
 			templates = append(templates, path)
 		}
 		return nil

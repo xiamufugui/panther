@@ -29,7 +29,13 @@ import (
 
 func Clean() error {
 	log := logger.Build("[clean]")
-	paths := []string{util.SetupDir, util.NpmDir, "out", "internal/core/analysis_api/main/bulk_upload.zip"}
+	paths := []string{
+		util.SetupDir,
+		util.NpmDir,
+		"deployments/root_config.yml",
+		"internal/core/analysis_api/main/bulk_upload.zip", // created by integration tests
+		"out",
+	}
 
 	// Remove __pycache__ folders
 	for _, target := range util.PyTargets {
