@@ -68,6 +68,7 @@ func (api *API) DeleteIntegration(input *models.DeleteIntegrationInput) error {
 			}
 		}
 
+		// TODO(giorgosp): Tell user that we don't delete the notifications
 		if shouldRemovePermissions {
 			if err = api.DisableExternalSnsTopicSubscription(integrationItem.AWSAccountID); err != nil {
 				zap.L().Error("failed to remove permission from SQS queue for integrationItem",

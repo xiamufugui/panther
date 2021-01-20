@@ -102,6 +102,13 @@ func (api *API) UpdateIntegrationSettings(input *models.UpdateIntegrationSetting
 	}
 
 	existingIntegration := itemToIntegration(existingItem)
+
+	if existingIntegration.IntegrationType == models.IntegrationTypeAWS3 &&
+		existingIntegration.ManagedBucketNotifications {
+		// TODO(giorgosp): UI should show a warning if this fails
+		handleManagedBucketNotifs(api.AwsSession, existingIntegration)
+	}
+
 	return existingIntegration, nil
 }
 
