@@ -19,6 +19,7 @@ package handlers
  */
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -29,6 +30,26 @@ import (
 	"github.com/panther-labs/panther/internal/core/analysis_api/analysis"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
+
+var ValidResourceTypes = []string{ "AWS.ACM.Certificate", "AWS.CloudFormation.Stack", "AWS.CloudTrail", "AWS.CloudTrail.Meta", "AWS.CloudWatch.LogGroup", "AWS.Config.Recorder", "AWS.Config.Recorder.Meta", "AWS.DynamoDB.Table", "AWS.EC2.AMI", "AWS.EC2.Instance", "AWS.EC2.NetworkACL", "AWS.EC2.SecurityGroup", "AWS.EC2.Volume", "AWS.EC2.VPC", "AWS.ECS.Cluster", "AWS.EKS.Cluster", "AWS.ELBV2.ApplicationLoadBalancer", "AWS.GuardDuty.Detector", "AWS.IAM.Group", "AWS.IAM.Policy", "AWS.IAM.Role", "AWS.IAM.RootUser", "AWS.IAM.User", "AWS.KMS.Key", "AWS.Lambda.Function", "AWS.PasswordPolicy", "AWS.RDS.Instance", "AWS.Redshift.Cluster", "AWS.S3.Bucket", "AWS.WAF.Regional.WebACL", "AWS.WAF.WebACL"}
+
+func ValidResourceType(checkValidResourceType string) bool {
+	for _, existingResourceTypeEntry := range ValidResourceTypes {
+		if checkValidResourceType == existingResourceTypeEntry {
+			return true
+		}
+	}
+	return false
+}
+
+func ValidResourceTypeSet(checkResourceTypeSet []string) error {
+	for _, writeResourceTypeEntry := range checkResourceTypeSet {
+		if !ValidResourceType(writeResourceTypeEntry) {
+			return fmt.Errorf("Resource type contains invalid entry: %s", writeResourceTypeEntry)
+		}
+	}
+	return nil
+}
 
 // CreatePolicy adds a new policy to the Dynamo table.
 func (API) CreatePolicy(input *models.CreatePolicyInput) *events.APIGatewayProxyResponse {
@@ -41,6 +62,14 @@ func (API) UpdatePolicy(input *models.UpdatePolicyInput) *events.APIGatewayProxy
 
 // Shared by CreatePolicy and UpdatePolicy
 func writePolicy(input *models.CreatePolicyInput, create bool) *events.APIGatewayProxyResponse {
+
+	if err := ValidResourceTypeSet(input.ResourceTypes); err != nil {
+		return &events.APIGatewayProxyResponse{
+			Body: err.Error(),
+			StatusCode: http.StatusBadRequest,
+		}
+	}
+
 	// Disallow saving if policy is enabled and its tests fail.
 	testsPass, err := enabledPolicyTestsPass(input)
 

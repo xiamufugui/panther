@@ -391,7 +391,12 @@ func validateUploadedPolicy(item *tableItem) error {
 		item.Severity = compliancemodels.SeverityInfo
 	case models.TypeDataModel:
 		item.Severity = compliancemodels.SeverityInfo
-	case models.TypePolicy, models.TypeRule:
+	case models.TypePolicy:
+		if err := ValidResourceTypeSet(item.ResourceTypes); err != nil {
+			return err
+		}
+		break;
+	case models.TypeRule:
 		break
 	default:
 		return fmt.Errorf("policy ID %s is invalid: unknown analysis type %s", item.ID, item.Type)
