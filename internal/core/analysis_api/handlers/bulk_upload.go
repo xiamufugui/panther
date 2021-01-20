@@ -395,7 +395,7 @@ func validateUploadedPolicy(item *tableItem) error {
 		if err := ValidResourceTypeSet(item.ResourceTypes); err != nil {
 			return err
 		}
-		break;
+		break
 	case models.TypeRule:
 		break
 	default:
