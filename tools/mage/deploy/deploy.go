@@ -432,7 +432,7 @@ func deployMainStacks(settings *PantherConfig, outputs map[string]string) error 
 }
 
 func deployBootstrapStack(settings *PantherConfig) (map[string]string, error) {
-	return deployTemplate(cfnstacks.BootstrapTemplate, "", cfnstacks.Bootstrap, map[string]string{
+	return Stack(cfnstacks.BootstrapTemplate, "", cfnstacks.Bootstrap, map[string]string{
 		"AccessLogsBucket":              settings.Setup.S3AccessLogsBucket,
 		"AlarmTopicArn":                 settings.Monitoring.AlarmSnsTopicArn,
 		"CloudWatchLogRetentionDays":    strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
@@ -462,7 +462,7 @@ func deployBootstrapGatewayStack(
 		return nil, err
 	}
 
-	return deployTemplate(cfnstacks.GatewayTemplate, outputs["SourceBucket"], cfnstacks.Gateway, map[string]string{
+	return Stack(cfnstacks.GatewayTemplate, outputs["SourceBucket"], cfnstacks.Gateway, map[string]string{
 		"AlarmTopicArn":              outputs["AlarmTopicArn"],
 		"AthenaResultsBucket":        outputs["AthenaResultsBucket"],
 		"AuditLogsBucket":            outputs["AuditLogsBucket"],
@@ -480,7 +480,7 @@ func deployBootstrapGatewayStack(
 }
 
 func deployAppsyncStack(outputs map[string]string) error {
-	_, err := deployTemplate(cfnstacks.AppsyncTemplate, outputs["SourceBucket"], cfnstacks.Appsync, map[string]string{
+	_, err := Stack(cfnstacks.AppsyncTemplate, outputs["SourceBucket"], cfnstacks.Appsync, map[string]string{
 		"AlarmTopicArn":         outputs["AlarmTopicArn"],
 		"ApiId":                 outputs["GraphQLApiId"],
 		"CustomResourceVersion": customResourceVersion(),
@@ -490,7 +490,7 @@ func deployAppsyncStack(outputs map[string]string) error {
 }
 
 func deployCloudSecurityStack(settings *PantherConfig, outputs map[string]string) error {
-	_, err := deployTemplate(cfnstacks.CloudsecTemplate, outputs["SourceBucket"], cfnstacks.Cloudsec, map[string]string{
+	_, err := Stack(cfnstacks.CloudsecTemplate, outputs["SourceBucket"], cfnstacks.Cloudsec, map[string]string{
 		"AlarmTopicArn":              outputs["AlarmTopicArn"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"CustomResourceVersion":      customResourceVersion(),
@@ -507,7 +507,7 @@ func deployCloudSecurityStack(settings *PantherConfig, outputs map[string]string
 }
 
 func deployCoreStack(settings *PantherConfig, outputs map[string]string) error {
-	_, err := deployTemplate(cfnstacks.CoreTemplate, outputs["SourceBucket"], cfnstacks.Core, map[string]string{
+	_, err := Stack(cfnstacks.CoreTemplate, outputs["SourceBucket"], cfnstacks.Core, map[string]string{
 		"AlarmTopicArn":              outputs["AlarmTopicArn"],
 		"AnalysisVersionsBucket":     outputs["AnalysisVersionsBucket"],
 		"AppDomainURL":               outputs["LoadBalancerUrl"],
@@ -531,12 +531,12 @@ func deployCoreStack(settings *PantherConfig, outputs map[string]string) error {
 }
 
 func deployDashboardStack(bucket string) error {
-	_, err := deployTemplate(cfnstacks.DashboardTemplate, bucket, cfnstacks.Dashboard, nil)
+	_, err := Stack(cfnstacks.DashboardTemplate, bucket, cfnstacks.Dashboard, nil)
 	return err
 }
 
 func deployLogAnalysisStack(settings *PantherConfig, outputs map[string]string) error {
-	_, err := deployTemplate(cfnstacks.LogAnalysisTemplate, outputs["SourceBucket"], cfnstacks.LogAnalysis, map[string]string{
+	_, err := Stack(cfnstacks.LogAnalysisTemplate, outputs["SourceBucket"], cfnstacks.LogAnalysis, map[string]string{
 		"AlarmTopicArn":                      outputs["AlarmTopicArn"],
 		"AthenaResultsBucket":                outputs["AthenaResultsBucket"],
 		"AthenaWorkGroup":                    outputs["AthenaWorkGroup"],
@@ -560,7 +560,7 @@ func deployLogAnalysisStack(settings *PantherConfig, outputs map[string]string) 
 func deployOnboardStack(settings *PantherConfig, outputs map[string]string) error {
 	var err error
 	if settings.Setup.OnboardSelf {
-		_, err = deployTemplate(cfnstacks.OnboardTemplate, outputs["SourceBucket"], cfnstacks.Onboard, map[string]string{
+		_, err = Stack(cfnstacks.OnboardTemplate, outputs["SourceBucket"], cfnstacks.Onboard, map[string]string{
 			"AlarmTopicArn":         outputs["AlarmTopicArn"],
 			"AuditLogsBucket":       outputs["AuditLogsBucket"],
 			"CustomResourceVersion": customResourceVersion(),

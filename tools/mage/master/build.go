@@ -20,7 +20,6 @@ package master
 
 import (
 	"bytes"
-	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"go.uber.org/zap"
@@ -31,8 +30,6 @@ import (
 	"github.com/panther-labs/panther/tools/mage/srcfmt"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
-
-var masterTemplate = filepath.Join("deployments", "master.yml")
 
 // Build lambda functions, python layer, and docker image.
 //
@@ -65,7 +62,7 @@ func buildAssets(log *zap.SugaredLogger) (string, error) {
 //
 // Returns the path to the final generated template.
 func pkgAssets(log *zap.SugaredLogger, ecrClient *ecr.ECR, region, bucket, imgRegistry, dockerImageID string) (string, error) {
-	pkg, err := util.SamPackage(region, masterTemplate, bucket)
+	pkg, err := util.SamPackage(region, rootTemplate, bucket)
 	if err != nil {
 		return "", err
 	}

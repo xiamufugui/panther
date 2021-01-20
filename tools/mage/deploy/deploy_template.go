@@ -45,15 +45,19 @@ const (
 // Deploy a CloudFormation template, returning stack outputs.
 //
 // The bucket parameter can be empty to skip S3 packaging.
-func deployTemplate(
+func Stack(
 	templatePath, bucket, stack string,
 	params map[string]string,
 ) (map[string]string, error) {
 
 	// 1) Generate final template, with large assets packaged in S3.
-	packagedTemplate, err := util.SamPackage(clients.Region(), templatePath, bucket)
-	if err != nil {
-		return nil, err
+	packagedTemplate := templatePath
+	if bucket != "" {
+		var err error
+		packagedTemplate, err = util.SamPackage(clients.Region(), templatePath, bucket)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// 2) If the stack already exists, wait for it to reach a steady state.

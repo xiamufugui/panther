@@ -30,10 +30,7 @@ import (
 	"github.com/panther-labs/panther/tools/mage/logger"
 )
 
-// "go build" in parallel for each Lambda function.
-//
-// If you don't already have all go modules downloaded, this may fail because each goroutine will
-// automatically modify the go.mod/go.sum files which will cause conflicts with itself.
+// "go build" sequentially for each Lambda function.
 //
 // Run "go mod download" or "mage setup" before building to download the go modules.
 // If you're adding a new module, run "go get ./..." before building to fetch the new module.

@@ -20,110 +20,76 @@ package master
 
 import (
 	"fmt"
-	"os"
-	"strings"
+	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"github.com/aws/aws-sdk-go/service/ecr"
-	"github.com/aws/aws-sdk-go/service/s3"
 
-	"github.com/panther-labs/panther/pkg/prompt"
 	"github.com/panther-labs/panther/tools/cfnstacks"
 	"github.com/panther-labs/panther/tools/mage/clients"
 	"github.com/panther-labs/panther/tools/mage/deploy"
 	"github.com/panther-labs/panther/tools/mage/logger"
-	"github.com/panther-labs/panther/tools/mage/util"
 )
 
-const defaultStackName = "panther"
+const devStackName = "panther-dev"
 
-// Deploy single master template nesting all other stacks.
-//
-// This allows developers to simulate the customer deployment flow and test the master
-// template before publishing a release.
+var (
+	devTemplate  = filepath.Join("deployments", "dev.yml")
+	rootTemplate = filepath.Join("deployments", "root.yml")
+)
+
+// Deploy the root template nesting all other stacks.
 func Deploy() error {
 	log := logger.Build("[master:deploy]")
-	if err := masterDeployPreCheck(); err != nil {
+	if err := deployPreCheck(); err != nil {
 		return err
 	}
 
-	var stack string
-	if stack = os.Getenv("STACK"); stack == "" {
-		stack = defaultStackName
-	}
-
-	log.Infof("deploying %s %s (%s) to %s (%s) as stack '%s'", masterTemplate,
-		util.Semver(), util.CommitSha(), clients.AccountID(), clients.Region(), stack)
-	email := prompt.Read("First user email: ", prompt.EmailValidator)
-
-	dockerImageID, err := buildAssets(log)
+	outputs, err := deploy.Stack(devTemplate, "", devStackName, nil)
 	if err != nil {
 		return err
 	}
 
-	// Create S3 bucket for staging assets
-	bucket := fmt.Sprintf("panther-dev-%s-master-%s", clients.AccountID(), clients.Region())
-	if _, err := clients.S3().CreateBucket(&s3.CreateBucketInput{Bucket: &bucket}); err != nil {
-		if awsErr := err.(awserr.Error); awsErr.Code() != s3.ErrCodeBucketAlreadyOwnedByYou &&
-			awsErr.Code() != s3.ErrCodeBucketAlreadyExists {
-
-			return fmt.Errorf("failed to create S3 bucket %s: %v", bucket, err)
-		}
-	}
-
-	// Delete packaged assets after a few days
-	if _, err := clients.S3().PutBucketLifecycleConfiguration(&s3.PutBucketLifecycleConfigurationInput{
-		Bucket: &bucket,
-		LifecycleConfiguration: &s3.BucketLifecycleConfiguration{
-			Rules: []*s3.LifecycleRule{
-				{
-					AbortIncompleteMultipartUpload: &s3.AbortIncompleteMultipartUpload{
-						DaysAfterInitiation: aws.Int64(1),
-					},
-					Expiration: &s3.LifecycleExpiration{
-						Days: aws.Int64(7),
-					},
-					Filter: &s3.LifecycleRuleFilter{
-						Prefix: aws.String(""),
-					},
-					ID:     aws.String("expire-everything"),
-					Status: aws.String("Enabled"),
-				},
-			},
-		},
-	}); err != nil {
-		return fmt.Errorf("failed to put S3 bucket lifecycle policy: %v", err)
-	}
-
-	// Create ECR repo
-	const repoName = "panther-dev-master"
-	if _, err := clients.ECR().CreateRepository(&ecr.CreateRepositoryInput{
-		RepositoryName: aws.String(repoName),
-	}); err != nil {
-		if awsErr := err.(awserr.Error); awsErr.Code() != ecr.ErrCodeRepositoryAlreadyExistsException {
-			return fmt.Errorf("failed to create ECR repo %s: %v", repoName, err)
-		}
-	}
-	var registryURI = fmt.Sprintf("%s.dkr.ecr.%s.amazonaws.com/%s", clients.AccountID(), clients.Region(), repoName)
-
-	pkg, err := pkgAssets(log, clients.ECR(), clients.Region(), bucket, registryURI, dockerImageID)
+	// TODO - mage clean should remove the root_config.yml file
+	_, err = buildRootConfig(log, outputs["ImageRegistryUri"])
 	if err != nil {
 		return err
 	}
 
-	params := []string{"FirstUserEmail=" + email, "ImageRegistry=" + registryURI}
-	if p := os.Getenv("PARAMS"); p != "" {
-		// Assume no spaces in the parameter values
-		params = append(params, strings.Split(p, " ")...)
-	}
+	return nil
 
-	return util.SamDeploy(stack, pkg, params...)
+	/*
+		1. Deploy panther-dev
+		2. go build / docker build in parallel
+		3. package assets
+		4. Deploy root stack
+	*/
+
+	//log.Infof("deploying %s %s (%s) to %s (%s) as stack '%s'", rootTemplate,
+	//	util.Semver(), util.CommitSha(), clients.AccountID(), clients.Region(), stack)
+	//email := prompt.Read("First user email: ", prompt.EmailValidator)
+	//
+	//dockerImageID, err := buildAssets(log)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//pkg, err := pkgAssets(log, clients.ECR(), clients.Region(), bucket, registryURI, dockerImageID)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//params := []string{"FirstUserEmail=" + email, "ImageRegistry=" + registryURI}
+	//if p := os.Getenv("PARAMS"); p != "" {
+	//	// Assume no spaces in the parameter values
+	//	params = append(params, strings.Split(p, " ")...)
+	//}
+	//
+	//return util.SamDeploy(stack, pkg, params...)
 }
 
 // Stop early if there is a known issue with the dev environment.
-func masterDeployPreCheck() error {
+func deployPreCheck() error {
 	if err := deploy.PreCheck(); err != nil {
 		return err
 	}
@@ -133,7 +99,8 @@ func masterDeployPreCheck() error {
 	if err == nil {
 		// Multiple Panther deployments won't work in the same region in the same account.
 		// Named resources (e.g. IAM roles) will conflict
-		return fmt.Errorf("%s stack already exists, can't deploy master template", cfnstacks.Bootstrap)
+		// TODO - the stack migration will happen here
+		return fmt.Errorf("%s stack already exists, can't deploy root template", cfnstacks.Bootstrap)
 	}
 
 	return nil
