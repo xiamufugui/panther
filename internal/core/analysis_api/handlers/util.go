@@ -267,7 +267,7 @@ func writePack(item *packTableItem, userID string, mustExist *bool) error {
 		item.CreatedAt = time.Now()
 		item.CreatedBy = userID
 	} else {
-		if equal := packUpdated(oldItem, item); equal {
+		if equal := !packUpdated(oldItem, item); equal {
 			zap.L().Info("no changes necessary", zap.String("packId", item.ID))
 			return nil
 		}
@@ -398,8 +398,9 @@ func packUpdated(oldItem, newItem *packTableItem) bool {
 	itemsEqual := oldItem.Description == newItem.Description &&
 		oldItem.DisplayName == newItem.DisplayName &&
 		oldItem.Enabled == newItem.Enabled &&
-		oldItem.EnabledRelease.ID == newItem.EnabledRelease.ID &&
-		oldItem.UpdateAvailable == newItem.UpdateAvailable
+		oldItem.EnabledVersion.ID == newItem.EnabledVersion.ID &&
+		oldItem.UpdateAvailable == newItem.UpdateAvailable &&
+		len(oldItem.AvailableVersions) == len(newItem.AvailableVersions)
 	if !itemsEqual {
 		return true
 	}

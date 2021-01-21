@@ -84,13 +84,13 @@ type tableItem struct {
 //
 // optional values can be omitted from the table if they are empty,
 type packTableItem struct {
-	AvailableReleases []models.Release        `json:"availableReleases"`
+	AvailableVersions []models.Version        `json:"availableVersions"`
 	CreatedAt         time.Time               `json:"createdAt"`
 	CreatedBy         string                  `json:"createdBy"`
 	Description       string                  `json:"description,omitempty"`
 	DetectionPattern  models.DetectionPattern `json:"detectionPattern,omitempty"`
 	DisplayName       string                  `json:"displayName,omitempty"`
-	EnabledRelease    models.Release          `json:"enabledRelease,omitempty"`
+	EnabledVersion    models.Version          `json:"enabledVersion,omitempty"`
 	ID                string                  `json:"id"`
 	LastModified      time.Time               `json:"lastModified"`
 	LastModifiedBy    string                  `json:"lastModifiedBy"`
@@ -101,7 +101,7 @@ type packTableItem struct {
 	LowerID          string `json:"lowerId,omitempty"`
 
 	Enabled         bool   `json:"enabled"`
-	UpdateAvailable bool   `json:"updateAvailable,omitempty"`
+	UpdateAvailable bool   `json:"updateAvailable"`
 	VersionID       string `json:"versionId,omitempty"`
 }
 
@@ -222,13 +222,13 @@ func (r *tableItem) DataModel() *models.DataModel {
 // Pack converts a Dynamo row into a Pack external model.
 func (r *packTableItem) Pack() *models.Pack {
 	result := &models.Pack{
-		AvailableReleases: r.AvailableReleases,
+		AvailableVersions: r.AvailableVersions,
 		CreatedAt:         r.CreatedAt,
 		CreatedBy:         r.CreatedBy,
 		Description:       r.Description,
 		DetectionPattern:  r.DetectionPattern,
 		DisplayName:       r.DisplayName,
-		EnabledRelease:    r.EnabledRelease,
+		EnabledVersion:    r.EnabledVersion,
 		Enabled:           r.Enabled,
 		ID:                r.ID,
 		LastModified:      r.LastModified,
@@ -248,14 +248,6 @@ func tableKey(policyID string) map[string]*dynamodb.AttributeValue {
 
 // Batch delete multiple entries from the Dynamo table.
 func dynamoBatchDelete(input *models.DeletePoliciesInput) error {
-	return dynamoBatchDeleteItems(env.Table, input)
-}
-
-func dynamoBatchDeletePacks(input *models.DeletePacksInput) error {
-	return dynamoBatchDeleteItems(env.PackTable, input)
-}
-
-func dynamoBatchDeleteItems(table string, input *models.DeleteEntriesInput) error {
 	deleteRequests := make([]*dynamodb.WriteRequest, len(input.Entries))
 	for i, entry := range input.Entries {
 		deleteRequests[i] = &dynamodb.WriteRequest{
@@ -264,7 +256,7 @@ func dynamoBatchDeleteItems(table string, input *models.DeleteEntriesInput) erro
 	}
 
 	batchInput := &dynamodb.BatchWriteItemInput{
-		RequestItems: map[string][]*dynamodb.WriteRequest{table: deleteRequests},
+		RequestItems: map[string][]*dynamodb.WriteRequest{env.Table: deleteRequests},
 	}
 	if err := dynamodbbatch.BatchWriteItem(dynamoClient, maxDynamoBackoff, batchInput); err != nil {
 		zap.L().Error("dynamodbbatch.BatchWriteItem (delete) failed", zap.Error(err))
@@ -318,9 +310,9 @@ func dynamoGetItemFromTable(table string, id string, consistentRead bool) (*dyna
 		Key:            tableKey(id),
 		TableName:      &table,
 	})
-	zap.L().Error("table", zap.Any("table", &table), zap.Any("key", tableKey(id)))
 	if err != nil {
 		zap.L().Error("dynamoClient.GetItem failed", zap.Error(err))
+		zap.L().Error("table", zap.Any("table", &table), zap.Any("key", tableKey(id)))
 		return nil, err
 	}
 	return response, nil
@@ -490,6 +482,10 @@ func scanPackPages(input *dynamodb.ScanInput, handler func(packTableItem) error)
 
 // Build dynamo scan input for list operations
 func buildScanInput(itemType models.DetectionType, fields []string, filters ...expression.ConditionBuilder) (*dynamodb.ScanInput, error) {
+	return buildTableScanInput(env.Table, itemType, fields, filters...)
+}
+
+func buildTableScanInput(table string, itemType models.DetectionType, fields []string, filters ...expression.ConditionBuilder) (*dynamodb.ScanInput, error) {
 	masterFilter := expression.Equal(expression.Name("type"), expression.Value(itemType))
 	for _, filter := range filters {
 		masterFilter = masterFilter.And(filter)
@@ -515,7 +511,7 @@ func buildScanInput(itemType models.DetectionType, fields []string, filters ...e
 		ExpressionAttributeValues: expr.Values(),
 		FilterExpression:          expr.Filter(),
 		ProjectionExpression:      expr.Projection(),
-		TableName:                 &env.Table,
+		TableName:                 &table,
 	}
 	zap.L().Debug("built dynamo scan input", zap.Any("scanInput", result))
 	return &result, nil

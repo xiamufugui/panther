@@ -80,9 +80,9 @@ func scanPackInput(input *models.ListPacksInput) (*dynamodb.ScanInput, error) {
 	}
 
 	// does this work with a struct like this?
-	if input.EnabledRelease.Version != "" {
+	if input.EnabledVersion.Name != "" {
 		filters = append(filters, expression.Equal(expression.Name("enabledRelease"),
-			expression.Value(input.EnabledRelease)))
+			expression.Value(input.EnabledVersion)))
 	}
 
 	if input.NameContains != "" {
@@ -94,20 +94,20 @@ func scanPackInput(input *models.ListPacksInput) (*dynamodb.ScanInput, error) {
 		filters = append(filters, expression.Equal(expression.Name("updateAvailable"), expression.Value(*input.UpdateAvailable)))
 	}
 
-	return buildScanInput(models.TypePack, input.Fields, filters...)
+	return buildTableScanInput(env.PackTable, models.TypePack, input.Fields, filters...)
 }
 
-func getPackItems(scanInput *dynamodb.ScanInput) ([]packTableItem, error) {
-	var items []packTableItem
+func getPackItems(scanInput *dynamodb.ScanInput) ([]*packTableItem, error) {
+	var items []*packTableItem
 	err := scanPackPages(scanInput, func(item packTableItem) error {
-		items = append(items, item)
+		items = append(items, &item)
 		return nil
 	})
 	return items, err
 }
 
 // Truncate list of items to the requested page
-func pagePackItems(items []packTableItem, page, pageSize int) (models.Paging, []packTableItem) {
+func pagePackItems(items []*packTableItem, page, pageSize int) (models.Paging, []*packTableItem) {
 	if len(items) == 0 {
 		return models.Paging{}, nil
 	}

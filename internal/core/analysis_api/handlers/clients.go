@@ -28,6 +28,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
+	"github.com/google/go-github/github"
 	"github.com/kelseyhightower/envconfig"
 
 	"github.com/panther-labs/panther/internal/core/analysis_api/analysis"
@@ -41,6 +42,7 @@ var (
 
 	awsSession       *session.Session
 	dynamoClient     dynamodbiface.DynamoDBAPI
+	githubClient     *github.Client
 	kmsClient        *kms.KMS
 	s3Client         s3iface.S3API
 	sqsClient        sqsiface.SQSAPI
@@ -70,6 +72,7 @@ func Setup() {
 
 	awsSession = session.Must(session.NewSession())
 	dynamoClient = dynamodb.New(awsSession)
+	githubClient = github.NewClient(nil)
 	kmsClient = kms.New(awsSession)
 	s3Client = s3.New(awsSession)
 	sqsClient = sqs.New(awsSession)

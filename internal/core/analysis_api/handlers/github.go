@@ -1,117 +1,260 @@
 package handlers
 
+/**
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import (
+	"archive/zip"
+	"bytes"
 	"context"
+	"crypto/sha512"
 	"encoding/base64"
+	"errors"
+	"fmt"
 	"io/ioutil"
+	"net/http"
+	"path/filepath"
+	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/kms"
 	"github.com/google/go-github/github"
 	"github.com/hashicorp/go-version"
-	"github.com/panther-labs/panther/api/lambda/analysis/models"
+	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v2"
+
+	"github.com/panther-labs/panther/api/lambda/analysis"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
 )
 
 const (
 	// github org and repo containing detection packs
 	githubOwner      = "panther-labs"
 	githubRepo       = "panther-analysis"
-	signingKeyID     = "2f555f7a-636a-41ed-9a6b-c6192bf55810" // TODO: this is a test key
-	signingAlgorithm = kms.SigningAlgorithmSpecEcdsaSha512
-	// cache the detection packs to prevent downloading them up multiple times
+	signingKeyID     = "2f555f7a-636a-41ed-9a6b-c6192bf55810" // TODO: update: this is a test key
+	signingAlgorithm = kms.SigningAlgorithmSpecRsassaPkcs1V15Sha512
+	// cache the detection packs to prevent downloading them multiple times
 	// when updating packs (potentially one at a time) via the UI
 	cacheTimeout = 60 * time.Minute
-	// minimum version that supported packs
-	minimumVersion = "v1.15.0"
-	// default version for the `EnabledRelease` field for new packs
-	defaultVersion = "v0.0.0"
+	// minimum version that supports packs
+	minimumVersionName = "v1.15.0"
 )
 
 var (
 	// cache packs and detections
 	cacheLastUpdated time.Time
-	cacheVersion     models.Release
+	cacheVersion     models.Version
 	detectionCache   = make(map[string]*tableItem)
 	packCache        = make(map[string]*packTableItem)
 )
 
-func downloadGithubAsset(client *github.Client, id int64) ([]byte, error) {
-	rawAsset, _, err := client.Repositories.DownloadReleaseAsset(context.Background(), githubOwner, githubRepo, id)
+func downloadGithubAsset(id int64) ([]byte, error) {
+	rawAsset, url, err := githubClient.Repositories.DownloadReleaseAsset(context.Background(), githubOwner, githubRepo, id)
 	// download the raw data
 	var body []byte
 	if rawAsset != nil {
 		body, err = ioutil.ReadAll(rawAsset)
 		rawAsset.Close()
+	} else if url != "" {
+		body, err = downloadURL(url)
 	}
 	return body, err
 }
 
-func downloadGithubRelease(releaseVersion models.Release) (sourceData []byte, signatureData []byte, err error) {
+func downloadGithubRelease(version models.Version) (sourceData []byte, signatureData []byte, err error) {
 	// Setup options and client
-	client := github.NewClient(nil)
 	// First, get all of the release data
-	release, _, err := client.Repositories.GetRelease(context.Background(), githubOwner, githubRepo, releaseVersion.ID)
+	release, _, err := githubClient.Repositories.GetRelease(context.Background(), githubOwner, githubRepo, version.ID)
 	if err != nil {
 		return nil, nil, err
 	}
-	// retreive the signature file and entire analysis zip
+	// retrieve the signature file and entire analysis zip
 	for _, asset := range release.Assets {
-		//if *asset.Name == "panther-analysis.sig" {
-		//	signatureData, err = downloadGithubAsset(client, *asset.ID)
-		//} else
-		if *asset.Name == "panther-analysis-all.zip" {
-			sourceData, err = downloadGithubAsset(client, *asset.ID)
+		if *asset.Name == "panther-analysis-all.sig" {
+			signatureData, err = downloadGithubAsset(*asset.ID)
+		} else if *asset.Name == "panther-analysis-all.zip" {
+			sourceData, err = downloadGithubAsset(*asset.ID)
 		}
 		if err != nil {
 			// If we failed to download an asset, report and return the error
 			zap.L().Error("Failed to download release asset file from repo",
-				zap.String("source_file", *asset.Name),
+				zap.String("sourceFile", *asset.Name),
 				zap.String("repository", githubRepo))
 			return nil, nil, err
 		}
 	}
-	// TODO: removed the signature retrieval for testing purposes
-	//return sourceData, signatureData, nil
-	correctSignature, _ := base64.StdEncoding.DecodeString("e14BUAuoq2oohlpo3Ref2Iatrm0wGEiDUhYPpAOcRxd5pcNzjgILnlAOR5Yg0kcCZKz3XSsHXeywoqtVQe/fcHL8IjX/JmxOVZU5MCed3V4utdl7G8rmbc7o3o2KIgKVpCnpy07rbzGblojuS8QE8VUIlkGcBWh6e0W27Pa2IG/KrBJBy/t2BhhpF8aOAnSJdxwXBOwd9cUUKiw1FGVisj2CkOFGltLJRFJZRi9DKR8P/6KCCra0OdwpaD1uQaAzBOlCDHuuVXL3KGFKGTtxLZV+CUDdWZToseiJJEo0xfdYYIZzwsOe7U848sIV3Ov70OOPcqNqtsfJJAqomquTZkfKNR4/YWNXydm8+q0rVCjjJ2b3sQJ7HRGXOK0ZFdAzmn27RsexGDs/AFdrhKasXwCpiXE0aYOJYZvWi0PoDjdGvyzVVuFveTxKjN72WzzbgffiC2anrq5msACuSuYli++MvWvcMXAPM33sUaWrgrY6mu9hWiuFsfoubC4KBBq+uT3O+DRSUZsVL5jZzUcJUhYNsplef51F1dov1ItQTuj3D8EhtE3nkLKHR09iMuryrb/K/lZLwL5TUU09vk9wxYNNjFZh5wJeAhHWTsYklA+fTPtIlQR9hrt4hz5DN/XPPvJtuDvinkwyUcjCrecnCyF/Ybu/IZsvFmv3XlzwzdA=")
-	return sourceData, correctSignature, nil
+	return sourceData, signatureData, nil
 }
 
-func downloadValidatePackData(release models.Release) error {
-	sourceData, signatureData, err := downloadGithubRelease(release)
+func downloadURL(url string) ([]byte, error) {
+	response, err := http.Get(url) // nolint:gosec
 	if err != nil {
-		zap.L().Error("GitHub release download failed", zap.Error(err))
+		return nil, fmt.Errorf("failed to GET %s: %v", url, err)
+	}
+	defer response.Body.Close()
+
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to download %s: %v", url, err)
+	}
+	return body, nil
+}
+
+func downloadValidatePackData(version models.Version) error {
+	sourceData, signatureData, err := downloadGithubRelease(version)
+	if err != nil || sourceData == nil || signatureData == nil {
+		zap.L().Error("GitHub release version download failed", zap.Error(err))
 		return err
 	}
 	err = validateSignature(sourceData, signatureData)
 	if err != nil {
 		return err
 	}
-	// TODO: this is inefficient - extracting the same zip file multiple times
-	// but I wanted to reuse the bulk uploader logic / updating the bulk uploader to
-	// take packs into account doesn't make sense
-	detectionCache, err = extractZipFileBytes(sourceData)
+	packCache, detectionCache, err = extractPackZipFileBytes(sourceData)
 	if err != nil {
-		return err
-	}
-	packCache, err = extractPackZipFileBytes(sourceData)
-	if err != nil {
+		zap.L().Error("error extracting pack data", zap.Error(err))
 		return err
 	}
 	cacheLastUpdated = time.Now()
-	cacheVersion = release
+	cacheVersion = version
 	return nil
 }
 
-func listAvailableGithubReleases() ([]models.Release, error) {
+func extractPackZipFileBytes(content []byte) (map[string]*packTableItem, map[string]*tableItem, error) {
+	// Unzip in memory (the max request size is only 6 MB, so this should easily fit)
+	zipReader, err := zip.NewReader(bytes.NewReader(content), int64(len(content)))
+	if err != nil {
+		return nil, nil, fmt.Errorf("zipReader failed: %s", err)
+	}
+	packs := make(map[string]*packTableItem)
+	detections := make(map[string]*tableItem)
+	detectionBodies := make(map[string]string) // map base file name to contents
+
+	// Process the zip file and extract each pack file
+	for _, zipFile := range zipReader.File {
+		unzippedBytes, err := readZipFile(zipFile)
+		if err != nil {
+			return nil, nil, fmt.Errorf("file extraction failed: %s: %s", zipFile.Name, err)
+		}
+		// the pack directory
+		if strings.Contains(zipFile.Name, "packs/") {
+			var config analysis.PackConfig
+
+			switch strings.ToLower(filepath.Ext(zipFile.Name)) {
+			case ".yml", ".yaml":
+				err = yaml.Unmarshal(unzippedBytes, &config)
+			default:
+				zap.L().Debug("skipped unsupported file", zap.String("fileName", zipFile.Name))
+				continue
+			}
+
+			if err != nil {
+				return nil, nil, err
+			}
+
+			// Map the Config struct fields over to the fields we need to store in Dynamo
+			analysisPackItem := packTableItemFromConfig(config)
+			if _, exists := packs[analysisPackItem.ID]; exists {
+				return nil, nil, fmt.Errorf("multiple pack specs with ID %s", analysisPackItem.ID)
+			}
+			packs[analysisPackItem.ID] = analysisPackItem
+		} else {
+			var config analysis.Config
+
+			switch strings.ToLower(filepath.Ext(zipFile.Name)) {
+			case ".py":
+				// Store the Python body to be referenced later
+				detectionBodies[filepath.Base(zipFile.Name)] = string(unzippedBytes)
+				continue
+			case ".json":
+				err = jsoniter.Unmarshal(unzippedBytes, &config)
+			case ".yml", ".yaml":
+				err = yaml.Unmarshal(unzippedBytes, &config)
+			default:
+				zap.L().Debug("skipped unsupported file", zap.String("fileName", zipFile.Name))
+			}
+
+			if err != nil {
+				return nil, nil, err
+			}
+
+			// Map the Config struct fields over to the fields we need to store in Dynamo
+			analysisItem := tableItemFromConfig(config)
+			if analysisItem.Type == models.TypeDataModel {
+				// ensure Mappings are nil rather than an empty slice
+				if len(config.Mappings) > 0 {
+					analysisItem.Mappings = make([]models.DataModelMapping, len(config.Mappings))
+					for i, mapping := range config.Mappings {
+						analysisItem.Mappings[i], err = buildMapping(mapping)
+						if err != nil {
+							return nil, nil, err
+						}
+					}
+				}
+			}
+
+			for i, test := range config.Tests {
+				// A test can specify a resource and a resource type or a log and a log type.
+				// By convention, log and log type are used for rules and resource and resource type are used for policies.
+				if test.Resource == nil {
+					analysisItem.Tests[i], err = buildRuleTest(test)
+				} else {
+					analysisItem.Tests[i], err = buildPolicyTest(test)
+				}
+				if err != nil {
+					return nil, nil, err
+				}
+			}
+
+			if _, exists := detections[analysisItem.ID]; exists {
+				return nil, nil, fmt.Errorf("multiple analysis specs with ID %s", analysisItem.ID)
+			}
+			detections[analysisItem.ID] = analysisItem
+		}
+	}
+
+	// add python bodies
+	// Finish each policy by adding its body and then validate it
+	for _, detection := range detections {
+		if body, ok := detectionBodies[detection.Body]; ok {
+			detection.Body = body
+			if err := validateUploadedPolicy(detection); err != nil {
+				return nil, nil, err
+			}
+		} else if detection.Type != models.TypeDataModel {
+			// it is ok for DataModels to be missing python body
+			return nil, nil, fmt.Errorf("policy %s is missing a body", detection.ID)
+		}
+	}
+
+	return packs, detections, err
+}
+
+func listAvailableGithubReleases() ([]models.Version, error) {
 	// Setup options and client
 	// TODO: should number of available releases be configurable? By default returns all releases
 	// paged at 100 releases at a time
 	opt := &github.ListOptions{}
-	client := github.NewClient(nil)
 	var allReleases []*github.RepositoryRelease
 	for {
-		releases, response, err := client.Repositories.ListReleases(context.Background(), githubOwner, githubRepo, opt)
+		releases, response, err := githubClient.Repositories.ListReleases(context.Background(), githubOwner, githubRepo, opt)
 		if err != nil {
 			return nil, err
 		}
@@ -121,22 +264,76 @@ func listAvailableGithubReleases() ([]models.Release, error) {
 		}
 		opt.Page = response.NextPage
 	}
-	var availableReleases []models.Release
+	var availableVersions []models.Version
 	// earliest version of panther managed detections that supports packs
-	minimumVersion, _ := version.NewVersion(minimumVersion)
+	minimumVersion, _ := version.NewVersion(minimumVersionName)
 	for _, release := range allReleases {
 		version, err := version.NewVersion(*release.Name)
 		if err != nil {
 			// if we can't parse the version, just throw it away?
+			zap.L().Warn("can't parse version", zap.String("version", *release.Name))
 			continue
 		}
 		if version.GreaterThan(minimumVersion) {
-			release := models.Release{
-				ID:      *release.ID,
-				Version: *release.Name,
+			newVersion := models.Version{
+				ID:   *release.ID,
+				Name: *release.Name,
 			}
-			availableReleases = append(availableReleases, release)
+			availableVersions = append(availableVersions, newVersion)
 		}
 	}
-	return availableReleases, nil
+	return availableVersions, nil
+}
+
+func validateSignature(rawData []byte, signature []byte) error {
+	// use hash of body in validation
+	intermediateHash := sha512.Sum512(rawData)
+	var computedHash []byte = intermediateHash[:]
+	// The signature is base64 encoded in the file, decode it
+	decodedSignature, err := base64.StdEncoding.DecodeString(string(signature))
+	if err != nil {
+		zap.L().Error("error base64 decoding item", zap.Error(err))
+		return err
+	}
+	signatureVerifyInput := &kms.VerifyInput{
+		KeyId:            aws.String(signingKeyID),
+		Message:          computedHash,
+		MessageType:      aws.String(kms.MessageTypeDigest),
+		Signature:        decodedSignature,
+		SigningAlgorithm: aws.String(signingAlgorithm),
+	}
+	result, err := kmsClient.Verify(signatureVerifyInput)
+	if err != nil {
+		zap.L().Error("error validating signature", zap.Error(err))
+		return err
+	}
+	if *result.SignatureValid {
+		zap.L().Debug("signature validation successful")
+		return nil
+	}
+	return errors.New("error validating signature")
+}
+
+func validateDetections(detections map[string]*tableItem) error {
+	for _, detection := range detections {
+		if err := validateUploadedPolicy(detection); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func packTableItemFromConfig(config analysis.PackConfig) *packTableItem {
+	item := packTableItem{
+		Description: config.Description,
+		DisplayName: config.DisplayName,
+		ID:          config.PackID,
+		Type:        models.DetectionType(strings.ToUpper(config.AnalysisType)),
+	}
+	var detectionPattern models.DetectionPattern
+	if config.DetectionPattern.IDs != nil {
+		detectionPattern.IDs = config.DetectionPattern.IDs
+	}
+	item.DetectionPattern = detectionPattern
+	return &item
 }

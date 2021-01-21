@@ -252,7 +252,7 @@ func extractZipFileBytes(content []byte) (map[string]*tableItem, error) {
 			if err := validateUploadedPolicy(policy); err != nil {
 				return nil, err
 			}
-		} else if policy.Type != models.TypeDataModel {
+		} else if policy.Type != models.TypeDataModel && policy.Type != models.TypePack {
 			// it is ok for DataModels to be missing python body
 			return nil, fmt.Errorf("policy %s is missing a body", policy.ID)
 		}

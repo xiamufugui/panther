@@ -37,7 +37,7 @@ type ListPacksInput struct {
 	Enabled *bool `json:"enabled"`
 
 	// Only include packs which have this enabledRelease
-	EnabledRelease Release `json:"enabledRelease"`
+	EnabledVersion Version `json:"enabledVersion"`
 
 	// Only include packs whose ID or display name contains this case-insensitive substring
 	NameContains string `json:"nameContains" validate:"max=1000"`
@@ -64,20 +64,15 @@ type ListPacksOutput struct {
 type PatchPackInput struct {
 	// This is a partial update
 	Enabled        bool    `json:"enabled"`
-	EnabledRelease Release `json:"enabledRelease"`
+	EnabledVersion Version `json:"enabledVersion"`
 	ID             string  `json:"id" validate:"required,max=1000,excludesall='<>&\""`
 	UserID         string  `json:"userId" validate:"required"`
 }
 
 // PollPacksInput will also update the pack metadata: "availableReleases" and "updateAvailable"
 type PollPacksInput struct {
-	// PollPacksInput will be similar to ListPacksInput, in that there are several
-	// ways to specify which packs you would like to poll for updates
-	// Poll packs whose ID or display name contains this case-insensitive substring
-	NameContains string `json:"nameContains" validate:"max=1000"`
-
-	// Poll packs that are enabled or disabled
-	Enabled *bool `json:"enabled"`
+	// PollPacksInput allows for specifying a specific relase to poll or not
+	ReleaseVersion Version `json:"releaseVersion"`
 }
 
 // This struct is used to build a new Pack or used by Patch operation to update certain fields
@@ -87,10 +82,10 @@ type UpdatePackInput struct {
 	Description       string           `json:"description"`
 	DetectionPattern  DetectionPattern `json:"detectionPattern"`
 	DisplayName       string           `json:"displayName"`
-	EnabledRelease    Release          `json:"enabledRelease"`
+	EnabledVersion    Version          `json:"enabledVersion"`
 	ID                string           `json:"id" validate:"required,max=1000,excludesall='<>&\""`
 	UserID            string           `json:"userId" validate:"required"`
-	AvailableReleases []Release        `json:"availableReleases"`
+	AvailableVersions []Version        `json:"availableVersions"`
 }
 
 type Pack struct {
@@ -99,7 +94,7 @@ type Pack struct {
 	CreatedBy         string           `json:"createdBy"`
 	Description       string           `json:"description"`
 	DisplayName       string           `json:"displayName"`
-	EnabledRelease    Release          `json:"enabledRelease"`
+	EnabledVersion    Version          `json:"enabledVersion"`
 	ID                string           `json:"id" validate:"required,max=1000,excludesall='<>&\""`
 	LastModifiedBy    string           `json:"lastModifiedBy"`
 	Type              string           `json:"type"`
@@ -107,7 +102,7 @@ type Pack struct {
 	VersionID         string           `json:"versionId"` // TODO: VersionID ? (will this be in S3?)
 	CreatedAt         time.Time        `json:"createdAt"`
 	LastModified      time.Time        `json:"lastModified"`
-	AvailableReleases []Release        `json:"availableReleases"`
+	AvailableVersions []Version        `json:"availableVersions"`
 	DetectionPattern  DetectionPattern `json:"detectionPatterns"`
 }
 
@@ -115,7 +110,7 @@ type DetectionPattern struct {
 	IDs []string `json:"IDs"`
 }
 
-type Release struct {
-	ID      int64
-	Version string
+type Version struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
 }

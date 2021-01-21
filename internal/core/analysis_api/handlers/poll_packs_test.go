@@ -27,77 +27,92 @@ import (
 )
 
 func TestIsNewReleaseAvailable(t *testing.T) {
-	release := models.Release{
-		ID: 2222, Version: "v1.2.0",
+	newVersion := models.Version{
+		ID: 2222, Name: "v1.2.0",
 	}
-	enabledRelease := models.Release{
-		Version: "v0.1.0",
+	enabledVersion := models.Version{
+		Name: "v0.1.0",
 	}
-	currentPacks := []packTableItem{
+	currentPacks := []*packTableItem{
 		{
-			EnabledRelease: enabledRelease,
+			EnabledVersion: enabledVersion,
+			AvailableVersions: []models.Version{
+				enabledVersion,
+			},
 		},
 	}
 	// Test new release is available
-	result := isNewReleaseAvailable(release, currentPacks)
+	result := isNewReleaseAvailable(newVersion, currentPacks)
 	assert.True(t, result)
 	// Test at current release
-	enabledRelease = models.Release{
-		Version: "v1.2.0",
+	enabledVersion = models.Version{
+		Name: "v1.2.0",
 	}
-	currentPacks = []packTableItem{
+	currentPacks = []*packTableItem{
 		{
-			EnabledRelease: enabledRelease,
+			EnabledVersion: enabledVersion,
+			AvailableVersions: []models.Version{
+				enabledVersion,
+				newVersion,
+			},
 		},
 	}
-	result = isNewReleaseAvailable(release, currentPacks)
+	result = isNewReleaseAvailable(enabledVersion, currentPacks)
 	assert.False(t, result)
 	// Test malformed version string
-	enabledRelease = models.Release{
-		Version: "-a.1.0",
+	enabledVersion = models.Version{
+		Name: "-a.1.0",
 	}
-	currentPacks = []packTableItem{
+	currentPacks = []*packTableItem{
 		{
-			EnabledRelease: enabledRelease,
+			EnabledVersion: enabledVersion,
+			AvailableVersions: []models.Version{
+				enabledVersion,
+				newVersion,
+			},
 		},
 	}
-	result = isNewReleaseAvailable(release, currentPacks)
+	result = isNewReleaseAvailable(enabledVersion, currentPacks)
 	assert.False(t, result)
+	// Test no current packs, new release is available
+	currentPacks = []*packTableItem{}
+	result = isNewReleaseAvailable(newVersion, currentPacks)
+	assert.True(t, result)
 }
 
 func TestContainsRelease(t *testing.T) {
-	releases := []models.Release{
-		{ID: 1111, Version: "v1.1.0"},
-		{ID: 2222, Version: "v1.2.0"},
+	releases := []models.Version{
+		{ID: 1111, Name: "v1.1.0"},
+		{ID: 2222, Name: "v1.2.0"},
 	}
-	contains := models.Release{
-		ID:      1111,
-		Version: "v1.1.0",
+	contains := models.Version{
+		ID:   1111,
+		Name: "v1.1.0",
 	}
 	result := containsRelease(releases, contains)
 	assert.True(t, result)
-	doesNotContain := models.Release{
-		ID:      3333,
-		Version: "v1.3.0",
+	doesNotContain := models.Version{
+		ID:   3333,
+		Name: "v1.3.0",
 	}
 	result = containsRelease(releases, doesNotContain)
 	assert.False(t, result)
 }
 
 func TestGetLatestRelease(t *testing.T) {
-	expectedRelease := models.Release{
-		ID:      3333,
-		Version: "v1.3.0",
+	expectedRelease := models.Version{
+		ID:   3333,
+		Name: "v1.3.0",
 	}
-	firstRelease := models.Release{
-		ID:      1111,
-		Version: "v1.1.0",
+	firstRelease := models.Version{
+		ID:   1111,
+		Name: "v1.1.0",
 	}
-	secondRelease := models.Release{
-		ID:      2222,
-		Version: "v1.2.0",
+	secondRelease := models.Version{
+		ID:   2222,
+		Name: "v1.2.0",
 	}
-	releases := []models.Release{
+	releases := []models.Version{
 		firstRelease,
 		secondRelease,
 		expectedRelease,
@@ -105,12 +120,11 @@ func TestGetLatestRelease(t *testing.T) {
 	result := getLatestRelease(releases)
 	assert.Equal(t, result, expectedRelease)
 	// validate in different order
-	releases = []models.Release{
+	releases = []models.Version{
 		secondRelease,
 		expectedRelease,
 		firstRelease,
 	}
 	result = getLatestRelease(releases)
 	assert.Equal(t, result, expectedRelease)
-
 }
