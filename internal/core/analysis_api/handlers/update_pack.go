@@ -307,8 +307,7 @@ func detectionLookup(input models.DetectionPattern) (map[string]*tableItem, erro
 	}
 
 	// Build the scan input
-	// TODO: this should support both rules & policies
-	scanInput, err := buildScanInput(models.TypeRule, []string{}, filters...)
+	scanInput, err := buildScanInput([]models.DetectionType{models.TypeRule, models.TypePolicy, models.TypeDataModel, models.TypeGlobal}, []string{}, filters...)
 	if err != nil {
 		return nil, err
 	}

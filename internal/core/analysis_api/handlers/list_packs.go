@@ -94,7 +94,7 @@ func scanPackInput(input *models.ListPacksInput) (*dynamodb.ScanInput, error) {
 		filters = append(filters, expression.Equal(expression.Name("updateAvailable"), expression.Value(*input.UpdateAvailable)))
 	}
 
-	return buildTableScanInput(env.PackTable, models.TypePack, input.Fields, filters...)
+	return buildTableScanInput(env.PackTable, []models.DetectionType{models.TypePack}, input.Fields, filters...)
 }
 
 func getPackItems(scanInput *dynamodb.ScanInput) ([]*packTableItem, error) {
