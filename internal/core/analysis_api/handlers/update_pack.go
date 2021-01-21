@@ -124,7 +124,7 @@ func updatePack(item *packTableItem, userID string) error {
 }
 
 func updatePackDetections(userID string, pack *packTableItem, release models.Version) error {
-	newDetectionItems, err := setupPackDetectionUpdate(pack, release)
+	newDetectionItems, err := setupUpdatePackDetections(pack, release)
 	if err != nil {
 		return err
 	}
@@ -138,7 +138,7 @@ func updatePackDetections(userID string, pack *packTableItem, release models.Ver
 	return nil
 }
 
-func setupPackDetectionUpdate(pack *packTableItem, version models.Version) ([]*tableItem, error) {
+func setupUpdatePackDetections(pack *packTableItem, version models.Version) ([]*tableItem, error) {
 	// setup slice to return
 	var newItems []*tableItem
 	// check the pack & detection cache
@@ -190,7 +190,7 @@ func setupPackDetectionUpdate(pack *packTableItem, version models.Version) ([]*t
 }
 
 func updatePackVersions(newVersion models.Version, oldPacks []*packTableItem) error {
-	newPacks, err := setupPacksVersionsUpdates(newVersion, oldPacks)
+	newPacks, err := setupUpdatePacksVersions(newVersion, oldPacks)
 	if err != nil {
 		return err
 	}
@@ -204,7 +204,7 @@ func updatePackVersions(newVersion models.Version, oldPacks []*packTableItem) er
 	return nil
 }
 
-func setupPacksVersionsUpdates(newVersion models.Version, oldPacks []*packTableItem) ([]*packTableItem, error) {
+func setupUpdatePacksVersions(newVersion models.Version, oldPacks []*packTableItem) ([]*packTableItem, error) {
 	// setup var to return slice of updated pack items
 	var newPackItems []*packTableItem
 	// check the cache for fresh data
@@ -244,14 +244,13 @@ func setupPacksVersionsUpdates(newVersion models.Version, oldPacks []*packTableI
 			newPack.LastModifiedBy = systemUserID
 			newPack.CreatedBy = systemUserID
 			newPackItems = append(newPackItems, newPack)
-
 		}
 	}
 	return newPackItems, nil
 }
 
 func updatePackToVersion(input *models.PatchPackInput, item *packTableItem) error {
-	newPack, err := setupPackToVersionUpdate(input, item)
+	newPack, err := setupUpdatePackToVersion(input, item)
 	if err != nil {
 		zap.L().Error("Error setting up pack version fields",
 			zap.String("newVersion", input.EnabledVersion.Name))
@@ -260,7 +259,7 @@ func updatePackToVersion(input *models.PatchPackInput, item *packTableItem) erro
 	return updatePack(newPack, input.UserID)
 }
 
-func setupPackToVersionUpdate(input *models.PatchPackInput, oldPack *packTableItem) (*packTableItem, error) {
+func setupUpdatePackToVersion(input *models.PatchPackInput, oldPack *packTableItem) (*packTableItem, error) {
 	version := input.EnabledVersion
 	// check the pack & detection cache
 	if time.Since(cacheLastUpdated) > cacheTimeout || cacheVersion.ID != version.ID {
@@ -307,7 +306,16 @@ func detectionLookup(input models.DetectionPattern) (map[string]*tableItem, erro
 	}
 
 	// Build the scan input
-	scanInput, err := buildScanInput([]models.DetectionType{models.TypeRule, models.TypePolicy, models.TypeDataModel, models.TypeGlobal}, []string{}, filters...)
+	// include all detection types
+	scanInput, err := buildScanInput(
+		[]models.DetectionType{
+			models.TypeRule,
+			models.TypePolicy,
+			models.TypeDataModel,
+			models.TypeGlobal,
+		},
+		[]string{},
+		filters...)
 	if err != nil {
 		return nil, err
 	}

@@ -2667,7 +2667,6 @@ func pollPacks(t *testing.T) {
 	// test detection removed from a pack ??
 
 	// test detection added to a pack ??
-
 }
 
 func getPack(t *testing.T) {
@@ -2755,5 +2754,4 @@ func patchPack(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, statusCode)
 	//assert.Equal(t, *pack, result) // TODO: fill in with pack data; but EnabledVersion: downgraded version
-
 }

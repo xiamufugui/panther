@@ -68,13 +68,13 @@ func TestSetupPacksVersions(t *testing.T) {
 		packTwo,
 		packThree,
 	}
-	newPackItems, err := setupPacksVersionsUpdates(newVersion, oldPacks)
+	newPackItems, err := setupUpdatePacksVersions(newVersion, oldPacks)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(newPackItems))
 	// Test: no packs added/removed, releases updated
 	newVersion = models.Version{ID: 3333, Name: "v1.3.0"}
 	cacheVersion = newVersion
-	newPackItems, err = setupPacksVersionsUpdates(newVersion, oldPacks)
+	newPackItems, err = setupUpdatePacksVersions(newVersion, oldPacks)
 	assert.NoError(t, err)
 	for _, newPackItem := range newPackItems {
 		assert.True(t, newPackItem.UpdateAvailable)
@@ -115,7 +115,7 @@ func TestSetupPacksVersionsAddPack(t *testing.T) {
 	}
 	cacheLastUpdated = time.Now()
 	cacheVersion = newVersion
-	newPackItems, err := setupPacksVersionsUpdates(newVersion, oldPacks)
+	newPackItems, err := setupUpdatePacksVersions(newVersion, oldPacks)
 	assert.NoError(t, err)
 	assert.Equal(t, 3, len(newPackItems)) // ensure all three items have updates
 	for _, newPackItem := range newPackItems {
@@ -168,7 +168,7 @@ func TestSetupPacksVersionsRemovePack(t *testing.T) {
 	}
 	cacheLastUpdated = time.Now()
 	cacheVersion = newVersion
-	newPackItems, err := setupPacksVersionsUpdates(newVersion, oldPacks)
+	newPackItems, err := setupUpdatePacksVersions(newVersion, oldPacks)
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(newPackItems)) // only two packs should be updated
 	for _, newPackItem := range newPackItems {
@@ -190,17 +190,18 @@ func TestSetupUpdateToVersion(t *testing.T) {
 		{ID: 2222, Name: "v1.2.0"},
 		newVersion,
 	}
+	oldPackOne := &packTableItem{
+		ID:                "pack.id.1",
+		AvailableVersions: availableVersions,
+		Enabled:           false,
+		Description:       "original description",
+	}
 	input := &models.PatchPackInput{
 		EnabledVersion: newVersion,
 		ID:             "pack.id.1",
 		Enabled:        false,
 	}
-	packOne := &packTableItem{
-		ID:                "pack.id.1",
-		AvailableVersions: availableVersions,
-		Enabled:           false,
-		Description:       "new description",
-	}
+	packOne := oldPackOne
 	packTwo := &packTableItem{
 		ID:                "pack.id.2",
 		AvailableVersions: availableVersions,
@@ -213,7 +214,7 @@ func TestSetupUpdateToVersion(t *testing.T) {
 	cacheLastUpdated = time.Now()
 	cacheVersion = newVersion
 	// Test: success, no update to enabled status
-	item, err := setupPackToVersionUpdate(input)
+	item, err := setupUpdatePackToVersion(input, packOne)
 	assert.NoError(t, err)
 	assert.Equal(t, newVersion, item.EnabledVersion)
 	assert.False(t, item.Enabled)
@@ -238,7 +239,7 @@ func TestSetupUpdateToVersion(t *testing.T) {
 		"pack.id.1": packOne,
 		"pack.id.2": packTwo,
 	}
-	item, err = setupPackToVersionUpdate(input)
+	item, err = setupUpdatePackToVersion(input, oldPackOne)
 	assert.NoError(t, err)
 	assert.Equal(t, newVersion, item.EnabledVersion)
 	assert.True(t, item.Enabled)
@@ -249,7 +250,13 @@ func TestSetupUpdateToVersion(t *testing.T) {
 		ID:             "pack.id.3",
 		Enabled:        true,
 	}
-	item, err = setupPackToVersionUpdate(input)
+	packThree := &packTableItem{
+		ID: "pack.id.3",
+		AvailableVersions: []models.Version{
+			{ID: 1111, Name: "v1.1.0"}},
+		Enabled: false,
+	}
+	item, err = setupUpdatePackToVersion(input, packThree)
 	assert.NoError(t, err)
 	assert.Nil(t, item)
 }
@@ -267,11 +274,17 @@ func TestSetupUpdateToVersionOnDowngrade(t *testing.T) {
 		ID:             "pack.id.1",
 		Enabled:        true,
 	}
-	packOne := &packTableItem{
+	oldPackOne := &packTableItem{
 		ID:                "pack.id.1",
 		AvailableVersions: availableVersions,
 		Enabled:           false,
 		Description:       "new description",
+	}
+	packOne := &packTableItem{
+		ID:                "pack.id.1",
+		AvailableVersions: availableVersions,
+		Enabled:           false,
+		Description:       "original description",
 	}
 	packTwo := &packTableItem{
 		ID:                "pack.id.2",
@@ -284,7 +297,7 @@ func TestSetupUpdateToVersionOnDowngrade(t *testing.T) {
 	}
 	cacheLastUpdated = time.Now()
 	cacheVersion = newVersion // setup cache to hold relevant version
-	item, err := setupPackToVersionUpdate(input)
+	item, err := setupUpdatePackToVersion(input, oldPackOne)
 	assert.NoError(t, err)
 	assert.Equal(t, newVersion, item.EnabledVersion)
 	assert.True(t, item.Enabled)

@@ -520,11 +520,15 @@ func scanPackPages(input *dynamodb.ScanInput, handler func(packTableItem) error)
 }
 
 // Build dynamo scan input for list operations
-func buildScanInput(itemTypes []models.DetectionType, fields []string, filters ...expression.ConditionBuilder) (*dynamodb.ScanInput, error) {
+func buildScanInput(itemTypes []models.DetectionType, fields []string,
+	filters ...expression.ConditionBuilder) (*dynamodb.ScanInput, error) {
+
 	return buildTableScanInput(env.Table, itemTypes, fields, filters...)
 }
 
-func buildTableScanInput(table string, itemTypes []models.DetectionType, fields []string, filters ...expression.ConditionBuilder) (*dynamodb.ScanInput, error) {
+func buildTableScanInput(table string, itemTypes []models.DetectionType, fields []string,
+	filters ...expression.ConditionBuilder) (*dynamodb.ScanInput, error) {
+
 	var masterFilter expression.ConditionBuilder
 	for i, itemType := range itemTypes {
 		if i == 0 {
