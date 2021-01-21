@@ -27,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/pkg/awscfn"
 	"github.com/panther-labs/panther/pkg/awsutils"
@@ -46,6 +47,7 @@ const (
 //
 // The bucket parameter can be empty to skip S3 packaging.
 func Stack(
+	log *zap.SugaredLogger,
 	templatePath, bucket, stack string,
 	params map[string]string,
 ) (map[string]string, error) {
@@ -73,7 +75,7 @@ func Stack(
 		changeSetType = "UPDATE"
 	}
 
-	changeID, err := createChangeSet(bucket, stack, changeSetType, packagedTemplate, params)
+	changeID, err := createChangeSet(log, bucket, stack, changeSetType, packagedTemplate, params)
 	if err != nil {
 		return nil, err
 	}
@@ -87,28 +89,31 @@ func Stack(
 }
 
 // Upload a CloudFormation asset to S3 if it doesn't already exist, returning s3 object key and version
-func uploadAsset(assetPath, bucket, stack string) (string, string, error) {
+func UploadAsset(log *zap.SugaredLogger, assetPath, bucket string) (string, string, error) {
 	contents := util.MustReadFile(assetPath)
 
 	// We are using SHA1 for caching / asset lookup, we don't need strong cryptographic guarantees
-	hash := sha1.Sum(contents) // nolint: gosec
-	s3Key := fmt.Sprintf("%s/%x", stack, hash)
+	s3Key := fmt.Sprintf("%x", sha1.Sum(contents)) // nolint: gosec
 	response, err := clients.S3().HeadObject(&s3.HeadObjectInput{Bucket: &bucket, Key: &s3Key})
 	if err == nil {
+		log.Debugf("upload: %s (sha1:%s) already exists in %s", assetPath, s3Key[:10], bucket)
 		return s3Key, *response.VersionId, nil // object already exists in S3 with the same hash
 	}
 
 	if awsutils.IsAnyError(err, "NotFound") {
 		// object does not exist yet - upload it!
+		log.Infof("uploading %s file %s (sha1:%s) to panther-dev S3 bucket",
+			util.ByteCountSI(int64(len(contents))), assetPath, s3Key[:10])
+
 		response, err := util.UploadFileToS3(log, clients.S3Uploader(), assetPath, bucket, s3Key)
 		if err != nil {
-			return "", "", fmt.Errorf("package %s: failed to upload %s: %v", stack, assetPath, err)
+			return "", "", fmt.Errorf("failed to upload %s: %s", assetPath, err)
 		}
 		return s3Key, *response.VersionID, nil
 	}
 
 	// Some other error related to HeadObject
-	return "", "", fmt.Errorf("package %s: failed to describe s3://%s/%s: %v", stack, bucket, s3Key, err)
+	return "", "", fmt.Errorf("failed to describe s3://%s/%s: %s", bucket, s3Key, err)
 }
 
 // Before a change set can be created, the stack needs to be in a steady state.
@@ -164,6 +169,7 @@ func prepareStack(stackName string) (map[string]string, error) {
 //
 // If there are no changes, the change set is deleted and (nil, nil) is returned.
 func createChangeSet(
+	log *zap.SugaredLogger,
 	bucket, stack string,
 	changeSetType string, // "CREATE" or "UPDATE"
 	templatePath string,
@@ -201,7 +207,7 @@ func createChangeSet(
 		createInput.SetTemplateBody(string(template))
 	} else {
 		// Upload to S3 (if it doesn't already exist)
-		key, _, err := uploadAsset(templatePath, bucket, stack)
+		key, _, err := UploadAsset(log, templatePath, bucket)
 		if err != nil {
 			return nil, err
 		}

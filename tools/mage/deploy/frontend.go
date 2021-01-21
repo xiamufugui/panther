@@ -84,7 +84,7 @@ func deployFrontend(bootstrapOutputs map[string]string, settings *PantherConfig)
 		"SubnetTwoId":                bootstrapOutputs["SubnetTwoId"],
 		"UserPoolId":                 bootstrapOutputs["UserPoolId"],
 	}
-	_, err = Stack(cfnstacks.FrontendTemplate, bootstrapOutputs["SourceBucket"], cfnstacks.Frontend, params)
+	_, err = Stack(log, cfnstacks.FrontendTemplate, bootstrapOutputs["SourceBucket"], cfnstacks.Frontend, params)
 	return err
 }
 

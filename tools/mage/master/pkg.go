@@ -19,13 +19,16 @@ package master
  */
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v2"
 
+	"github.com/panther-labs/panther/tools/mage/deploy"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
@@ -33,6 +36,9 @@ import (
 type packager struct {
 	// zap logger for printing progress updates
 	log *zap.SugaredLogger
+
+	// AWS region where the S3 bucket lives
+	region string
 
 	// S3 bucket for uploading lambda zipfiles
 	bucket string
@@ -52,6 +58,9 @@ type cfnResource struct {
 
 	// Map values, e.g. {"Type": "AWS::CloudFormation::Stack", "Properties": {...}}
 	fields map[string]interface{}
+
+	// Error returned by the worker
+	err error
 }
 
 // TODO - expose a 'mage pkg' command?
@@ -95,6 +104,9 @@ func (p packager) template(path string) (string, error) {
 	// Rebuild the resource map with the packaged versions
 	for i := 0; i < len(resources); i++ {
 		result := <-results
+		if result.err != nil {
+			return "", fmt.Errorf("%s packaging failed: %s: %s", path, result.logicalID, result.err)
+		}
 		resources[result.logicalID] = result.fields
 	}
 
@@ -104,7 +116,7 @@ func (p packager) template(path string) (string, error) {
 		return "", err
 	}
 
-	pkgPath := filepath.Join("out", "deployments", "package."+filepath.Base(path))
+	pkgPath := filepath.Join("out", "deployments", "pkg."+filepath.Base(path))
 	if err = os.MkdirAll(filepath.Dir(pkgPath), 0700); err != nil {
 		return "", err
 	}
@@ -119,22 +131,45 @@ func (p packager) template(path string) (string, error) {
 // Each of the build/pkg workers runs this loop, processing one CloudFormation resource at a time.
 // TODO - consider triggering the go + docker build from here rather than walking source tree
 func (p packager) resourceWorker(path string, id int, resources chan cfnResource, results chan cfnResource) {
-	p.log.Debugf("%s: starting pkg worker %d", path, id)
 	for r := range resources {
 		rType := r.fields["Type"].(string)
-		p.log.Debugf("[%d] %s: processing %s %s", id, path, rType, r.logicalID)
 
 		switch rType {
 		case "AWS::AppSync::GraphQLSchema":
 			results <- r // TODO
+
 		case "AWS::CloudFormation::Stack":
-			results <- r // TODO
+			p.log.Debugf("[%d] %s: packaging %s %s", id, path, rType, r.logicalID)
+			properties := r.fields["Properties"].(map[string]interface{})
+			nestedPath := properties["TemplateURL"].(string)
+			if strings.HasPrefix(nestedPath, "https://") {
+				break // template URL is already an S3 path
+			}
+
+			// Recursively package the nested stack
+			pkgPath, err := p.template(filepath.Join("deployments", nestedPath))
+			if err != nil {
+				r.err = err
+				break
+			}
+
+			// Upload packaged template to S3
+			s3Key, _, err := deploy.UploadAsset(p.log, pkgPath, p.bucket)
+			if err != nil {
+				r.err = err
+				break
+			}
+
+			properties["TemplateURL"] = fmt.Sprintf(
+				"https://s3.%s.amazonaws.com/%s/%s", p.region, p.bucket, s3Key)
+
 		case "AWS::Lambda::LayerVersion":
-			results <- r // TODO
+			break // TODO
+
 		case "AWS::Serverless::Function":
-			results <- r // TODO
-		default:
-			results <- r // return original resource unchanged
+			break // TODO
 		}
+
+		results <- r
 	}
 }
