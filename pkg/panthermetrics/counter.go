@@ -1,22 +1,39 @@
 package panthermetrics
 
-import "sync"
+/**
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
+import "sync"
 
 // Counter is a counter. Observations are forwarded to a node
 // object, and aggregated (summed) per timeseries.
 type Counter struct {
-	name  string
-	dvs DimensionValues
-	obs func(name string, dvs DimensionValues, value float64)
+	name string
+	dvs  DimensionValues
+	obs  func(name string, dvs DimensionValues, value float64)
 }
 
 // With implements metrics.Counter.
 func (c *Counter) With(dimensionValues ...string) *Counter {
 	return &Counter{
-		name:  c.name,
-		dvs: c.dvs.With(dimensionValues...),
-		obs: c.obs,
+		name: c.name,
+		dvs:  c.dvs.With(dimensionValues...),
+		obs:  c.obs,
 	}
 }
 
@@ -179,5 +196,3 @@ func (n *node) walk(lvs DimensionValues, fn func(DimensionValues, []float64) boo
 func last(a []float64) float64 {
 	return a[len(a)-1]
 }
-
-

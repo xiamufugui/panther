@@ -1,14 +1,32 @@
 package panthermetrics
 
-const(
+/**
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+const (
 
 	// Subsystem dimensions
-	SubSystem = "Subsystem"
-	SubsystemSources = "Sources"
-	SubsystemDestinations = "Destinations"
+	SubSystem              = "Subsystem"
+	SubsystemSources       = "Sources"
+	SubsystemDestinations  = "Destinations"
 	SubsystemLogProcessing = "LogProcessing"
-	SubsystemDetections = "Detections"
-	SubsystemDatalake = "Datalake"
+	SubsystemDetections    = "Detections"
+	SubsystemDatalake      = "Datalake"
 
 	// Status dimensions
 	Status = "Status"
@@ -26,15 +44,29 @@ const(
 var (
 	// Sources metrics
 	AssumeRoleOp *Counter
-	GetObjectOp *Counter
-	PullDataOp *Counter
+	GetObjectOp  *Counter
+	PullDataOp   *Counter
+
+	// Destinations Metrics
+	// TODO
+
+	// Log Processing metrics
+	// TODO
+
+	// Detections metrics
+	// TODO
+
+	// Datalake metrics
+	// TODO
 )
 
-func Setup() {
-	AssumeRoleOp = metricsManager.NewCounter("AssumeRole").
+func Setup(mm MetricsManager) {
+	AssumeRoleOp = mm.NewCounter("AssumeRole").
 		With(SubSystem, SubsystemLogProcessing)
-	GetObjectOp = metricsManager.NewCounter("GetObject").
+	GetObjectOp = mm.NewCounter("GetObject").
 		With(SubSystem, SubsystemLogProcessing)
-	PullDataOp = metricsManager.NewCounter("PullData").
+	PullDataOp = mm.NewCounter("PullData").
 		With(SubSystem, SubsystemLogProcessing)
+
+	// TODO Initialize the rest
 }

@@ -1,4 +1,4 @@
-package alarms
+package testutils
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -17,3 +17,14 @@ package alarms
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+import (
+	"github.com/stretchr/testify/mock"
+
+	"github.com/panther-labs/panther/pkg/panthermetrics"
+)
+
+type Counter struct {
+	panthermetrics.Counter
+	mock.Mock
+}

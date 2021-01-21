@@ -24,15 +24,18 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/pkg/system"
+	"github.com/panther-labs/panther/pkg/metrics"
 )
 
-var metricsManager *CloudWatch
+// Global instance of metrics manager
+var metricsManager MetricsManager
 
+type MetricsManager interface {
+	NewCounter(name string) *Counter
+}
 
 type CloudWatch struct {
 	mtx      sync.RWMutex
-	subSystem system.Subsystem
 	ticker   *time.Ticker
 	counters *Space
 	logger   *zap.Logger
@@ -42,14 +45,24 @@ type CloudWatch struct {
 // Namespace is applied to all created metrics and maps to the CloudWatch namespace.
 // Callers must ensure that regular calls to Send are performed, either
 // manually or with one of the helper methods.
-func SetupGlobal(log *zap.Logger) *CloudWatch{
-	metricsManager =  &CloudWatch{
+func SetupManager(log *zap.Logger) *CloudWatch {
+	ticker := time.NewTicker(time.Minute)
+	cwManager := &CloudWatch{
 		logger:   log,
 		counters: NewSpace(),
-		ticker: time.NewTicker(time.Minute),
+		ticker:   ticker,
 	}
-	Setup()
-	return metricsManager
+	Setup(cwManager)
+
+	go func() {
+		for range ticker.C {
+			cwManager.mtx.RLock()
+			cwManager.send()
+			cwManager.mtx.RUnlock()
+		}
+	}()
+	metricsManager = cwManager
+	return cwManager
 }
 
 // NewCounter returns a counter. Observations are aggregated and emitted once
@@ -68,6 +81,68 @@ func (c *CloudWatch) Close() error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 	c.ticker.Stop()
-	c.logger.Info("TA-DA!!!")
+	return c.send()
+}
+
+func (c *CloudWatch) send() error {
+	now := time.Now()
+
+	// Add each dimension to the list of top level fields
+	var fields []zap.Field
+	var mets []metrics.Metric
+	var dims []metrics.DimensionSet
+
+	c.counters.Reset().Walk(func(name string, dms DimensionValues, values []float64) bool {
+		mets = append(mets, metrics.Metric{Name: name, Unit: "Count"})
+		dims = append(dims, dimensionNames(dms...))
+		fields = append(fields, zap.Any(name, sum(values)))
+		for i := 0; i+1 < len(dms); i = i + 2 {
+			fields = append(fields, zap.Any(dms[i], dms[i+1]))
+		}
+		return true
+	})
+
+	// If there are no metrics to be reported
+	// Don't log anything
+	if len(fields) == 0 {
+		return nil
+	}
+
+	// Construct the embedded metric metadata object per AWS standards
+	// https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format_Specification.html
+	const namespace = "Panther"
+	embeddedMetric := metrics.EmbeddedMetric{
+		Timestamp: now.UnixNano() / 10e6,
+		CloudWatchMetrics: []metrics.MetricDirectiveObject{
+			{
+				Namespace:  namespace,
+				Dimensions: dims,
+				Metrics:    mets,
+			},
+		},
+	}
+
+	const rootElement = "_aws"
+	fields = append(fields, zap.Any(rootElement, embeddedMetric))
+
+	const metricField = "metric"
+	c.logger.Info(metricField, fields...)
+
 	return nil
+}
+
+func sum(a []float64) float64 {
+	var v float64
+	for _, f := range a {
+		v += f
+	}
+	return v
+}
+
+func dimensionNames(dimensionValues ...string) []string {
+	dimensions := make([]string, len(dimensionValues)/2)
+	for i, j := 0, 0; i < len(dimensionValues); i, j = i+2, j+1 {
+		dimensions[j] = dimensionValues[i]
+	}
+	return dimensions
 }

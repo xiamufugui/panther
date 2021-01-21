@@ -1,4 +1,4 @@
-package alarms
+package panthermetrics
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -17,3 +17,19 @@ package alarms
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+import (
+	"testing"
+
+	"go.uber.org/zap"
+)
+
+func TestNewCounter(t *testing.T) {
+	cm := SetupManager(zap.L())
+	counter := cm.NewCounter("test")
+	counter.With("dimension1", "dimensionValue1").
+		With("dimension2", "dimensionValue2").
+		Add(1)
+
+	cm.Close()
+}

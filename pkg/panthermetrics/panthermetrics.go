@@ -1,4 +1,4 @@
-package alarms
+package panthermetrics
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.

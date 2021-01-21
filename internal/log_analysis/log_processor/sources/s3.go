@@ -119,7 +119,11 @@ func handleNotificationMessage(ctx context.Context, notification *SnsNotificatio
 		if dataStream != nil {
 			result = append(result, dataStream)
 		}
-		panthermetrics.GetObjectOp.With(panthermetrics.ID, dataStream.Source.IntegrationID).Add(1)
+		panthermetrics.GetObjectOp.
+			With(
+				panthermetrics.ID, dataStream.Source.IntegrationID,
+				panthermetrics.Status, panthermetrics.StatusOk).
+			Add(1)
 	}
 	return result, err
 }

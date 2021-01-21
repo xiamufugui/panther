@@ -50,7 +50,7 @@ func main() {
 
 func handle(ctx context.Context) error {
 	_, logger := lambdalogger.ConfigureGlobal(ctx, nil)
-	pm := panthermetrics.SetupGlobal(logger)
+	pm := panthermetrics.SetupManager(logger)
 	defer pm.Close()
 	return process(ctx, defaultScalingDecisionInterval)
 }
