@@ -22,8 +22,6 @@ import (
 	"time"
 )
 
-type CreatePackInput = UpdatePackInput
-
 type DeletePacksInput = DeleteEntriesInput
 
 type GetPackInput struct {
@@ -73,19 +71,6 @@ type PatchPackInput struct {
 type PollPacksInput struct {
 	// PollPacksInput allows for specifying a specific relase to poll or not
 	ReleaseVersion Version `json:"releaseVersion"`
-}
-
-// This struct is used to build a new Pack or used by Patch operation to update certain fields
-type UpdatePackInput struct {
-	Enabled           bool             `json:"enabled"`
-	UpdateAvailable   bool             `json:"updateAvailable"`
-	Description       string           `json:"description"`
-	DetectionPattern  DetectionPattern `json:"detectionPattern"`
-	DisplayName       string           `json:"displayName"`
-	EnabledVersion    Version          `json:"enabledVersion"`
-	ID                string           `json:"id" validate:"required,max=1000,excludesall='<>&\""`
-	UserID            string           `json:"userId" validate:"required"`
-	AvailableVersions []Version        `json:"availableVersions"`
 }
 
 type Pack struct {

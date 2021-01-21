@@ -64,7 +64,7 @@ func (API) PollPacks(input *models.PollPacksInput) *events.APIGatewayProxyRespon
 	latestRelease := getLatestRelease(releases)
 	if isNewReleaseAvailable(latestRelease, currentPacks) {
 		// If an update is available, retrieve & validate pack data and:
-		// Update fields: availableReleases and updateAvailable status of the detections in the pack
+		// Update fields: availableReleases and updateAvailable status
 		// Create any new packs: default to disabled status
 		// TODO: what this doesn't handle is when there are multiple new releases that need to be registered
 		err := updatePackVersions(latestRelease, currentPacks)
