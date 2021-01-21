@@ -473,6 +473,7 @@ Resources:
               - RegistryProvided
               - !Ref ImageRegistry
               - !Sub 349240696275.dkr.ecr.${AWS::Region}.amazonaws.com/panther-community
+            # TODO: this tag needs to be configurable, e.g. could be the sha
             tag: !FindInMap [Constants, Panther, Version]
         InitialAnalysisPackUrls: !Join [',', !Ref InitialAnalysisPackUrls]
         PantherCommit: !FindInMap [Constants, Panther, Commit]

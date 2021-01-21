@@ -29,6 +29,7 @@ import (
 	"github.com/panther-labs/panther/tools/mage/clients"
 	"github.com/panther-labs/panther/tools/mage/deploy"
 	"github.com/panther-labs/panther/tools/mage/logger"
+	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 const devStackName = "panther-dev"
@@ -56,21 +57,24 @@ func Deploy() error {
 		return err
 	}
 
-	_, err = buildAssets(log, config.PipLayer)
-	if err != nil {
+	log.Infof("deploying %s %s (%s) to %s (%s) as stack '%s'", rootTemplate,
+		util.Semver(), util.CommitSha(), clients.AccountID(), clients.Region(), config.RootStackName)
+
+	pkg := packager{log: log, bucket: outputs["SourceBucket"], numWorkers: 4}
+	if _, err = pkg.template(rootTemplate); err != nil {
 		return err
 	}
 
+	//_, err = buildAssets(log, config.PipLayer)
+	//if err != nil {
+	//	return err
+	//}
+
 	return nil
 
-	// TODO - package assets (in parallel)
 	// TODO - embed version directly in final template
 	// TODO - deploy root stack
 
-	//log.Infof("deploying %s %s (%s) to %s (%s) as stack '%s'", rootTemplate,
-	//	util.Semver(), util.CommitSha(), clients.AccountID(), clients.Region(), stack)
-	//email := prompt.Read("First user email: ", prompt.EmailValidator)
-	//
 	//pkg, err := pkgAssets(log, clients.ECR(), clients.Region(), bucket, registryURI, dockerImageID)
 	//if err != nil {
 	//	return err

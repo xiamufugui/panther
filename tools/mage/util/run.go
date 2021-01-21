@@ -26,8 +26,6 @@ import (
 
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
-
-	"github.com/panther-labs/panther/tools/mage/clients"
 )
 
 // Returns true if the mage command is running inside the CI environment
@@ -57,23 +55,6 @@ func RunWithCapturedOutput(cmd string, args ...string) error {
 	}
 
 	return nil
-}
-
-// Deploy CloudFormation template directly with SAM.
-func SamDeploy(stack, path string, params ...string) error {
-	args := []string{
-		"deploy",
-		"--capabilities", "CAPABILITY_AUTO_EXPAND", "CAPABILITY_IAM", "CAPABILITY_NAMED_IAM",
-		"--region", clients.Region(),
-		"--stack-name", stack,
-		"--template", path,
-	}
-	if len(params) > 0 {
-		args = append(args, "--parameter-overrides")
-		args = append(args, params...)
-	}
-
-	return sh.RunV(PipPath("sam"), args...)
 }
 
 // Package resources in S3 and return the path to the modified CloudFormation template.
