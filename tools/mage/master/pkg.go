@@ -43,11 +43,11 @@ type packager struct {
 	// S3 bucket for uploading lambda zipfiles
 	bucket string
 
-	// Worker build/pkg routines running for each template.
+	// Max number of worker build/pkg routines running for each template.
 	//
 	// Because nested templates trigger recursive packaging, the _total_ number of workers
-	// running will reach numWorkers^2 (but the workers in the root stack won't be doing anything
-	// until the children are finished).
+	// running will reach about numWorkers^2
+	// (but the workers in the root stack won't be doing anything until the children are finished).
 	numWorkers int
 }
 
@@ -91,7 +91,14 @@ func (p packager) template(path string) (string, error) {
 	resources := body["Resources"].(map[string]interface{})
 	jobs := make(chan cfnResource, len(resources))
 	results := make(chan cfnResource, len(resources))
-	for w := 1; w <= p.numWorkers; w++ {
+
+	workers := p.numWorkers
+	if len(resources) < workers {
+		// Some stacks have very few resources (e.g. aux templates);
+		// no need to spin up workers that won't have anything to do.
+		workers = len(resources)
+	}
+	for w := 1; w <= workers; w++ {
 		go p.resourceWorker(path, w, jobs, results)
 	}
 
@@ -136,10 +143,21 @@ func (p packager) resourceWorker(path string, id int, resources chan cfnResource
 
 		switch rType {
 		case "AWS::AppSync::GraphQLSchema":
-			results <- r // TODO
+			properties := r.fields["Properties"].(map[string]interface{})
+			schemaPath := properties["DefinitionS3Location"].(string)
+			if strings.HasPrefix(schemaPath, "s3://") {
+				break // already an S3 path
+			}
+
+			// Upload schema to S3
+			s3Key, _, err := deploy.UploadAsset(p.log, filepath.Join("deployments", schemaPath), p.bucket)
+			if err != nil {
+				r.err = err
+				break
+			}
+			properties["DefinitionS3Location"] = fmt.Sprintf("s3://%s/%s", p.bucket, s3Key)
 
 		case "AWS::CloudFormation::Stack":
-			p.log.Debugf("[%d] %s: packaging %s %s", id, path, rType, r.logicalID)
 			properties := r.fields["Properties"].(map[string]interface{})
 			nestedPath := properties["TemplateURL"].(string)
 			if strings.HasPrefix(nestedPath, "https://") {
@@ -147,6 +165,7 @@ func (p packager) resourceWorker(path string, id int, resources chan cfnResource
 			}
 
 			// Recursively package the nested stack
+			p.log.Debugf("[%d] %s: packaging %s %s", id, path, rType, r.logicalID)
 			pkgPath, err := p.template(filepath.Join("deployments", nestedPath))
 			if err != nil {
 				r.err = err
@@ -159,7 +178,6 @@ func (p packager) resourceWorker(path string, id int, resources chan cfnResource
 				r.err = err
 				break
 			}
-
 			properties["TemplateURL"] = fmt.Sprintf(
 				"https://s3.%s.amazonaws.com/%s/%s", p.region, p.bucket, s3Key)
 
