@@ -2144,3 +2144,149 @@ func batchDeleteRules(t *testing.T, ruleID ...string) {
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, statusCode)
 }
+
+func pollPacks(t *testing.T) {
+	// test success
+	// no packs exist yet
+	input := models.LambdaInput{
+		ListPacks: &models.ListPacksInput{},
+	}
+	var result models.ListPacksOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.ListPacksOutput{
+		Paging: models.Paging{
+			ThisPage:   0,
+			TotalItems: 0,
+			TotalPages: 1,
+		},
+		Packs: []models.Pack{},
+	}
+	assert.Equal(t, expected, result)
+	assert.NoError(t, err)
+	// poll for packs from well known release version
+	input = models.LambdaInput{
+		PollPacks: &models.PollPacksInput{
+			ReleaseVersion: models.Version{
+				ID:   123456, // TODO: Fill this in
+				Name: "v1.14.0",
+			},
+		},
+	}
+	statusCode, err = apiClient.Invoke(&input, nil)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+	// packs should now exist and are disabled
+	input = models.LambdaInput{
+		ListPacks: &models.ListPacksInput{},
+	}
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+	// TODO: fill this in with well known data from release above
+	expected = models.ListPacksOutput{
+		Paging: models.Paging{
+			ThisPage:   0,
+			TotalItems: 0,
+			TotalPages: 1,
+		},
+		Packs: []models.Pack{},
+	}
+	assert.Equal(t, expected, result)
+	assert.NoError(t, err)
+
+	// test detection removed from a pack ??
+
+	// test detection added to a pack ??
+
+}
+
+func getPack(t *testing.T) {
+	// success
+	input := models.LambdaInput{
+		GetPack: &models.GetPackInput{ID: "id"}, // TODO: fill in with from well known release (v1.14.0) id
+	}
+	var result models.Pack
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+	//assert.Equal(t, *pack, result) // TODO: fill in with pack data
+
+	// does not exist
+	input = models.LambdaInput{
+		GetPack: &models.GetPackInput{ID: "id.does.not.exist"},
+	}
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusNotFound, statusCode)
+}
+
+func listPacks(t *testing.T) {
+	// success
+	input := models.LambdaInput{
+		ListPacks: &models.ListPacksInput{},
+	}
+	var result models.ListPacksOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	// TODO: fill in packs info from well known release (v1.14.0)
+	expected := models.ListPacksOutput{
+		Paging: models.Paging{
+			ThisPage:   0,
+			TotalItems: 0,
+			TotalPages: 1,
+		},
+		Packs: []models.Pack{},
+	}
+	assert.Equal(t, expected, result)
+}
+
+func patchPack(t *testing.T) {
+	// enabled pack
+	input := models.PatchPackInput{
+		Enabled: true,
+	}
+	var result models.Pack
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+	//assert.Equal(t, *pack, result)  // TODO: fill in with pack data; but enabled: true
+	// TODO: lookup detection in pack and ensure enabled:true
+	// disable pack
+	input = models.PatchPackInput{
+		Enabled: true,
+	}
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+	//assert.Equal(t, *pack, result) // TODO: fill in with pack data; but enabled: false
+	// TODO: lookup detection in pack and ensure enabled: false
+
+	// upgrade to newer well known version (v1.15.0)
+	input = models.PatchPackInput{
+		EnabledVersion: models.Version{
+			ID:   12345,
+			Name: "v1.15.0", // TODO: fill in this info
+		},
+	}
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+	//assert.Equal(t, *pack, result) // TODO: fill in with pack data; but EnabledVersion: upgraded version
+	// downgrade to older version (v1.14.0)
+	input = models.PatchPackInput{
+		EnabledVersion: models.Version{
+			ID:   12345,
+			Name: "v1.14.0", // TODO: fill in this info
+		},
+	}
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+	//assert.Equal(t, *pack, result) // TODO: fill in with pack data; but EnabledVersion: downgraded version
+
+}
