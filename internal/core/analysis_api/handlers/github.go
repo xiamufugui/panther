@@ -314,15 +314,6 @@ func validateSignature(rawData []byte, signature []byte) error {
 	return errors.New("error validating signature")
 }
 
-func validateDetections(detections map[string]*tableItem) error {
-	for _, detection := range detections {
-		if err := validateUploadedPolicy(detection); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func packTableItemFromConfig(config analysis.PackConfig) *packTableItem {
 	item := packTableItem{
 		Description: config.Description,
