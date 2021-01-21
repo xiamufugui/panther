@@ -1,4 +1,4 @@
-package metrics
+package panthermetrics
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -24,13 +24,17 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/pkg/metrics/internal"
+	"github.com/panther-labs/panther/pkg/system"
 )
+
+var metricsManager *CloudWatch
+
 
 type CloudWatch struct {
 	mtx      sync.RWMutex
+	subSystem system.Subsystem
 	ticker   *time.Ticker
-	counters *internal.Space
+	counters *Space
 	logger   *zap.Logger
 }
 
@@ -38,17 +42,22 @@ type CloudWatch struct {
 // Namespace is applied to all created metrics and maps to the CloudWatch namespace.
 // Callers must ensure that regular calls to Send are performed, either
 // manually or with one of the helper methods.
-func NewCloudWatch(log *zap.Logger, duration time.Duration) *CloudWatch {
-	return &CloudWatch{
+func SetupGlobal(log *zap.Logger) *CloudWatch{
+	metricsManager =  &CloudWatch{
 		logger:   log,
-		counters: internal.NewSpace(),
-		ticker: time.NewTicker(duration),
+		counters: NewSpace(),
+		ticker: time.NewTicker(time.Minute),
 	}
+	Setup()
+	return metricsManager
 }
 
 // NewCounter returns a counter. Observations are aggregated and emitted once
 // per write invocation.
+// Panics if the client has been closed
 func (c *CloudWatch) NewCounter(name string) *Counter {
+	c.mtx.RLock()
+	defer c.mtx.RUnlock()
 	return &Counter{
 		name: name,
 		obs:  c.counters.Observe,
@@ -56,10 +65,9 @@ func (c *CloudWatch) NewCounter(name string) *Counter {
 }
 
 func (c *CloudWatch) Close() error {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
 	c.ticker.Stop()
-	return c.logger.Sync()
-}
-
-func (c *CloudWatch) Sync() error {
+	c.logger.Info("TA-DA!!!")
 	return nil
 }

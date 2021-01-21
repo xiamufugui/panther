@@ -1,28 +1,42 @@
-package internal
+package panthermetrics
 
-/**
- * Panther is a Cloud-Native SIEM for the Modern Security Team.
- * Copyright (C) 2020 Panther Labs Inc
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+import "sync"
 
-import (
-	"sync"
 
-	"github.com/panther-labs/panther/pkg/metrics"
-)
+// Counter is a counter. Observations are forwarded to a node
+// object, and aggregated (summed) per timeseries.
+type Counter struct {
+	name  string
+	dvs DimensionValues
+	obs func(name string, dvs DimensionValues, value float64)
+}
+
+// With implements metrics.Counter.
+func (c *Counter) With(dimensionValues ...string) *Counter {
+	return &Counter{
+		name:  c.name,
+		dvs: c.dvs.With(dimensionValues...),
+		obs: c.obs,
+	}
+}
+
+// Add implements metrics.Counter.
+func (c *Counter) Add(delta float64) {
+	c.obs(c.name, c.dvs, delta)
+}
+
+// DimensionValues is a type alias that provides validation on its With method.
+// Metrics may include it as a member to help them satisfy With semantics and
+// save some code duplication.
+type DimensionValues []string
+
+// With validates the input, and returns a new aggregate labelValues.
+func (lvs DimensionValues) With(dimensionValues ...string) DimensionValues {
+	if len(dimensionValues)%2 != 0 {
+		dimensionValues = append(dimensionValues, "unknown")
+	}
+	return append(lvs, dimensionValues...)
+}
 
 // NewSpace returns an N-dimensional vector space.
 func NewSpace() *Space {
@@ -39,25 +53,25 @@ type Space struct {
 
 // Observe locates the time series identified by the name and label values in
 // the vector space, and appends the value to the list of observations.
-func (s *Space) Observe(name string, lvs metrics.LabelValues, value float64) {
+func (s *Space) Observe(name string, lvs DimensionValues, value float64) {
 	s.nodeFor(name).observe(lvs, value)
 }
 
 // Add locates the time series identified by the name and label values in
 // the vector space, and appends the delta to the last value in the list of
 // observations.
-func (s *Space) Add(name string, lvs metrics.LabelValues, delta float64) {
+func (s *Space) Add(name string, lvs DimensionValues, delta float64) {
 	s.nodeFor(name).add(lvs, delta)
 }
 
 // Walk traverses the vector space and invokes fn for each non-empty time series
 // which is encountered. Return false to abort the traversal.
-func (s *Space) Walk(fn func(name string, lvs metrics.LabelValues, observations []float64) bool) {
+func (s *Space) Walk(fn func(name string, lvs DimensionValues, observations []float64) bool) {
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
 	for name, node := range s.nodes {
-		f := func(lvs metrics.LabelValues, observations []float64) bool { return fn(name, lvs, observations) }
-		if !node.walk(metrics.LabelValues{}, f) {
+		f := func(lvs DimensionValues, observations []float64) bool { return fn(name, lvs, observations) }
+		if !node.walk(DimensionValues{}, f) {
 			return
 		}
 	}
@@ -98,7 +112,7 @@ type node struct {
 
 type pair struct{ label, value string }
 
-func (n *node) observe(lvs metrics.LabelValues, value float64) {
+func (n *node) observe(lvs DimensionValues, value float64) {
 	n.mtx.Lock()
 	defer n.mtx.Unlock()
 	if len(lvs) <= 0 {
@@ -106,7 +120,7 @@ func (n *node) observe(lvs metrics.LabelValues, value float64) {
 		return
 	}
 	if len(lvs) < 2 {
-		panic("too few metrics.LabelValues; programmer error!")
+		panic("too few metrics.DimensionValues; programmer error!")
 	}
 	head, tail := pair{lvs[0], lvs[1]}, lvs[2:]
 	if n.children == nil {
@@ -120,7 +134,7 @@ func (n *node) observe(lvs metrics.LabelValues, value float64) {
 	child.observe(tail, value)
 }
 
-func (n *node) add(lvs metrics.LabelValues, delta float64) {
+func (n *node) add(lvs DimensionValues, delta float64) {
 	n.mtx.Lock()
 	defer n.mtx.Unlock()
 	if len(lvs) <= 0 {
@@ -134,7 +148,7 @@ func (n *node) add(lvs metrics.LabelValues, delta float64) {
 		return
 	}
 	if len(lvs) < 2 {
-		panic("too few LabelValues; programmer error!")
+		panic("too few DimensionValues; programmer error!")
 	}
 	head, tail := pair{lvs[0], lvs[1]}, lvs[2:]
 	if n.children == nil {
@@ -148,7 +162,7 @@ func (n *node) add(lvs metrics.LabelValues, delta float64) {
 	child.add(tail, delta)
 }
 
-func (n *node) walk(lvs metrics.LabelValues, fn func(metrics.LabelValues, []float64) bool) bool {
+func (n *node) walk(lvs DimensionValues, fn func(DimensionValues, []float64) bool) bool {
 	n.mtx.RLock()
 	defer n.mtx.RUnlock()
 	if len(n.observations) > 0 && !fn(lvs, n.observations) {
@@ -165,3 +179,5 @@ func (n *node) walk(lvs metrics.LabelValues, fn func(metrics.LabelValues, []floa
 func last(a []float64) float64 {
 	return a[len(a)-1]
 }
+
+

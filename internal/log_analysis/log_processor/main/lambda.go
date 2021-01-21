@@ -34,6 +34,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
+	"github.com/panther-labs/panther/pkg/panthermetrics"
 )
 
 const (
@@ -48,7 +49,9 @@ func main() {
 }
 
 func handle(ctx context.Context) error {
-	lambdalogger.ConfigureGlobal(ctx, nil)
+	_, logger := lambdalogger.ConfigureGlobal(ctx, nil)
+	pm := panthermetrics.SetupGlobal(logger)
+	defer pm.Close()
 	return process(ctx, defaultScalingDecisionInterval)
 }
 
