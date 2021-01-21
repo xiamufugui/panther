@@ -365,6 +365,12 @@ Resources:
               Resource: !GetAtt AnalysisTable.Arn
             - Effect: Allow
               Action:
+                - dynamodb:*Item
+                - dynamodb:Query
+                - dynamodb:Scan
+              Resource: !GetAtt AnalysisPackTable.Arn
+            - Effect: Allow
+              Action:
                 - s3:DeleteObject # Does NOT grant permission to permanently delete versions
                 - s3:GetObject*
                 - s3:PutObject
