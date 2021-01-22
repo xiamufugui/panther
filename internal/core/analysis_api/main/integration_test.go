@@ -242,6 +242,8 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("SaveDisabledRuleFailingTests", saveDisabledRuleFailingTests)
 		t.Run("SaveEnabledRulePassingTests", saveEnabledRulePassingTests)
 		t.Run("SaveRuleInvalidTestInputJson", saveRuleInvalidTestInputJSON)
+
+		t.Run("TestFailCreatePolicyInvalidResourceType", testFailCreatePolicyInvalidResourceType)
 	})
 	if t.Failed() {
 		return
@@ -744,6 +746,34 @@ func createPolicySuccess(t *testing.T) {
 	expectedPolicy.VersionID = result.VersionID
 	assert.Equal(t, expectedPolicy, result)
 	policy = &result
+}
+
+// Create policy fail when policy contains invalid ResourceTypes
+func testFailCreatePolicyInvalidResourceType(t *testing.T) {
+	input := models.LambdaInput{
+		CreatePolicy: &models.CreatePolicyInput{
+			AutoRemediationID:         policy.AutoRemediationID,
+			AutoRemediationParameters: policy.AutoRemediationParameters,
+			Body:                      policy.Body,
+			Description:               policy.Description,
+			DisplayName:               "Duplicate AWS Config Recording Status",
+			Enabled:                   policy.Enabled,
+			ID:                        "AWS.Config.DuplicateRecordingNoErrors",
+			OutputIDs:                 policy.OutputIDs,
+			ResourceTypes: []string{
+				"AWS.Config.DuplicateRecorder",
+			},
+			Severity:     policy.Severity,
+			Suppressions: policy.Suppressions,
+			Tags:         policy.Tags,
+			Tests:        policy.Tests,
+			UserID:       userID,
+		},
+	}
+	var result models.Policy
+	statusCode, err := apiClient.Invoke(&input, &result)
+	assert.Equal(t, http.StatusBadRequest, statusCode)
+	assert.Error(t, err)
 }
 
 // Tests that a policy cannot be saved if it is enabled and its tests fail.

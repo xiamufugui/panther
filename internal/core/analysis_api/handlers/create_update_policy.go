@@ -31,21 +31,45 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-var ValidResourceTypes = []string{"AWS.ACM.Certificate", "AWS.CloudFormation.Stack", "AWS.CloudTrail", "AWS.CloudTrail.Meta", "AWS.CloudWatch.LogGroup", "AWS.Config.Recorder", "AWS.Config.Recorder.Meta", "AWS.DynamoDB.Table", "AWS.EC2.AMI", "AWS.EC2.Instance", "AWS.EC2.NetworkACL", "AWS.EC2.SecurityGroup", "AWS.EC2.Volume", "AWS.EC2.VPC", "AWS.ECS.Cluster", "AWS.EKS.Cluster", "AWS.ELBV2.ApplicationLoadBalancer", "AWS.GuardDuty.Detector", "AWS.IAM.Group", "AWS.IAM.Policy", "AWS.IAM.Role", "AWS.IAM.RootUser", "AWS.IAM.User", "AWS.KMS.Key", "AWS.Lambda.Function", "AWS.PasswordPolicy", "AWS.RDS.Instance", "AWS.Redshift.Cluster", "AWS.S3.Bucket", "AWS.WAF.Regional.WebACL", "AWS.WAF.WebACL"}
-
-func ValidResourceType(checkValidResourceType string) bool {
-	for _, existingResourceTypeEntry := range ValidResourceTypes {
-		if checkValidResourceType == existingResourceTypeEntry {
-			return true
-		}
-	}
-	return false
+var ValidResourceTypes = map[string]struct{}{
+	"AWS.ACM.Certificate":               {},
+	"AWS.CloudFormation.Stack":          {},
+	"AWS.CloudTrail":                    {},
+	"AWS.CloudTrail.Meta":               {},
+	"AWS.CloudWatch.LogGroup":           {},
+	"AWS.Config.Recorder":               {},
+	"AWS.Config.Recorder.Meta":          {},
+	"AWS.DynamoDB.Table":                {},
+	"AWS.EC2.AMI":                       {},
+	"AWS.EC2.Instance":                  {},
+	"AWS.EC2.NetworkACL":                {},
+	"AWS.EC2.SecurityGroup":             {},
+	"AWS.EC2.Volume":                    {},
+	"AWS.EC2.VPC":                       {},
+	"AWS.ECS.Cluster":                   {},
+	"AWS.EKS.Cluster":                   {},
+	"AWS.ELBV2.ApplicationLoadBalancer": {},
+	"AWS.GuardDuty.Detector":            {},
+	"AWS.IAM.Group":                     {},
+	"AWS.IAM.Policy":                    {},
+	"AWS.IAM.Role":                      {},
+	"AWS.IAM.RootUser":                  {},
+	"AWS.IAM.User":                      {},
+	"AWS.KMS.Key":                       {},
+	"AWS.Lambda.Function":               {},
+	"AWS.PasswordPolicy":                {},
+	"AWS.RDS.Instance":                  {},
+	"AWS.Redshift.Cluster":              {},
+	"AWS.S3.Bucket":                     {},
+	"AWS.WAF.Regional.WebACL":           {},
+	"AWS.WAF.WebACL":                    {},
 }
 
 func ValidResourceTypeSet(checkResourceTypeSet []string) error {
 	for _, writeResourceTypeEntry := range checkResourceTypeSet {
-		if !ValidResourceType(writeResourceTypeEntry) {
-			return fmt.Errorf("Resource type contains invalid entry: %s", writeResourceTypeEntry)
+		if _, exists := ValidResourceTypes[writeResourceTypeEntry]; !exists {
+			// Found a resource type that doesnt exist
+			return fmt.Errorf("%s", writeResourceTypeEntry)
 		}
 	}
 	return nil
@@ -62,10 +86,9 @@ func (API) UpdatePolicy(input *models.UpdatePolicyInput) *events.APIGatewayProxy
 
 // Shared by CreatePolicy and UpdatePolicy
 func writePolicy(input *models.CreatePolicyInput, create bool) *events.APIGatewayProxyResponse {
-
 	if err := ValidResourceTypeSet(input.ResourceTypes); err != nil {
 		return &events.APIGatewayProxyResponse{
-			Body:       err.Error(),
+			Body:       fmt.Sprintf("Policy contains invalid resource type: %s", err.Error()),
 			StatusCode: http.StatusBadRequest,
 		}
 	}
