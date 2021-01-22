@@ -30,22 +30,13 @@ import (
 )
 
 func (API) PollPacks(input *models.PollPacksInput) *events.APIGatewayProxyResponse {
-	// First, check for a new release in the github repo by listing all releases or use
-	// input value to poll for a speicific release
-	var releases []models.Version
-	var err error
-	//if input.ReleaseVersion != (models.Version{}) {
-	//	releases = []models.Version{
-	//		input.ReleaseVersion,
-	//	}
-	//} else {
-	releases, err = listAvailableGithubReleases()
+	// First, check for a new release in the github repo by listing all releases
+	releases, err := listAvailableGithubReleases()
 	if err != nil {
 		// error looking up the github releases
 		zap.L().Error("failed to list github releases", zap.Error(err))
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
-	//}
 	if len(releases) == 0 {
 		// there aren't any releases, just return
 		zap.L().Error("no releases found", zap.Error(err))

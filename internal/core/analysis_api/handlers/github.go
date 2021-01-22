@@ -43,6 +43,7 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/analysis"
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
+	"github.com/panther-labs/panther/pkg/awsutils"
 )
 
 const (
@@ -50,8 +51,8 @@ const (
 	pantherGithubOwner = "panther-labs"
 	pantherGithubRepo  = "panther-analysis"
 	// signing keys information
-	pantherSigningKeyID = "2f555f7a-636a-41ed-9a6b-c6192bf55810" // TODO: update: this is a test key
-	signingAlgorithm    = kms.SigningAlgorithmSpecRsassaPkcs1V15Sha512
+	pantherFirstSigningKeyID = "2f555f7a-636a-41ed-9a6b-c6192bf55810" // TODO: update: this is a test key
+	signingAlgorithm         = kms.SigningAlgorithmSpecRsassaPkcs1V15Sha512
 	// source filenames
 	pantherSourceFilename    = "panther-analysis-all.zip"
 	pantherSignatureFilename = "panther-analysis-all.sig"
@@ -109,8 +110,14 @@ func downloadGithubRelease(version models.Version) (sourceData []byte, signature
 }
 
 func downloadURL(url string) ([]byte, error) {
+	if !strings.HasPrefix(url, "https://") {
+		return nil, fmt.Errorf("url is not https: %v", url)
+	}
 	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: false},
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: false,
+			MinVersion:         tls.VersionTLS12,
+		},
 	}
 	client := &http.Client{
 		Timeout:   10 * time.Second,
@@ -132,7 +139,10 @@ func downloadURL(url string) ([]byte, error) {
 func downloadValidatePackData(version models.Version) error {
 	sourceData, signatureData, err := downloadGithubRelease(version)
 	if err != nil || sourceData == nil || signatureData == nil {
-		zap.L().Error("GitHub release version download failed", zap.Error(err), zap.Bool("sourceData nil", sourceData == nil), zap.Bool("signatureData nil", signatureData == nil))
+		zap.L().Error("GitHub release version download failed",
+			zap.Error(err),
+			zap.Bool("sourceData nil", sourceData == nil),
+			zap.Bool("signatureData nil", signatureData == nil))
 		return err
 	}
 	err = validateSignature(sourceData, signatureData)
@@ -209,15 +219,13 @@ func extractPackZipFileBytes(content []byte) (map[string]*packTableItem, map[str
 
 			// Map the Config struct fields over to the fields we need to store in Dynamo
 			analysisItem := tableItemFromConfig(config)
-			if analysisItem.Type == models.TypeDataModel {
+			if analysisItem.Type == models.TypeDataModel && len(config.Mappings) > 0 {
 				// ensure Mappings are nil rather than an empty slice
-				if len(config.Mappings) > 0 {
-					analysisItem.Mappings = make([]models.DataModelMapping, len(config.Mappings))
-					for i, mapping := range config.Mappings {
-						analysisItem.Mappings[i], err = buildMapping(mapping)
-						if err != nil {
-							return nil, nil, err
-						}
+				analysisItem.Mappings = make([]models.DataModelMapping, len(config.Mappings))
+				for i, mapping := range config.Mappings {
+					analysisItem.Mappings[i], err = buildMapping(mapping)
+					if err != nil {
+						return nil, nil, err
 					}
 				}
 			}
@@ -307,7 +315,7 @@ func validateSignature(rawData []byte, signature []byte) error {
 		return err
 	}
 	signatureVerifyInput := &kms.VerifyInput{
-		KeyId:            aws.String(pantherSigningKeyID),
+		KeyId:            aws.String(pantherFirstSigningKeyID),
 		Message:          computedHash,
 		MessageType:      aws.String(kms.MessageTypeDigest),
 		Signature:        decodedSignature,
@@ -315,7 +323,11 @@ func validateSignature(rawData []byte, signature []byte) error {
 	}
 	result, err := kmsClient.Verify(signatureVerifyInput)
 	if err != nil {
-		zap.L().Error("error validating signature", zap.Error(err))
+		if awsutils.IsAnyError(err, kms.ErrCodeKMSInvalidSignatureException) {
+			zap.L().Error("signature verification failed", zap.Error(err))
+			return err
+		}
+		zap.L().Warn("error validating signature", zap.Error(err))
 		return err
 	}
 	if *result.SignatureValid {
