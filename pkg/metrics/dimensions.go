@@ -25,14 +25,14 @@ import (
 const (
 
 	// SubsystemDimension dimension
-	SubsystemDimension     = "SubsystemDimension"
+	SubsystemDimension     = "Subsystem"
 	SubsystemDestinations  = "Destinations"
 	SubsystemLogProcessing = "LogProcessing"
 	SubsystemDetections    = "Detections"
 	SubsystemDatalake      = "Datalake"
 
 	// StatusDimension dimension
-	StatusDimension = "StatusDimension"
+	StatusDimension = "Status"
 	// StatusDimension indicating that a subsystem operation is well
 	StatusOk = "Ok"
 	// StatusDimension indicating that a subsystem is experiencing authZ/N errors
