@@ -26,7 +26,6 @@ type DeletePacksInput = DeleteEntriesInput
 
 type GetPackInput struct {
 	ID string `json:"id" validate:"required,max=1000,excludesall='<>&\""`
-	//VersionID string `json:"versionId" validate:"omitempty,len=32"` // TODO: will this be in S3?
 }
 
 type ListPacksInput struct {
@@ -84,7 +83,6 @@ type Pack struct {
 	LastModifiedBy    string           `json:"lastModifiedBy"`
 	Type              string           `json:"type"`
 	UserID            string           `json:"userId"`
-	VersionID         string           `json:"versionId"` // TODO: VersionID ? (will this be in S3?)
 	CreatedAt         time.Time        `json:"createdAt"`
 	LastModified      time.Time        `json:"lastModified"`
 	AvailableVersions []Version        `json:"availableVersions"`

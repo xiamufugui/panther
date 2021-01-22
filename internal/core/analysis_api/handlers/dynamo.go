@@ -273,7 +273,6 @@ func (r *packTableItem) Pack() *models.Pack {
 		LastModified:      r.LastModified,
 		LastModifiedBy:    r.LastModifiedBy,
 		UpdateAvailable:   r.UpdateAvailable,
-		VersionID:         r.VersionID,
 	}
 	genericapi.ReplaceMapSliceNils(result)
 	return result
@@ -425,7 +424,7 @@ func dynamoPut(policy *tableItem) error {
 	return dynamoPutItem(env.Table, body)
 }
 
-// Write a single policy to Dynamo.
+// Write a single pack to Dynamo.
 func dynamoPutPack(pack *packTableItem) error {
 	body, err := dynamodbattribute.MarshalMap(pack)
 	if err != nil {

@@ -281,13 +281,7 @@ func writePack(item *packTableItem, userID string, mustExist *bool) error {
 	item.LastModified = time.Now()
 	item.LastModifiedBy = userID
 
-	// TODO: should pack data be stored in S3?
-	// Write to S3 first so we can get the versionID
-	//if err := s3Upload(item); err != nil {
-	//	return changeType, err
-	//
-
-	// Write to Dynamo (with version ID)
+	// Write to Dynamo
 	if err := dynamoPutPack(item); err != nil {
 		return err
 	}

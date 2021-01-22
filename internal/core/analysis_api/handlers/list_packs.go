@@ -79,7 +79,6 @@ func scanPackInput(input *models.ListPacksInput) (*dynamodb.ScanInput, error) {
 			expression.Name("enabled"), expression.Value(*input.Enabled)))
 	}
 
-	// does this work with a struct like this?
 	if input.EnabledVersion.Name != "" {
 		filters = append(filters, expression.Equal(expression.Name("enabledRelease"),
 			expression.Value(input.EnabledVersion)))

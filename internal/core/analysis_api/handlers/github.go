@@ -23,6 +23,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha512"
+	"crypto/tls"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -46,13 +47,17 @@ import (
 
 const (
 	// github org and repo containing detection packs
-	githubOwner      = "panther-labs"
-	githubRepo       = "panther-analysis"
-	signingKeyID     = "2f555f7a-636a-41ed-9a6b-c6192bf55810" // TODO: update: this is a test key
-	signingAlgorithm = kms.SigningAlgorithmSpecRsassaPkcs1V15Sha512
+	pantherGithubOwner = "panther-labs"
+	pantherGithubRepo  = "panther-analysis"
+	// signing keys information
+	pantherSigningKeyID = "2f555f7a-636a-41ed-9a6b-c6192bf55810" // TODO: update: this is a test key
+	signingAlgorithm    = kms.SigningAlgorithmSpecRsassaPkcs1V15Sha512
+	// source filenames
+	pantherSourceFilename    = "panther-analysis-all.zip"
+	pantherSignatureFilename = "panther-analysis-all.sig"
 	// cache the detection packs to prevent downloading them multiple times
 	// when updating packs (potentially one at a time) via the UI
-	cacheTimeout = 60 * time.Minute
+	cacheTimeout = 15 * time.Minute
 	// minimum version that supports packs
 	minimumVersionName = "v1.15.0"
 )
@@ -66,7 +71,7 @@ var (
 )
 
 func downloadGithubAsset(id int64) ([]byte, error) {
-	rawAsset, url, err := githubClient.Repositories.DownloadReleaseAsset(context.Background(), githubOwner, githubRepo, id)
+	rawAsset, url, err := githubClient.Repositories.DownloadReleaseAsset(context.Background(), pantherGithubOwner, pantherGithubRepo, id)
 	// download the raw data
 	var body []byte
 	if rawAsset != nil {
@@ -81,22 +86,22 @@ func downloadGithubAsset(id int64) ([]byte, error) {
 func downloadGithubRelease(version models.Version) (sourceData []byte, signatureData []byte, err error) {
 	// Setup options and client
 	// First, get all of the release data
-	release, _, err := githubClient.Repositories.GetRelease(context.Background(), githubOwner, githubRepo, version.ID)
+	release, _, err := githubClient.Repositories.GetRelease(context.Background(), pantherGithubOwner, pantherGithubRepo, version.ID)
 	if err != nil {
 		return nil, nil, err
 	}
 	// retrieve the signature file and entire analysis zip
 	for _, asset := range release.Assets {
-		if *asset.Name == "panther-analysis-all.sig" {
+		if *asset.Name == pantherSignatureFilename {
 			signatureData, err = downloadGithubAsset(*asset.ID)
-		} else if *asset.Name == "panther-analysis-all.zip" {
+		} else if *asset.Name == pantherSourceFilename {
 			sourceData, err = downloadGithubAsset(*asset.ID)
 		}
 		if err != nil {
 			// If we failed to download an asset, report and return the error
 			zap.L().Error("Failed to download release asset file from repo",
 				zap.String("sourceFile", *asset.Name),
-				zap.String("repository", githubRepo))
+				zap.String("repository", pantherGithubRepo))
 			return nil, nil, err
 		}
 	}
@@ -104,7 +109,14 @@ func downloadGithubRelease(version models.Version) (sourceData []byte, signature
 }
 
 func downloadURL(url string) ([]byte, error) {
-	response, err := http.Get(url) // nolint:gosec
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: false},
+	}
+	client := &http.Client{
+		Timeout:   10 * time.Second,
+		Transport: transport,
+	}
+	response, err := client.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to GET %s: %v", url, err)
 	}
@@ -120,7 +132,7 @@ func downloadURL(url string) ([]byte, error) {
 func downloadValidatePackData(version models.Version) error {
 	sourceData, signatureData, err := downloadGithubRelease(version)
 	if err != nil || sourceData == nil || signatureData == nil {
-		zap.L().Error("GitHub release version download failed", zap.Error(err))
+		zap.L().Error("GitHub release version download failed", zap.Error(err), zap.Bool("sourceData nil", sourceData == nil), zap.Bool("signatureData nil", signatureData == nil))
 		return err
 	}
 	err = validateSignature(sourceData, signatureData)
@@ -138,7 +150,7 @@ func downloadValidatePackData(version models.Version) error {
 }
 
 func extractPackZipFileBytes(content []byte) (map[string]*packTableItem, map[string]*tableItem, error) {
-	// Unzip in memory (the max request size is only 6 MB, so this should easily fit)
+	// Unzip in memory
 	zipReader, err := zip.NewReader(bytes.NewReader(content), int64(len(content)))
 	if err != nil {
 		return nil, nil, fmt.Errorf("zipReader failed: %s", err)
@@ -231,7 +243,7 @@ func extractPackZipFileBytes(content []byte) (map[string]*packTableItem, map[str
 	}
 
 	// add python bodies
-	// Finish each policy by adding its body and then validate it
+	// Finish each detection by adding its body and then validate it
 	for _, detection := range detections {
 		if body, ok := detectionBodies[detection.Body]; ok {
 			detection.Body = body
@@ -248,13 +260,12 @@ func extractPackZipFileBytes(content []byte) (map[string]*packTableItem, map[str
 }
 
 func listAvailableGithubReleases() ([]models.Version, error) {
-	// Setup options and client
-	// TODO: should number of available releases be configurable? By default returns all releases
-	// paged at 100 releases at a time
+	// Setup options
+	// By default returns all releases, paged at 100 releases at a time
 	opt := &github.ListOptions{}
 	var allReleases []*github.RepositoryRelease
 	for {
-		releases, response, err := githubClient.Repositories.ListReleases(context.Background(), githubOwner, githubRepo, opt)
+		releases, response, err := githubClient.Repositories.ListReleases(context.Background(), pantherGithubOwner, pantherGithubRepo, opt)
 		if err != nil {
 			return nil, err
 		}
@@ -270,7 +281,7 @@ func listAvailableGithubReleases() ([]models.Version, error) {
 	for _, release := range allReleases {
 		version, err := version.NewVersion(*release.Name)
 		if err != nil {
-			// if we can't parse the version, just throw it away?
+			// if we can't parse the version, just throw it away
 			zap.L().Warn("can't parse version", zap.String("version", *release.Name))
 			continue
 		}
@@ -296,7 +307,7 @@ func validateSignature(rawData []byte, signature []byte) error {
 		return err
 	}
 	signatureVerifyInput := &kms.VerifyInput{
-		KeyId:            aws.String(signingKeyID),
+		KeyId:            aws.String(pantherSigningKeyID),
 		Message:          computedHash,
 		MessageType:      aws.String(kms.MessageTypeDigest),
 		Signature:        decodedSignature,

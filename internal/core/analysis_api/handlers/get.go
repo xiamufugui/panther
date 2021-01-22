@@ -53,13 +53,6 @@ func (API) GetPack(input *models.GetPackInput) *events.APIGatewayProxyResponse {
 
 	var item *packTableItem
 	item, err = dynamoGetPack(itemID, false)
-	// TODO: do packs need to be in S3?
-	//if versionID == "" {
-	// Get latest version from Dynamo
-	//} else {
-	// Get specific version from S3
-	//item, err = s3Get(itemID, versionID)
-	//}
 
 	if err != nil {
 		return &events.APIGatewayProxyResponse{

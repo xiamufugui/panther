@@ -467,7 +467,7 @@ Resources:
         SSEEnabled: True
       TableName: panther-analysis-packs
       # <cfndoc>
-      # This ddb table holds the packs that manages detections in `panther-analysis` ddb and
+      # This ddb table holds the packs that manages packs in `panther-analysis-packs` ddb and
       # is managed by the `panther-analysis-api`.
       #
       # Failure Impact

@@ -27,13 +27,7 @@ import (
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
 )
 
-func TestSetupPackDetectionUpdate(t *testing.T) {
-	// detection added to pack
-
-	// detection removed from pack
-}
-
-func TestSetupPacksVersions(t *testing.T) {
+func TestSetupUpdatePacksVersions(t *testing.T) {
 	// This tests setting up pack items when there is
 	// no change needed (packs already have knowledge of all releases)
 	// as well as when a new release is available, but there aren't any
@@ -83,8 +77,8 @@ func TestSetupPacksVersions(t *testing.T) {
 }
 
 func TestSetupPacksVersionsAddPack(t *testing.T) {
-	// This tests setting up the updated Pack items when
-	// a new pack is added in a release. It should auto-disable
+	// This tests setting up pack items when
+	// a new pack is added in a release. It should be auto-disable
 	// and the AvailableReleases should only include the
 	// new release version
 	newVersion := models.Version{ID: 3333, Name: "v1.3.0"}
