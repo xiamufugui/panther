@@ -22,6 +22,7 @@ import (
 	"context"
 	"io"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -143,7 +144,7 @@ func pollEvents(
 					err = kickOffReader(s)
 					common.GetObject.With(
 						metrics.IDDimension, s.Source.IntegrationID,
-						metrics.StatusDimension, metrics.StatusFromErr(err),
+						metrics.StatusDimension, statusFromErr(err),
 					).Add(1)
 					if err != nil {
 						zap.L().Warn("Skipping event due to error", zap.Error(err))
@@ -217,4 +218,15 @@ func readZero(r io.Reader) error {
 	buf := [0]byte{}
 	_, err := r.Read(buf[:])
 	return err
+}
+
+// Returns the correct Status dimension from the provided error
+func statusFromErr(err error) string {
+	if err == nil {
+		return metrics.StatusOk
+	}
+	if strings.Contains(err.Error(), "AccessDenied") {
+		return metrics.StatusAuthErr
+	}
+	return metrics.StatusErr
 }

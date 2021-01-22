@@ -1,9 +1,5 @@
 package metrics
 
-import (
-	"strings"
-)
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -43,14 +39,3 @@ const (
 	// IDDimension dimensions
 	IDDimension = "ID"
 )
-
-// Returns the correct Status dimension from the provided error
-func StatusFromErr(err error) string {
-	if err == nil {
-		return StatusOk
-	}
-	if strings.Contains(err.Error(), "AccessDenied") {
-		return StatusAuthErr
-	}
-	return StatusErr
-}
