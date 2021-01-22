@@ -1,4 +1,4 @@
-package panthermetrics
+package metrics
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,101 +19,116 @@ package panthermetrics
  */
 
 import (
+	"context"
+	"io"
 	"sync"
 	"time"
 
-	"go.uber.org/zap"
-
-	"github.com/panther-labs/panther/pkg/metrics"
+	jsoniter "github.com/json-iterator/go"
 )
 
-// Global instance of metrics manager
-var metricsManager MetricsManager
-
-type MetricsManager interface {
-	NewCounter(name string) *Counter
+type Manager interface {
+	Run(ctx context.Context, interval time.Duration)
+	NewCounter(name string) Counter
+	Sync() error
 }
 
 type CloudWatch struct {
-	mtx      sync.RWMutex
-	ticker   *time.Ticker
+	mtx      sync.Mutex
 	counters *Space
-	logger   *zap.Logger
+	writer   io.Writer
+	stream   *jsoniter.Stream
+	// Function that return the current time in milliseconds
+	// Can be overwritten in unit tests
+	timeFunc func() int64
 }
 
 // New returns a CloudWatch object that may be used to create metrics.
 // Namespace is applied to all created metrics and maps to the CloudWatch namespace.
 // Callers must ensure that regular calls to Send are performed, either
 // manually or with one of the helper methods.
-func SetupManager(log *zap.Logger) *CloudWatch {
-	ticker := time.NewTicker(time.Minute)
+func NewCWMetrics(writer io.Writer) *CloudWatch {
 	cwManager := &CloudWatch{
-		logger:   log,
+		writer:   writer,
 		counters: NewSpace(),
-		ticker:   ticker,
+		stream:   jsoniter.NewStream(jsoniter.ConfigDefault, nil, 8192),
+		timeFunc: func() int64 {
+			return time.Now().UnixNano() / 1e6
+		},
 	}
-	Setup(cwManager)
-
-	go func() {
-		for range ticker.C {
-			cwManager.mtx.RLock()
-			cwManager.send()
-			cwManager.mtx.RUnlock()
-		}
-	}()
-	metricsManager = cwManager
 	return cwManager
 }
 
 // NewCounter returns a counter. Observations are aggregated and emitted once
 // per write invocation.
 // Panics if the client has been closed
-func (c *CloudWatch) NewCounter(name string) *Counter {
-	c.mtx.RLock()
-	defer c.mtx.RUnlock()
-	return &Counter{
+func (c *CloudWatch) NewCounter(name string) Counter {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+	return &DimensionsCounter{
 		name: name,
 		obs:  c.counters.Observe,
 	}
 }
 
-func (c *CloudWatch) Close() error {
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
-	c.ticker.Stop()
-	return c.send()
+func (c *CloudWatch) Run(ctx context.Context, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	for {
+		select {
+		case <-ticker.C:
+			// nolint: errcheck
+			c.Sync()
+		case <-ctx.Done():
+			// nolint: errcheck
+			c.Sync()
+			ticker.Stop()
+			return
+		}
+	}
 }
 
-func (c *CloudWatch) send() error {
-	now := time.Now()
+func (c *CloudWatch) Sync() error {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
 
-	// Add each dimension to the list of top level fields
-	var fields []zap.Field
-	var mets []metrics.Metric
-	var dims []metrics.DimensionSet
+	var mets []Metric
+	var dims [][]string
+
+	// Clear jsoniter buffer
+	c.stream.Reset(nil)
+	c.stream.WriteObjectStart()
 
 	c.counters.Reset().Walk(func(name string, dms DimensionValues, values []float64) bool {
-		mets = append(mets, metrics.Metric{Name: name, Unit: "Count"})
-		dims = append(dims, dimensionNames(dms...))
-		fields = append(fields, zap.Any(name, sum(values)))
+		// Write `"<metric name>" : <value>`
+		c.stream.WriteObjectField(name)
+		c.stream.WriteVal(sum(values))
+		c.stream.WriteMore()
+
+		// Write dimension values
 		for i := 0; i+1 < len(dms); i = i + 2 {
-			fields = append(fields, zap.Any(dms[i], dms[i+1]))
+			c.stream.WriteObjectField(dms[i])
+			c.stream.WriteVal(dms[i+1])
+			c.stream.WriteMore()
 		}
+
+		mets = append(mets, Metric{Name: name, Unit: "Count"})
+		dims = append(dims, dimensionNames(dms...))
+
 		return true
 	})
 
 	// If there are no metrics to be reported
 	// Don't log anything
-	if len(fields) == 0 {
+	if len(mets) == 0 {
 		return nil
 	}
 
 	// Construct the embedded metric metadata object per AWS standards
 	// https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format_Specification.html
 	const namespace = "Panther"
-	embeddedMetric := metrics.EmbeddedMetric{
-		Timestamp: now.UnixNano() / 10e6,
-		CloudWatchMetrics: []metrics.MetricDirectiveObject{
+	embeddedMetric := EmbeddedMetric{
+		Timestamp: c.timeFunc(),
+		CloudWatchMetrics: []MetricDirectiveObject{
 			{
 				Namespace:  namespace,
 				Dimensions: dims,
@@ -123,10 +138,11 @@ func (c *CloudWatch) send() error {
 	}
 
 	const rootElement = "_aws"
-	fields = append(fields, zap.Any(rootElement, embeddedMetric))
-
-	const metricField = "metric"
-	c.logger.Info(metricField, fields...)
+	c.stream.WriteObjectField(rootElement)
+	c.stream.WriteVal(embeddedMetric)
+	c.stream.WriteObjectEnd()
+	// nolint: errcheck
+	c.writer.Write(append(c.stream.Buffer(), '\n'))
 
 	return nil
 }

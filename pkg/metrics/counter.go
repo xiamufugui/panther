@@ -1,4 +1,4 @@
-package panthermetrics
+package metrics
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -20,26 +20,31 @@ package panthermetrics
 
 import "sync"
 
+type Counter interface {
+	With(dimensionValues ...string) Counter
+	Add(delta float64)
+}
+
 // Counter is a counter. Observations are forwarded to a node
 // object, and aggregated (summed) per timeseries.
-type Counter struct {
+type DimensionsCounter struct {
 	name string
 	dvs  DimensionValues
 	obs  func(name string, dvs DimensionValues, value float64)
 }
 
 // With implements metrics.Counter.
-func (c *Counter) With(dimensionValues ...string) *Counter {
-	return &Counter{
-		name: c.name,
-		dvs:  c.dvs.With(dimensionValues...),
-		obs:  c.obs,
+func (d *DimensionsCounter) With(dimensionValues ...string) Counter {
+	return &DimensionsCounter{
+		name: d.name,
+		dvs:  d.dvs.With(dimensionValues...),
+		obs:  d.obs,
 	}
 }
 
 // Add implements metrics.Counter.
-func (c *Counter) Add(delta float64) {
-	c.obs(c.name, c.dvs, delta)
+func (d *DimensionsCounter) Add(delta float64) {
+	d.obs(d.name, d.dvs, delta)
 }
 
 // DimensionValues is a type alias that provides validation on its With method.
@@ -87,6 +92,7 @@ func (s *Space) Walk(fn func(name string, lvs DimensionValues, observations []fl
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
 	for name, node := range s.nodes {
+		name := name
 		f := func(lvs DimensionValues, observations []float64) bool { return fn(name, lvs, observations) }
 		if !node.walk(DimensionValues{}, f) {
 			return

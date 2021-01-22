@@ -39,7 +39,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor/logstream"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/s3pipe"
-	"github.com/panther-labs/panther/pkg/panthermetrics"
 	"github.com/panther-labs/panther/pkg/stringset"
 )
 
@@ -119,11 +118,6 @@ func handleNotificationMessage(ctx context.Context, notification *SnsNotificatio
 		if dataStream != nil {
 			result = append(result, dataStream)
 		}
-		panthermetrics.GetObjectOp.
-			With(
-				panthermetrics.ID, dataStream.Source.IntegrationID,
-				panthermetrics.Status, panthermetrics.StatusOk).
-			Add(1)
 	}
 	return result, err
 }
@@ -142,7 +136,7 @@ func buildStream(ctx context.Context, s3Object *S3ObjectInfo) (*common.DataStrea
 		return nil, err
 	}
 	if src == nil {
-		zap.L().Warn("no source configured for S3 object",
+		zap.L().Debug("no source configured for S3 object",
 			zap.String("bucket", bucket),
 			zap.String("key", key))
 		return nil, nil

@@ -30,7 +30,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"golang.org/x/sync/errgroup"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
@@ -38,6 +37,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 	"github.com/panther-labs/panther/pkg/awsutils"
+	"github.com/panther-labs/panther/pkg/metrics"
 )
 
 const (
@@ -125,13 +125,6 @@ func pollEvents(
 			for _, msg := range messages {
 				// pass lambda context to set FULL deadline to process which is pushed down into downloader
 				dataStreams, err := generateDataStreamsFunc(ctx, aws.StringValue(msg.Body))
-				if err == nil {
-					// This is a temporary workaround to ensure all S3 streams are readable.
-					// The proper solution for this require an SQS message tracker that allows true concurrent processing.
-					// The overall behavior of the system does not change since reading was triggered
-					// when we were detecting MIME types by using `Peek()`.
-					err = kickOffReaders(ctx, dataStreams)
-				}
 				if err != nil {
 					// No need for error here. This issue can happen due to
 					// 1. Persistent AWS issues while accessing S3 object
@@ -143,6 +136,21 @@ func pollEvents(
 				}
 
 				for _, s := range dataStreams {
+					// This is a temporary workaround to ensure all S3 streams are readable.
+					// The proper solution for this require an SQS message tracker that allows true concurrent processing.
+					// The overall behavior of the system does not change since reading was triggered
+					// when we were detecting MIME types by using `Peek()`.
+					err = kickOffReader(s)
+					tsa := common.GetObject.With(
+						metrics.StatusDimension, metrics.StatusFromErr(err),
+						metrics.IDDimension, s.Source.IntegrationID,
+					)
+					tsa.Add(1)
+					if err != nil {
+						zap.L().Warn("Skipping event due to error", zap.Error(err))
+						continue
+					}
+
 					select {
 					case streamChan <- s:
 					case <-ctx.Done():
@@ -197,18 +205,13 @@ func receiveFromSqs(ctx context.Context, sqsClient sqsiface.SQSAPI) ([]*sqs.Mess
 	return output.Messages, nil
 }
 
-func kickOffReaders(ctx context.Context, streams []*common.DataStream) error {
-	grp, _ := errgroup.WithContext(ctx)
-	for _, s := range streams {
-		r, ok := s.Closer.(io.ReadCloser)
-		if !ok {
-			continue
-		}
-		grp.Go(func() error {
-			return readZero(r)
-		})
+func kickOffReader(stream *common.DataStream) error {
+	r, ok := stream.Closer.(io.ReadCloser)
+	if !ok {
+		return nil
 	}
-	return grp.Wait()
+
+	return readZero(r)
 }
 
 func readZero(r io.Reader) error {

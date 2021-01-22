@@ -34,7 +34,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
-	"github.com/panther-labs/panther/pkg/panthermetrics"
 )
 
 const (
@@ -49,9 +48,7 @@ func main() {
 }
 
 func handle(ctx context.Context) error {
-	_, logger := lambdalogger.ConfigureGlobal(ctx, nil)
-	pm := panthermetrics.SetupManager(logger)
-	defer pm.Close()
+	lambdalogger.ConfigureGlobal(ctx, nil)
 	return process(ctx, defaultScalingDecisionInterval)
 }
 
@@ -82,6 +79,18 @@ func process(ctx context.Context, scalingDecisionInterval time.Duration) (err er
 			},
 		}),
 	)
+
+	// Configure metrics
+	cwCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	// Sync metrics every minute
+	go common.CWMetrics.Run(cwCtx, time.Minute)
+	defer func() {
+		// Force syncing metrics at the end of the invocation
+		if err := common.CWMetrics.Sync(); err != nil {
+			zap.L().Warn("failed to sync metrics", zap.Error(err))
+		}
+	}()
 
 	sqsMessageCount, err = processor.PollEvents(ctx, common.SqsClient, logTypesResolver)
 	return err

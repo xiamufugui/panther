@@ -1,4 +1,8 @@
-package panthermetrics
+package metrics
+
+import (
+	"strings"
+)
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -20,53 +24,32 @@ package panthermetrics
 
 const (
 
-	// Subsystem dimensions
-	SubSystem              = "Subsystem"
-	SubsystemSources       = "Sources"
+	// SubsystemDimension dimension
+	SubsystemDimension     = "SubsystemDimension"
 	SubsystemDestinations  = "Destinations"
 	SubsystemLogProcessing = "LogProcessing"
 	SubsystemDetections    = "Detections"
 	SubsystemDatalake      = "Datalake"
 
-	// Status dimensions
-	Status = "Status"
-	// Status indicating that a subsystem operation is well
+	// StatusDimension dimension
+	StatusDimension = "StatusDimension"
+	// StatusDimension indicating that a subsystem operation is well
 	StatusOk = "Ok"
-	// Status indicating that a subsystem is experiencing authZ/N errors
+	// StatusDimension indicating that a subsystem is experiencing authZ/N errors
 	StatusAuthErr = "AuthErr"
-	// Status indicating some general error with the subsystem
+	// StatusDimension indicating some general error with the subsystem
 	StatusErr = "Err"
 
-	// ID dimensions
-	ID = "ID"
+	// IDDimension dimensions
+	IDDimension = "ID"
 )
 
-var (
-	// Sources metrics
-	AssumeRoleOp *Counter
-	GetObjectOp  *Counter
-	PullDataOp   *Counter
-
-	// Destinations Metrics
-	// TODO
-
-	// Log Processing metrics
-	// TODO
-
-	// Detections metrics
-	// TODO
-
-	// Datalake metrics
-	// TODO
-)
-
-func Setup(mm MetricsManager) {
-	AssumeRoleOp = mm.NewCounter("AssumeRole").
-		With(SubSystem, SubsystemLogProcessing)
-	GetObjectOp = mm.NewCounter("GetObject").
-		With(SubSystem, SubsystemLogProcessing)
-	PullDataOp = mm.NewCounter("PullData").
-		With(SubSystem, SubsystemLogProcessing)
-
-	// TODO Initialize the rest
+func StatusFromErr(err error) string {
+	if err == nil {
+		return StatusOk
+	}
+	if strings.Contains(err.Error(), "AccessDenied") {
+		return StatusAuthErr
+	}
+	return StatusErr
 }

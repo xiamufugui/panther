@@ -1,4 +1,4 @@
-package panthermetrics
+package metrics
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,17 +19,24 @@ package panthermetrics
  */
 
 import (
+	"bytes"
+	"fmt"
 	"testing"
 
-	"go.uber.org/zap"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewCounter(t *testing.T) {
-	cm := SetupManager(zap.L())
-	counter := cm.NewCounter("test")
-	counter.With("dimension1", "dimensionValue1").
-		With("dimension2", "dimensionValue2").
-		Add(1)
+	buf := bytes.NewBuffer(make([]byte, 8192))
+	cm := NewCWMetrics(buf)
+	counter := cm.NewCounter("test").With("dimension1", "dimensionValue1").
+		With("dimension2", "dimensionValue2")
 
-	cm.Close()
+	counter.Add(1)
+	counter = cm.NewCounter("test").With("dimension1", "dimensionValue1").
+		With("dimension2", "dimensionValue2")
+	counter.Add(1)
+
+	assert.NoError(t, cm.Sync())
+	fmt.Println(buf.String())
 }
