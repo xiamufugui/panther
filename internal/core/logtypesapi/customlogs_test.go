@@ -22,33 +22,23 @@ import (
 	"context"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/service/lambda"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
-	"github.com/panther-labs/panther/pkg/testutils"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
 )
 
 func TestAPI_PutCustomLog(t *testing.T) {
-	integration := &models.SourceIntegration{
-		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-			IntegrationType: models.IntegrationTypeAWS3,
-			LogTypes:        []string{"Custom.InUse"},
-		},
-	}
-	marshaledResult, err := jsoniter.Marshal([]*models.SourceIntegration{integration})
-	require.NoError(t, err)
-	lambdaOutput := &lambda.InvokeOutput{
-		Payload: marshaledResult,
-	}
-	lambdaMock := &testutils.LambdaMock{}
-	lambdaMock.On("Invoke", mock.Anything).Return(lambdaOutput, nil)
+	numDataCatalogCalls := 0
 	api := logtypesapi.LogTypesAPI{
-		Database:     logtypesapi.NewInMemory(),
-		LambdaClient: lambdaMock,
+		Database: logtypesapi.NewInMemory(),
+		LogTypeInUse: func(ctx context.Context) ([]string, error) {
+			return []string{"Custom.InUse"}, nil
+		},
+		UpdateDataCatalog: func(ctx context.Context, logType string, from, to []logschema.FieldSchema) error {
+			numDataCatalogCalls++
+			return nil
+		},
 	}
 	ctx := context.Background()
 	assert := require.New(t)
@@ -68,7 +58,7 @@ func TestAPI_PutCustomLog(t *testing.T) {
 	record := reply.Result
 	assert.Equal(&expect, &record.CustomLog)
 	assert.Equal(int64(1), record.Revision)
-
+	assert.Equal(1, numDataCatalogCalls)
 	{
 		reply, err := api.GetCustomLog(ctx, &logtypesapi.GetCustomLogInput{
 			LogType:  "Custom.Event",
@@ -98,10 +88,9 @@ func TestAPI_PutCustomLog(t *testing.T) {
 			LogType:  "Custom.Event",
 			Revision: 2,
 		})
-		assert.Nil(err)
-		assert.Nil(reply.Result)
-		assert.NotNil(reply.Error)
-		assert.Equal(logtypesapi.ErrNotFound, reply.Error.Code)
+		assert.NotNil(err)
+		assert.Nil(reply)
+		assert.Equal(logtypesapi.ErrNotFound, logtypesapi.AsAPIError(err).Code)
 	}
 
 	expect = logtypesapi.CustomLog{
@@ -114,18 +103,18 @@ func TestAPI_PutCustomLog(t *testing.T) {
 		LogType:   "Custom.Event",
 		CustomLog: expect,
 	})
-	assert.NoError(err)
-	assert.NotNil(reply)
-	assert.NotNil(reply.Error)
+	assert.Error(err)
+	assert.Nil(reply)
+	assert.Equal(logtypesapi.ErrInvalidUpdate, logtypesapi.AsAPIError(err).Code)
 
 	{
 		reply, err := api.DelCustomLog(ctx, &logtypesapi.DelCustomLogInput{
 			LogType:  "Custom.Event",
 			Revision: 2,
 		})
-		assert.NoError(err)
-		assert.NotNil(reply.Error)
-		assert.Equal(reply.Error.Code, logtypesapi.ErrRevisionConflict)
+		assert.Error(err)
+		assert.Nil(reply)
+		assert.Equal(logtypesapi.ErrRevisionConflict, logtypesapi.AsAPIError(err).Code)
 	}
 	{
 		reply, err := api.DelCustomLog(ctx, &logtypesapi.DelCustomLogInput{
@@ -134,26 +123,26 @@ func TestAPI_PutCustomLog(t *testing.T) {
 		})
 		assert.NoError(err)
 		assert.Nil(reply.Error)
+		assert.Equal(2, numDataCatalogCalls)
 	}
 	{
 		reply, err := api.DelCustomLog(ctx, &logtypesapi.DelCustomLogInput{
 			LogType:  "Custom.Event",
 			Revision: 1,
 		})
-		assert.NoError(err)
-		assert.NotNil(reply.Error)
-		assert.Equal(reply.Error.Code, logtypesapi.ErrRevisionConflict)
+		assert.Error(err)
+		assert.Nil(reply)
+		assert.Equal(logtypesapi.ErrRevisionConflict, logtypesapi.AsAPIError(err).Code)
 	}
 	{
 		reply, err := api.DelCustomLog(ctx, &logtypesapi.DelCustomLogInput{
 			LogType:  "Custom.InUse",
 			Revision: 1,
 		})
-		assert.NoError(err)
-		assert.NotNil(reply.Error)
-		assert.Equal(reply.Error.Code, logtypesapi.ErrInUse)
+		assert.Error(err)
+		assert.Nil(reply)
+		assert.Equal(logtypesapi.ErrInUse, logtypesapi.AsAPIError(err).Code)
 	}
-	lambdaMock.AssertExpectations(t)
 }
 
 // Enterprise-only stubs

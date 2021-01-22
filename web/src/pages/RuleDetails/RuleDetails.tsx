@@ -31,9 +31,9 @@ import ErrorBoundary from 'Components/ErrorBoundary';
 import { AlertTypesEnum } from 'Generated/schema';
 import RuleDetailsPageSkeleton from './Skeleton';
 import ListRuleAlerts from './RuleAlertsListing';
-import CardDetails from './RuleCardDetails';
 import RuleDetailsInfo from './RuleDetailsInfo';
-import { useRuleDetails } from './graphql/ruleDetails.generated';
+import RuleDetailsBanner from './RuleDetailsBanner';
+import { useGetRuleDetails } from './graphql/getRuleDetails.generated';
 import { useListAlertsForRule } from './graphql/listAlertsForRule.generated';
 
 export interface RuleDetailsPageUrlParams {
@@ -54,7 +54,7 @@ const tabIndexToSection = invert(sectionToTabIndex) as Record<
 const RuleDetailsPage: React.FC = () => {
   const { match } = useRouter<{ id: string }>();
   const { urlParams, setUrlParams } = useUrlParams<RuleDetailsPageUrlParams>();
-  const { error, data, loading } = useRuleDetails({
+  const { error, data, loading } = useGetRuleDetails({
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
@@ -105,10 +105,10 @@ const RuleDetailsPage: React.FC = () => {
   }
 
   return (
-    <Box as="article">
-      <Flex direction="column" spacing={6} my={6}>
+    <Box as="article" mb={6}>
+      <Flex direction="column" spacing={6}>
         <ErrorBoundary>
-          <RuleDetailsInfo rule={data.rule} />
+          <RuleDetailsBanner rule={data.rule} />
         </ErrorBoundary>
         <Card position="relative">
           <Tabs
@@ -138,7 +138,7 @@ const RuleDetailsPage: React.FC = () => {
               <BorderTabDivider />
               <TabPanels>
                 <TabPanel data-testid="rule-details-tabpanel">
-                  <CardDetails rule={data.rule} />
+                  <RuleDetailsInfo rule={data.rule} />
                 </TabPanel>
                 <TabPanel data-testid="rule-matches-tabpanel" lazy unmountWhenInactive>
                   <ListRuleAlerts ruleId={match.params.id} type={AlertTypesEnum.Rule} />

@@ -131,7 +131,6 @@ func TestHandlerNonExistentIntegration(t *testing.T) {
 			},
 		},
 	}
-
 	require.NoError(t, Handle(testContext(), sampleEvent))
 
 	mockResourceClient.AssertNumberOfCalls(t, "Invoke", 0)
@@ -187,6 +186,8 @@ func TestHandler(t *testing.T) {
 	pollers.VerifyAssumedCredsFunc = func(sess *session.Session, region string) error {
 		return nil
 	}
+	// Provide stub poller session
+	pollers.SnapshotPollerSession = &session.Session{}
 
 	utils.TimeNowFunc = mockTimeFunc
 

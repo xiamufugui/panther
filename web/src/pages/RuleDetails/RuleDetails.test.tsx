@@ -22,13 +22,14 @@ import {
   buildAlertSummary,
   buildAlertSummaryRuleInfo,
   buildListAlertsResponse,
-  buildRuleDetails,
+  buildRule,
   fireClickAndMouseEvents,
   fireEvent,
   render,
   waitFor,
   waitForElementToBeRemoved,
   waitMs,
+  within,
 } from 'test-utils';
 import { DEFAULT_LARGE_PAGE_SIZE, DEFAULT_SMALL_PAGE_SIZE } from 'Source/constants';
 import {
@@ -41,7 +42,7 @@ import { Route } from 'react-router-dom';
 import urls from 'Source/urls';
 import { mockUpdateAlertStatus } from 'Source/graphql/queries';
 import RuleDetails from './RuleDetails';
-import { mockRuleDetails } from './graphql/ruleDetails.generated';
+import { mockGetRuleDetails } from './graphql/getRuleDetails.generated';
 import { mockListAlertsForRule } from './graphql/listAlertsForRule.generated';
 
 const queryStringOptions = {
@@ -67,14 +68,14 @@ beforeEach(() => {
 
 describe('RuleDetails', () => {
   it('renders the rule details page', async () => {
-    const rule = buildRuleDetails({
+    const rule = buildRule({
       id: '123',
       displayName: 'This is an amazing rule',
       description: 'This is an amazing description',
       runbook: 'Panther labs runbook',
     });
     const mocks = [
-      mockRuleDetails({
+      mockGetRuleDetails({
         data: { rule },
         variables: {
           input: {
@@ -101,7 +102,7 @@ describe('RuleDetails', () => {
     // Rule info
     expect(getByText('This is an amazing rule')).toBeTruthy();
     expect(getByText('DISABLED')).toBeTruthy();
-    expect(getByText('LOW')).toBeTruthy();
+    expect(getByText('HIGH')).toBeTruthy();
     expect(getByText('This is an amazing description')).toBeTruthy();
     expect(getByText('Panther labs runbook')).toBeTruthy();
     // Tabs
@@ -111,14 +112,14 @@ describe('RuleDetails', () => {
   });
 
   it('shows the tabs as disabled when no alerts are in place', async () => {
-    const rule = buildRuleDetails({
+    const rule = buildRule({
       id: '123',
       displayName: 'This is an amazing rule',
       description: 'This is an amazing description',
       runbook: 'Panther labs runbook',
     });
     const mocks = [
-      mockRuleDetails({
+      mockGetRuleDetails({
         data: { rule },
         variables: {
           input: {
@@ -192,14 +193,14 @@ describe('RuleDetails', () => {
   });
 
   it('allows URL matching of tab navigation', async () => {
-    const rule = buildRuleDetails({
+    const rule = buildRule({
       id: '123',
       displayName: 'This is an amazing rule',
       description: 'This is an amazing description',
       runbook: 'Panther labs runbook',
     });
     const mocks = [
-      mockRuleDetails({
+      mockGetRuleDetails({
         data: { rule },
         variables: {
           input: {
@@ -231,14 +232,14 @@ describe('RuleDetails', () => {
   });
 
   it('fetches the alerts matching the rule', async () => {
-    const rule = buildRuleDetails({
+    const rule = buildRule({
       id: '123',
       displayName: 'This is an amazing rule',
       description: 'This is an amazing description',
       runbook: 'Panther labs runbook',
     });
     const mocks = [
-      mockRuleDetails({
+      mockGetRuleDetails({
         data: { rule },
         variables: {
           input: {
@@ -272,7 +273,7 @@ describe('RuleDetails', () => {
       }),
     ];
 
-    const { getByText, getByTestId, getByAriaLabel, getAllByText } = render(
+    const { getByText, getByTestId } = render(
       <Route exact path={urls.logAnalysis.rules.details(':id')}>
         <RuleDetails />
       </Route>,
@@ -288,26 +289,25 @@ describe('RuleDetails', () => {
     fireEvent.click(getByText('Rule Matches'));
 
     const loadingListingInterfaceElement = getByTestId('rule-alerts-listing-loading');
-    expect(loadingListingInterfaceElement).toBeTruthy();
     await waitForElementToBeRemoved(loadingListingInterfaceElement);
-    expect(getByText('Alert 1')).toBeInTheDocument();
-    expect(getByText('Rule Match')).toBeInTheDocument();
+    const withinTabPanel = within(getByTestId('rule-matches-tabpanel'));
+    expect(withinTabPanel.getByText('Alert 1')).toBeInTheDocument();
+    expect(withinTabPanel.getByText('Rule Match')).toBeInTheDocument();
 
-    expect(getAllByText('Destinations').length).toEqual(2);
-    expect(getByText('Log Types')).toBeInTheDocument();
-    expect(getByText('Events')).toBeInTheDocument();
-    expect(getByAriaLabel('Change Alert Status')).toBeInTheDocument();
+    expect(withinTabPanel.getByText('Destinations')).toBeInTheDocument();
+    expect(withinTabPanel.getByText('Log Types')).toBeInTheDocument();
+    expect(withinTabPanel.getByText('Events')).toBeInTheDocument();
   });
 
   it('fetches the alerts matching the rule errors', async () => {
-    const rule = buildRuleDetails({
+    const rule = buildRule({
       id: '123',
       displayName: 'This is an amazing rule',
       description: 'This is an amazing description',
       runbook: 'Panther labs runbook',
     });
     const mocks = [
-      mockRuleDetails({
+      mockGetRuleDetails({
         data: { rule },
         variables: {
           input: {
@@ -341,7 +341,7 @@ describe('RuleDetails', () => {
       }),
     ];
 
-    const { getByText, getByTestId, getByAriaLabel, getAllByText } = render(
+    const { getByText, getByTestId } = render(
       <Route exact path={urls.logAnalysis.rules.details(':id')}>
         <RuleDetails />
       </Route>,
@@ -357,26 +357,24 @@ describe('RuleDetails', () => {
     fireEvent.click(getByText('Rule Errors'));
 
     const loadingListingInterfaceElement = getByTestId('rule-alerts-listing-loading');
-    expect(loadingListingInterfaceElement).toBeTruthy();
     await waitForElementToBeRemoved(loadingListingInterfaceElement);
-    expect(getByText('Error 1')).toBeInTheDocument();
-    expect(getByText('Rule Error')).toBeInTheDocument();
-
-    expect(getAllByText('Destinations').length).toEqual(2);
-    expect(getByText('Log Types')).toBeInTheDocument();
-    expect(getByText('Events')).toBeInTheDocument();
-    expect(getByAriaLabel('Change Alert Status')).toBeInTheDocument();
+    const withinTabPanel = within(getByTestId('rule-errors-tabpanel'));
+    expect(withinTabPanel.getByText('Error 1')).toBeInTheDocument();
+    expect(withinTabPanel.getByText('Rule Error')).toBeInTheDocument();
+    expect(withinTabPanel.getByText('Destinations')).toBeInTheDocument();
+    expect(withinTabPanel.getByText('Log Types')).toBeInTheDocument();
+    expect(withinTabPanel.getByText('Events')).toBeInTheDocument();
   });
 
   it('fetches the alerts matching the rule & shows an empty fallback if no alerts exist', async () => {
-    const rule = buildRuleDetails({
+    const rule = buildRule({
       id: '123',
       displayName: 'This is an amazing rule',
       description: 'This is an amazing description',
       runbook: 'Panther labs runbook',
     });
     const mocks = [
-      mockRuleDetails({
+      mockGetRuleDetails({
         data: { rule },
         variables: {
           input: {
@@ -425,11 +423,11 @@ describe('RuleDetails', () => {
   });
 
   it('shows an empty illustration if filtering returns no results', async () => {
-    const rule = buildRuleDetails();
+    const rule = buildRule();
     const alert = buildAlertSummary();
 
     const mocks = [
-      mockRuleDetails({
+      mockGetRuleDetails({
         data: { rule },
         variables: {
           input: {
@@ -489,7 +487,7 @@ describe('RuleDetails', () => {
   });
 
   it('allows conditionally filtering the alerts matching the rule rule', async () => {
-    const rule = buildRuleDetails({
+    const rule = buildRule({
       id: '123',
     });
 
@@ -524,7 +522,7 @@ describe('RuleDetails', () => {
     };
 
     const mocks = [
-      mockRuleDetails({
+      mockGetRuleDetails({
         data: { rule },
         variables: {
           input: {
@@ -594,7 +592,7 @@ describe('RuleDetails', () => {
   });
 
   it('can select and bulk update status for rule matches', async () => {
-    const rule = buildRuleDetails({
+    const rule = buildRule({
       id: '123',
       displayName: 'This is an amazing rule',
       description: 'This is an amazing description',
@@ -619,7 +617,7 @@ describe('RuleDetails', () => {
       }),
     ];
     const mocks = [
-      mockRuleDetails({
+      mockGetRuleDetails({
         data: { rule },
         variables: {
           input: {
@@ -754,7 +752,7 @@ describe('RuleDetails', () => {
   });
 
   it('can select and bulk update status for rule errors', async () => {
-    const rule = buildRuleDetails({
+    const rule = buildRule({
       id: '123',
       displayName: 'This is an amazing rule',
       description: 'This is an amazing description',
@@ -779,7 +777,7 @@ describe('RuleDetails', () => {
       }),
     ];
     const mocks = [
-      mockRuleDetails({
+      mockGetRuleDetails({
         data: { rule },
         variables: {
           input: {

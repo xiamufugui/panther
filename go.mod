@@ -7,10 +7,12 @@ require (
 	github.com/aws/aws-lambda-go v1.20.0
 	github.com/aws/aws-sdk-go v1.35.34
 	github.com/cenkalti/backoff/v4 v4.1.0
+	github.com/dchest/uniuri v0.0.0-20200228104902-7aecb25e1fe5
 	github.com/fatih/structtag v1.2.0
 	github.com/go-bindata/go-bindata v3.1.2+incompatible
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/go-playground/validator v9.31.0+incompatible
+	github.com/google/gofuzz v1.0.0
 	github.com/google/uuid v1.1.2
 	github.com/hashicorp/go-cleanhttp v0.5.1
 	github.com/hashicorp/golang-lru v0.5.4
@@ -33,6 +35,8 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0
 	go.uber.org/multierr v1.6.0
 	go.uber.org/zap v1.16.0
+	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
+	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	golang.org/x/text v0.3.4 // indirect
 	golang.org/x/tools v0.0.0-20201110175055-ae6603bdc3c4
@@ -40,4 +44,5 @@ require (
 	gopkg.in/go-playground/assert.v1 v1.2.1
 	gopkg.in/go-playground/validator.v9 v9.31.0
 	gopkg.in/yaml.v2 v2.3.0
+	honnef.co/go/tools v0.0.1-2020.1.4 // indirect
 )

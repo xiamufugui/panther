@@ -26,6 +26,8 @@ import "time"
 type LogTypesAPI interface {
 	ListAvailableLogTypes() (ListAvailableLogTypesResponse, error)
 
+	ListDeletedCustomLogs() (ListDeletedCustomLogsResponse, error)
+
 	GetCustomLog(input GetCustomLogInput) (GetCustomLogResponse, error)
 
 	PutCustomLog(input PutCustomLogInput) (PutCustomLogResponse, error)
@@ -40,6 +42,7 @@ type LogTypesAPI interface {
 // LogTypesAPIPayload is the payload for calls to LogTypesAPI endpoints.
 type LogTypesAPIPayload struct {
 	ListAvailableLogTypes *struct{}
+	ListDeletedCustomLogs *struct{}
 	GetCustomLog          *GetCustomLogInput
 	PutCustomLog          *PutCustomLogInput
 	DelCustomLog          *DelCustomLogInput
@@ -55,7 +58,7 @@ type DelCustomLogResponse struct {
 	Error struct {
 		Code    string `json:"code" validate:"required"`
 		Message string `json:"message" validate:"required"`
-	} `json:"error,omitempty" validate:"required_without=Result" description:"The delete record"`
+	} `json:"error,omitempty" description:"The delete record"`
 }
 
 type GetCustomLogInput struct {
@@ -69,13 +72,13 @@ type GetCustomLogResponse struct {
 		Revision     int64     `json:"revision" validate:"required,min=1" description:"Log record revision"`
 		UpdatedAt    time.Time `json:"updatedAt" description:"Last update timestamp of the record"`
 		Description  string    `json:"description" description:"Log type description"`
-		ReferenceURL string    `json:"referenceURL" description:"A URL with reference docs for the logtype"`
+		ReferenceURL string    `json:"referenceURL" description:"A URL with reference docs for the log type"`
 		LogSpec      string    `json:"logSpec" validate:"required" description:"The log spec in YAML or JSON format"`
-	} `json:"record,omitempty" validate:"required_without=Error" description:"The custom log record"`
+	} `json:"record,omitempty" description:"The custom log record (field omitted if an error occurred)"`
 	Error struct {
 		Code    string `json:"code" validate:"required"`
 		Message string `json:"message" validate:"required"`
-	} `json:"error,omitempty" validate:"required_without=Result" description:"An error that occurred"`
+	} `json:"error,omitempty" description:"An error that occurred while fetching the record"`
 }
 
 type ListAvailableLogTypesResponse struct {
@@ -88,20 +91,28 @@ type ListCustomLogsResponse struct {
 		Revision     int64     `json:"revision" validate:"required,min=1" description:"Log record revision"`
 		UpdatedAt    time.Time `json:"updatedAt" description:"Last update timestamp of the record"`
 		Description  string    `json:"description" description:"Log type description"`
-		ReferenceURL string    `json:"referenceURL" description:"A URL with reference docs for the logtype"`
+		ReferenceURL string    `json:"referenceURL" description:"A URL with reference docs for the log type"`
 		LogSpec      string    `json:"logSpec" validate:"required" description:"The log spec in YAML or JSON format"`
-	} `json:"customLogs" validate:"required,min=0" description:"Custom log records stored"`
+	} `json:"customLogs" description:"Custom log records stored"`
 	Error struct {
 		Code    string `json:"code" validate:"required"`
 		Message string `json:"message" validate:"required"`
-	} `json:"error,omitempty" validate:"required_without=Result" description:"An error that occurred during the operation"`
+	} `json:"error,omitempty" description:"An error that occurred during the operation"`
+}
+
+type ListDeletedCustomLogsResponse struct {
+	LogTypes []string `json:"logTypes,omitempty" description:"A list of ids of deleted log types (omitted if an error occurred)"`
+	Error    struct {
+		Code    string `json:"code" validate:"required"`
+		Message string `json:"message" validate:"required"`
+	} `json:"error,omitempty" description:"An error that occurred while fetching the list"`
 }
 
 type PutCustomLogInput struct {
 	LogType      string `json:"logType" validate:"required,startswith=Custom." description:"The log type id"`
 	Revision     int64  `json:"revision,omitempty" validate:"omitempty,min=1" description:"Custom log record revision to update (if omitted a new record will be created)"`
 	Description  string `json:"description" description:"Log type description"`
-	ReferenceURL string `json:"referenceURL" description:"A URL with reference docs for the logtype"`
+	ReferenceURL string `json:"referenceURL" description:"A URL with reference docs for the log type"`
 	LogSpec      string `json:"logSpec" validate:"required" description:"The log spec in YAML or JSON format"`
 }
 
@@ -111,11 +122,11 @@ type PutCustomLogResponse struct {
 		Revision     int64     `json:"revision" validate:"required,min=1" description:"Log record revision"`
 		UpdatedAt    time.Time `json:"updatedAt" description:"Last update timestamp of the record"`
 		Description  string    `json:"description" description:"Log type description"`
-		ReferenceURL string    `json:"referenceURL" description:"A URL with reference docs for the logtype"`
+		ReferenceURL string    `json:"referenceURL" description:"A URL with reference docs for the log type"`
 		LogSpec      string    `json:"logSpec" validate:"required" description:"The log spec in YAML or JSON format"`
-	} `json:"record,omitempty" validate:"required_without=Error" description:"The modified record"`
+	} `json:"record,omitempty" description:"The modified record (field is omitted if an error occurred)"`
 	Error struct {
 		Code    string `json:"code" validate:"required"`
 		Message string `json:"message" validate:"required"`
-	} `json:"error,omitempty" validate:"required_without=Result" description:"An error that occurred during the operation"`
+	} `json:"error,omitempty" description:"An error that occurred during the operation"`
 }

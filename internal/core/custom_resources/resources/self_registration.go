@@ -40,11 +40,15 @@ const (
 )
 
 type SelfRegistrationProperties struct {
-	AccountID          string `validate:"required,len=12"`
-	AuditLogsBucket    string `validate:"required"`
-	EnableCloudTrail   bool   `json:",string"`
-	EnableGuardDuty    bool   `json:",string"`
-	EnableS3AccessLogs bool   `json:",string"`
+	AccountID               string   `validate:"required,len=12"`
+	AuditLogsBucket         string   `validate:"required"`
+	EnableCloudTrail        bool     `json:",string"`
+	EnableGuardDuty         bool     `json:",string"`
+	EnableS3AccessLogs      bool     `json:",string"`
+	Enabled                 *bool    `json:",string"`
+	RegionIgnoreList        []string `json:","`
+	ResourceTypeIgnoreList  []string `json:","`
+	ResourceRegexIgnoreList []string `json:","`
 }
 
 func customSelfRegistration(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
@@ -76,30 +80,43 @@ func registerPantherAccount(props SelfRegistrationProperties) error {
 	}
 
 	if cloudSecSource == nil {
-		if err := putCloudSecurityIntegration(props.AccountID); err != nil {
+		if err := putCloudSecurityIntegration(props); err != nil {
 			return err
 		}
 	}
 
 	// collect the configured log types
-	logTypes := []string{"AWS.VPCFlow", "AWS.ALB"}
+	prefixLogTypes := models.S3PrefixLogtypes{
+		{S3Prefix: "vpc-", LogTypes: []string{"AWS.VPCFlow"}},
+		{S3Prefix: fmt.Sprintf("AWSLogs/%s/elasticloadbalancing", props.AccountID), LogTypes: []string{"AWS.ALB"}},
+	}
 	if props.EnableCloudTrail {
-		logTypes = append(logTypes, "AWS.CloudTrail")
+		prefixLogTypes = append(prefixLogTypes, models.S3PrefixLogtypesMapping{
+			S3Prefix: fmt.Sprintf("AWSLogs/%s/CloudTrail", props.AccountID),
+			LogTypes: []string{"AWS.CloudTrail"},
+		})
 	}
 	if props.EnableGuardDuty {
-		logTypes = append(logTypes, "AWS.GuardDuty")
+		prefixLogTypes = append(prefixLogTypes, models.S3PrefixLogtypesMapping{
+			S3Prefix: fmt.Sprintf("AWSLogs/%s/GuardDuty", props.AccountID),
+			LogTypes: []string{"AWS.GuardDuty"},
+		})
 	}
 	if props.EnableS3AccessLogs {
-		logTypes = append(logTypes, "AWS.S3ServerAccess")
+		prefixLogTypes = append(prefixLogTypes, models.S3PrefixLogtypesMapping{
+			// We configure bucket access logs in various places of the CloudFormation templates.
+			// Better leave the S3Prefix here broad enough to avoid bugs if we forget to update it.
+			S3Prefix: "", LogTypes: []string{"AWS.S3ServerAccess"},
+		})
 	}
 
 	if logSource == nil {
-		if err := putLogProcessingIntegration(props.AccountID, props.AuditLogsBucket, logTypes); err != nil {
+		if err := putLogProcessingIntegration(props, prefixLogTypes); err != nil {
 			return err
 		}
-	} else if !stringSliceEqual(logSource.LogTypes, logTypes) {
+	} else if !stringSliceEqual(logSource.RequiredLogTypes(), prefixLogTypes.LogTypes()) {
 		// log types have changed, we need to update the source integration
-		if err := updateLogProcessingIntegration(logSource, logTypes); err != nil {
+		if err := updateLogProcessingIntegration(logSource, prefixLogTypes); err != nil {
 			return err
 		}
 	}
@@ -158,17 +175,21 @@ func stringSliceEqual(left, right []string) bool {
 	return true
 }
 
-func putCloudSecurityIntegration(accountID string) error {
+func putCloudSecurityIntegration(properties SelfRegistrationProperties) error {
 	input := &models.LambdaInput{
 		PutIntegration: &models.PutIntegrationInput{
 			PutIntegrationSettings: models.PutIntegrationSettings{
-				AWSAccountID:       accountID,
-				IntegrationLabel:   cloudSecLabel,
-				IntegrationType:    models.IntegrationTypeAWSScan,
-				ScanIntervalMins:   1440,
-				UserID:             systemUserID,
-				CWEEnabled:         aws.Bool(true),
-				RemediationEnabled: aws.Bool(true),
+				AWSAccountID:            properties.AccountID,
+				IntegrationLabel:        cloudSecLabel,
+				IntegrationType:         models.IntegrationTypeAWSScan,
+				ScanIntervalMins:        1440,
+				UserID:                  systemUserID,
+				CWEEnabled:              aws.Bool(true),
+				RemediationEnabled:      aws.Bool(true),
+				Enabled:                 properties.Enabled,
+				RegionIgnoreList:        properties.RegionIgnoreList,
+				ResourceTypeIgnoreList:  properties.ResourceTypeIgnoreList,
+				ResourceRegexIgnoreList: properties.ResourceRegexIgnoreList,
 			},
 		},
 	}
@@ -179,20 +200,20 @@ func putCloudSecurityIntegration(accountID string) error {
 		return fmt.Errorf("error calling source-api to register account for cloud security: %v", err)
 	}
 
-	zap.L().Info("account registered for cloud security", zap.String("accountID", accountID))
+	zap.L().Info("account registered for cloud security", zap.String("accountID", properties.AccountID))
 	return nil
 }
 
-func putLogProcessingIntegration(accountID, auditBucket string, logTypes []string) error {
+func putLogProcessingIntegration(properties SelfRegistrationProperties, prefixLogTypes models.S3PrefixLogtypes) error {
 	input := &models.LambdaInput{
 		PutIntegration: &models.PutIntegrationInput{
 			PutIntegrationSettings: models.PutIntegrationSettings{
-				AWSAccountID:     accountID,
+				AWSAccountID:     properties.AccountID,
 				IntegrationLabel: genLogProcessingLabel(),
 				IntegrationType:  models.IntegrationTypeAWS3,
 				UserID:           systemUserID,
-				S3Bucket:         auditBucket,
-				LogTypes:         logTypes,
+				S3Bucket:         properties.AuditLogsBucket,
+				S3PrefixLogTypes: prefixLogTypes,
 			},
 		},
 	}
@@ -204,18 +225,18 @@ func putLogProcessingIntegration(accountID, auditBucket string, logTypes []strin
 	}
 
 	zap.L().Info("account registered for log processing",
-		zap.String("accountID", accountID), zap.String("bucket", auditBucket),
-		zap.Strings("logTypes", logTypes))
+		zap.String("accountID", properties.AccountID), zap.String("bucket", properties.AuditLogsBucket),
+		zap.Any("logTypes", prefixLogTypes))
 	return nil
 }
 
-func updateLogProcessingIntegration(source *models.SourceIntegration, logTypes []string) error {
+func updateLogProcessingIntegration(source *models.SourceIntegration, prefixLogTypes models.S3PrefixLogtypes) error {
 	input := &models.LambdaInput{
 		UpdateIntegrationSettings: &models.UpdateIntegrationSettingsInput{
 			IntegrationID:    source.IntegrationID,
 			IntegrationLabel: source.IntegrationLabel,
 			S3Bucket:         source.S3Bucket,
-			LogTypes:         logTypes,
+			S3PrefixLogTypes: prefixLogTypes,
 		},
 	}
 
@@ -226,7 +247,7 @@ func updateLogProcessingIntegration(source *models.SourceIntegration, logTypes [
 	zap.L().Info("account updated for log processing",
 		zap.String("accountID", source.AWSAccountID),
 		zap.String("bucket", source.S3Bucket),
-		zap.Strings("logTypes", logTypes))
+		zap.Any("logTypes", source.S3PrefixLogTypes))
 	return nil
 }
 

@@ -56,8 +56,6 @@ const (
 	roleSuffixReplace = "Value: '%s' # RoleSuffix"
 	s3BucketFind      = "Value: '' # S3Bucket"
 	s3BucketReplace   = "Value: '%s' # S3Bucket"
-	s3PrefixFind      = "Value: '' # S3Prefix"
-	s3PrefixReplace   = "Value: '%s' # S3Prefix"
 	kmsKeyFind        = "Value: '' # KmsKey"
 	kmsKeyReplace     = "Value: '%s' # KmsKey"
 )
@@ -72,11 +70,11 @@ type templateCacheItem struct {
 }
 
 // GetIntegrationTemplate generates a new satellite account CloudFormation template based on the given parameters.
-func (API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput) (*models.SourceIntegrationTemplate, error) {
+func (api *API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput) (*models.SourceIntegrationTemplate, error) {
 	zap.L().Debug("constructing source template")
 
 	// Get the template
-	template, err := getTemplate(input.IntegrationType)
+	template, err := api.getTemplate(input.IntegrationType)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +86,7 @@ func (API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput) (*m
 	// Cloud Security replacements
 	if input.IntegrationType == models.IntegrationTypeAWSScan {
 		formattedTemplate = strings.Replace(formattedTemplate, regionFind,
-			fmt.Sprintf(regionReplace, *awsSession.Config.Region), 1)
+			fmt.Sprintf(regionReplace, api.Config.Region), 1)
 		formattedTemplate = strings.Replace(formattedTemplate, cweFind,
 			fmt.Sprintf(cweReplace, aws.BoolValue(input.CWEEnabled)), 1)
 		formattedTemplate = strings.Replace(formattedTemplate, remediationFind,
@@ -100,15 +98,6 @@ func (API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput) (*m
 
 		formattedTemplate = strings.Replace(formattedTemplate, s3BucketFind,
 			fmt.Sprintf(s3BucketReplace, input.S3Bucket), 1)
-
-		if len(input.S3Prefix) > 0 {
-			formattedTemplate = strings.Replace(formattedTemplate, s3PrefixFind,
-				fmt.Sprintf(s3PrefixReplace, input.S3Prefix), 1)
-		} else {
-			// If no S3Prefix is specified, add as default '*'
-			formattedTemplate = strings.Replace(formattedTemplate, s3PrefixFind,
-				fmt.Sprintf(s3PrefixReplace, "*"), 1)
-		}
 
 		if len(input.KmsKey) > 0 {
 			formattedTemplate = strings.Replace(formattedTemplate, kmsKeyFind,
@@ -122,7 +111,7 @@ func (API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput) (*m
 	}, nil
 }
 
-func getTemplate(integrationType string) (string, error) {
+func (api *API) getTemplate(integrationType string) (string, error) {
 	// First check the cache
 	if item, ok := templateCache[integrationType]; ok && time.Since(item.Timestamp) < cacheTimeout {
 		zap.L().Debug("using cached s3Object")
@@ -134,12 +123,12 @@ func getTemplate(integrationType string) (string, error) {
 	}
 
 	if integrationType == models.IntegrationTypeAWSScan {
-		templateRequest.Key = aws.String("panther-cloudsec-iam/v" + env.Version + "/template.yml")
+		templateRequest.Key = aws.String("panther-cloudsec-iam/v" + api.Config.Version + "/template.yml")
 	} else {
-		templateRequest.Key = aws.String("panther-log-analysis-iam/v" + env.Version + "/template.yml")
+		templateRequest.Key = aws.String("panther-log-analysis-iam/v" + api.Config.Version + "/template.yml")
 	}
 	zap.L().Debug("requesting template", zap.String("key", *templateRequest.Key), zap.String("bucket", *templateRequest.Bucket))
-	s3Object, err := templateS3Client.GetObject(templateRequest)
+	s3Object, err := api.TemplateS3Client.GetObject(templateRequest)
 	if err != nil {
 		return "", err
 	}

@@ -40,7 +40,8 @@ func ScanARN(w ValueWriter, input string) {
 		return
 	}
 	w.WriteValues(FieldAWSARN, input)
-	w.WriteValues(FieldAWSAccountID, arn.AccountID)
+	ScanAWSAccountID(w, arn.AccountID)
+
 	// instanceId: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-policy-structure.html#EC2_ARN_Format
 	if !strings.HasPrefix(arn.Resource, "instance/") {
 		return

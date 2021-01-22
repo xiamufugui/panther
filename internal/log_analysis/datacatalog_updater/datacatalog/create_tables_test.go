@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/glue"
@@ -50,7 +51,7 @@ func TestSQS_CreateTables(t *testing.T) {
 	event := events.SQSEvent{Records: []events.SQSMessage{msg}}
 
 	// Here comes the mocking
-	mockGlueClient.On("CreateTable", mock.Anything).Return(&glue.CreateTableOutput{}, nil)
+	mockGlueClient.On("CreateTableWithContext", mock.Anything, mock.Anything).Return(&glue.CreateTableOutput{}, nil)
 	// below called once for each database
 	mockGlueClient.On("GetTablesPagesWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Twice()
 	mockAthenaClient := &testutils.AthenaMock{}
@@ -68,7 +69,7 @@ func TestSQS_CreateTables(t *testing.T) {
 	}, nil)
 	mockAthenaClient.On("GetQueryResults", mock.Anything).Return(&athena.GetQueryResultsOutput{}, nil)
 
-	err = handler.HandleSQSEvent(context.Background(), &event)
+	err = handler.HandleSQSEvent(lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{}), &event)
 	require.NoError(t, err)
 	mockGlueClient.AssertExpectations(t)
 	mockAthenaClient.AssertExpectations(t)
@@ -112,7 +113,7 @@ func TestSQS_Sync(t *testing.T) {
 	// Sync databases
 	mockSqsClient.On("SendMessageWithContext", mock.Anything, mock.Anything).Return(&sqs.SendMessageOutput{}, nil).Once()
 
-	err = handler.HandleSQSEvent(context.Background(), &event)
+	err = handler.HandleSQSEvent(lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{}), &event)
 	require.NoError(t, err)
 	mockGlueClient.AssertExpectations(t)
 	mockAthenaClient.AssertExpectations(t)

@@ -25,14 +25,14 @@ import {
   DropdownMenu,
   IconButton,
 } from 'pouncejs';
-import { PolicySummary } from 'Generated/schema';
+import { Policy } from 'Generated/schema';
 import urls from 'Source/urls';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
 import { Link as RRLink } from 'react-router-dom';
 
 interface ListPoliciesTableRowOptionsProps {
-  policy: PolicySummary;
+  policy: Policy;
 }
 
 const ListPoliciesTableRowOptions: React.FC<ListPoliciesTableRowOptionsProps> = ({ policy }) => {
@@ -44,6 +44,7 @@ const ListPoliciesTableRowOptions: React.FC<ListPoliciesTableRowOptionsProps> = 
         as={IconButton}
         icon="more"
         variant="ghost"
+        variantBorderStyle="circle"
         size="medium"
         aria-label="Policy Options"
       />

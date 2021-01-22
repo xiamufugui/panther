@@ -22,9 +22,11 @@ import {
   Destination,
   GlobalPythonModule,
   LogIntegration,
-  PolicyDetails,
+  Policy,
   ResourceDetails,
-  RuleDetails,
+  Rule,
+  CustomLogRecord,
+  DataModel,
 } from 'Generated/schema';
 
 // Typical URL encoding, allowing colons (:) to be present in the URL. Colons are safe.
@@ -32,14 +34,18 @@ import {
 const urlEncode = (str: string) => encodeURIComponent(str).replace(/%3A/g, unescape);
 
 const urls = {
+  detections: {
+    home: () => '/detections/',
+    create: () => `${urls.detections.home()}new/`,
+  },
   compliance: {
     home: () => '/cloud-security/',
     overview: () => `${urls.compliance.home()}overview/`,
     policies: {
       list: () => `${urls.compliance.home()}policies/`,
-      create: () => `${urls.compliance.policies.list()}new/`,
-      details: (id: PolicyDetails['id']) => `${urls.compliance.policies.list()}${urlEncode(id)}/`,
-      edit: (id: PolicyDetails['id']) => `${urls.compliance.policies.details(id)}edit/`,
+      create: () => `${urls.detections.create()}?type=policy`,
+      details: (id: Policy['id']) => `${urls.compliance.policies.list()}${urlEncode(id)}/`,
+      edit: (id: Policy['id']) => `${urls.compliance.policies.details(id)}edit/`,
     },
     resources: {
       list: () => `${urls.compliance.home()}resources/`,
@@ -56,11 +62,17 @@ const urls = {
   logAnalysis: {
     home: () => '/log-analysis/',
     overview: () => `${urls.logAnalysis.home()}overview/`,
+    dataModels: {
+      list: () => `${urls.logAnalysis.home()}data-models/`,
+      create: () => `${urls.logAnalysis.dataModels.list()}new/`,
+      details: (id: DataModel['id']) => `${urls.logAnalysis.dataModels.list()}${urlEncode(id)}/`,
+      edit: (id: DataModel['id']) => `${urls.logAnalysis.dataModels.details(id)}edit/`,
+    },
     rules: {
       list: () => `${urls.logAnalysis.home()}rules/`,
-      create: () => `${urls.logAnalysis.rules.list()}new/`,
-      details: (id: RuleDetails['id']) => `${urls.logAnalysis.rules.list()}${urlEncode(id)}/`,
-      edit: (id: RuleDetails['id']) => `${urls.logAnalysis.rules.details(id)}edit/`,
+      create: () => `${urls.detections.create()}?type=rule`,
+      details: (id: Rule['id']) => `${urls.logAnalysis.rules.list()}${urlEncode(id)}/`,
+      edit: (id: Rule['id']) => `${urls.logAnalysis.rules.details(id)}edit/`,
     },
     alerts: {
       list: () => `${urls.logAnalysis.home()}alerts/`,
@@ -71,6 +83,14 @@ const urls = {
       create: (type?: string) => `${urls.logAnalysis.sources.list()}new/${type || ''}`,
       edit: (id: LogIntegration['integrationId'], type: string) =>
         `${urls.logAnalysis.sources.list()}${type}/${id}/edit/`,
+    },
+    customLogs: {
+      list: () => `${urls.logAnalysis.home()}custom-logs/`,
+      details: (logType: CustomLogRecord['logType']) =>
+        `${urls.logAnalysis.customLogs.list()}${urlEncode(logType)}/`,
+      edit: (logType: CustomLogRecord['logType']) =>
+        `${urls.logAnalysis.customLogs.details(logType)}/edit/`,
+      create: () => `${urls.logAnalysis.customLogs.list()}new/`,
     },
   },
   settings: {

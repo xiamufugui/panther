@@ -83,7 +83,7 @@ describe('EditS3LogSource', () => {
       mockUpdateS3LogSource({
         variables: {
           input: buildUpdateS3LogIntegrationInput({
-            integrationId: logSource.integrationId,
+            integrationId: updatedLogSource.integrationId,
             integrationLabel: updatedLogSource.integrationLabel,
             s3Bucket: logSource.s3Bucket,
             s3PrefixLogTypes: logSource.s3PrefixLogTypes,
