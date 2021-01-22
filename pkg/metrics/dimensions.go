@@ -44,6 +44,7 @@ const (
 	IDDimension = "ID"
 )
 
+// Returns the correct Status dimension from the provided error
 func StatusFromErr(err error) string {
 	if err == nil {
 		return StatusOk

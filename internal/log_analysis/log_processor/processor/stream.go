@@ -141,11 +141,10 @@ func pollEvents(
 					// The overall behavior of the system does not change since reading was triggered
 					// when we were detecting MIME types by using `Peek()`.
 					err = kickOffReader(s)
-					tsa := common.GetObject.With(
-						metrics.StatusDimension, metrics.StatusFromErr(err),
+					common.GetObject.With(
 						metrics.IDDimension, s.Source.IntegrationID,
-					)
-					tsa.Add(1)
+						metrics.StatusDimension, metrics.StatusFromErr(err),
+					).Add(1)
 					if err != nil {
 						zap.L().Warn("Skipping event due to error", zap.Error(err))
 						continue

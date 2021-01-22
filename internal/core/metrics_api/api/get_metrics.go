@@ -50,7 +50,7 @@ var (
 
 // GetMetrics routes the requests for various metric data to the correct handlers
 func (API) GetMetrics(input *models.GetMetricsInput) (*models.GetMetricsOutput, error) {
-	// Round the timestamps to align with CloudWatch's rounding
+	// Round the timestamps to align with CWEmbeddedMetricsManager's rounding
 	var minInterval int64
 	input.FromDate, input.ToDate, minInterval = roundInterval(input.FromDate, input.ToDate)
 	if minInterval > input.IntervalMinutes {
@@ -86,10 +86,10 @@ func (API) GetMetrics(input *models.GetMetricsInput) (*models.GetMetricsOutput, 
 // the GetMetricsInput how many values should be present, then fills in any missing values with 0
 // values. This function should be called for ALL time series metrics.
 //
-// This is necessary because CloudWatch will simply omit any value for intervals where no metrics
+// This is necessary because CWEmbeddedMetricsManager will simply omit any value for intervals where no metrics
 // were generated, but most other services which will be consuming these metrics interpret a missing
 // data point as missing, not a zero value. So for a metric that was queried across three time
-// intervals t1, t2, and  t3 but for which there was no activity in  t2, CloudWatch will return
+// intervals t1, t2, and  t3 but for which there was no activity in  t2, CWEmbeddedMetricsManager will return
 // [t1, t3], [v1, v3]. This will be graphed as a straight line from v1 to v3, when in reality it
 // should go from v1 to 0 then back up to v3.
 func normalizeTimeStamps(input *models.GetMetricsInput, data []*cloudwatch.MetricDataResult) ([]models.TimeSeriesValues, []*time.Time) {
@@ -125,9 +125,9 @@ func normalizeTimeStamps(input *models.GetMetricsInput, data []*cloudwatch.Metri
 		// activity, so we fill in a zero value.
 		//
 		// times is calculated based the IntervalMinutes and FromDate parameter set in the
-		// request. These same parameters are sent to CloudWatch, which uses them to calculate the
+		// request. These same parameters are sent to CWEmbeddedMetricsManager, which uses them to calculate the
 		// timestamps for the values. So the times that we create should match exactly the times
-		// that CloudWatch returns, except for cases where CloudWatch omits a timestamp for
+		// that CWEmbeddedMetricsManager returns, except for cases where CWEmbeddedMetricsManager omits a timestamp for
 		// having no values in the time period. For those cases, we insert a 0.
 		fullValues := make([]*float64, len(times))
 		for j, k := 0, 0; j < len(times); j++ {
@@ -148,7 +148,7 @@ func normalizeTimeStamps(input *models.GetMetricsInput, data []*cloudwatch.Metri
 }
 
 // roundInterval determines the correct starting time and minimum interval for a metric
-// based on the following rules set by CloudWatch:
+// based on the following rules set by CWEmbeddedMetricsManager:
 //
 // Start time less than 15 days ago - Round down to the nearest whole minute.
 // Data points with a period of 60 seconds (1 minute) are available for 15 days.

@@ -27,7 +27,7 @@ import (
 
 func TestNewCounter(t *testing.T) {
 	buf := bytes.NewBuffer([]byte{})
-	cm := NewCWMetrics(buf)
+	cm := NewCWEmbeddedMetrics(buf)
 	// Stubbing the time function
 	cm.timeFunc = func() int64 {
 		return 1000

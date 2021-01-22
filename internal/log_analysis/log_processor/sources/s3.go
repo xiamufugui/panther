@@ -136,7 +136,7 @@ func buildStream(ctx context.Context, s3Object *S3ObjectInfo) (*common.DataStrea
 		return nil, err
 	}
 	if src == nil {
-		zap.L().Debug("no source configured for S3 object",
+		zap.L().Warn("no source configured for S3 object",
 			zap.String("bucket", bucket),
 			zap.String("key", key))
 		return nil, nil

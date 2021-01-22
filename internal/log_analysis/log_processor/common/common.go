@@ -103,7 +103,7 @@ const (
 )
 
 func setupMetrics() {
-	CWMetrics = metrics.NewCWMetrics(os.Stdout)
+	CWMetrics = metrics.NewCWEmbeddedMetrics(os.Stdout)
 	GetObject = CWMetrics.NewCounter(MetricLogProcessorGetObject).
 		With(metrics.SubsystemDimension, metrics.SubsystemLogProcessing)
 }

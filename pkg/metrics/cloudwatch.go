@@ -27,28 +27,36 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
+// Metrics manager
 type Manager interface {
+	// Runs the metric manager
+	// It will sync the metrics every `interval` duration
 	Run(ctx context.Context, interval time.Duration)
+	// Returns a new Counter
 	NewCounter(name string) Counter
+	// Sync the metrics to the underlying system
 	Sync() error
 }
 
-type CloudWatch struct {
-	mtx      sync.Mutex
+type CWEmbeddedMetricsManager struct {
+	// mutex used for syncing
+	mtx sync.Mutex
+	// Space that keeps track of the counters
 	counters *Space
-	writer   io.Writer
-	stream   *jsoniter.Stream
+	// The writer will the metrics will be written to
+	writer io.Writer
+	stream *jsoniter.Stream
 	// Function that return the current time in milliseconds
 	// Can be overwritten in unit tests
 	timeFunc func() int64
 }
 
-// New returns a CloudWatch object that may be used to create metrics.
-// Namespace is applied to all created metrics and maps to the CloudWatch namespace.
+// New returns a CWEmbeddedMetricsManager object that may be used to create metrics.
+// Namespace is applied to all created metrics and maps to the CWEmbeddedMetricsManager namespace.
 // Callers must ensure that regular calls to Send are performed, either
 // manually or with one of the helper methods.
-func NewCWMetrics(writer io.Writer) *CloudWatch {
-	cwManager := &CloudWatch{
+func NewCWEmbeddedMetrics(writer io.Writer) *CWEmbeddedMetricsManager {
+	cwManager := &CWEmbeddedMetricsManager{
 		writer:   writer,
 		counters: NewSpace(),
 		stream:   jsoniter.NewStream(jsoniter.ConfigDefault, nil, 8192),
@@ -62,7 +70,7 @@ func NewCWMetrics(writer io.Writer) *CloudWatch {
 // NewCounter returns a counter. Observations are aggregated and emitted once
 // per write invocation.
 // Panics if the client has been closed
-func (c *CloudWatch) NewCounter(name string) Counter {
+func (c *CWEmbeddedMetricsManager) NewCounter(name string) Counter {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 	return &DimensionsCounter{
@@ -71,7 +79,7 @@ func (c *CloudWatch) NewCounter(name string) Counter {
 	}
 }
 
-func (c *CloudWatch) Run(ctx context.Context, interval time.Duration) {
+func (c *CWEmbeddedMetricsManager) Run(ctx context.Context, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	for {
 		select {
@@ -87,14 +95,17 @@ func (c *CloudWatch) Run(ctx context.Context, interval time.Duration) {
 	}
 }
 
-func (c *CloudWatch) Sync() error {
+// Syncs metrics to the underlying system
+// It will writer the metrics in the Embedded Metric Format
+// https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format_Specification.html
+func (c *CWEmbeddedMetricsManager) Sync() error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	var mets []Metric
-	var dims [][]string
+	var metrics []Metric
+	var dimensions [][]string
 
-	// Clear jsoniter buffer
+	// Clear jsoniter stream buffer
 	c.stream.Reset(nil)
 	c.stream.WriteObjectStart()
 
@@ -111,28 +122,26 @@ func (c *CloudWatch) Sync() error {
 			c.stream.WriteMore()
 		}
 
-		mets = append(mets, Metric{Name: name, Unit: "Count"})
-		dims = append(dims, dimensionNames(dms...))
+		metrics = append(metrics, Metric{Name: name, Unit: "Count"})
+		dimensions = append(dimensions, dimensionNames(dms...))
 
 		return true
 	})
 
 	// If there are no metrics to be reported
 	// Don't log anything
-	if len(mets) == 0 {
+	if len(metrics) == 0 {
 		return nil
 	}
 
-	// Construct the embedded metric metadata object per AWS standards
-	// https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format_Specification.html
 	const namespace = "Panther"
 	embeddedMetric := EmbeddedMetric{
 		Timestamp: c.timeFunc(),
 		CloudWatchMetrics: []MetricDirectiveObject{
 			{
 				Namespace:  namespace,
-				Dimensions: dims,
-				Metrics:    mets,
+				Dimensions: dimensions,
+				Metrics:    metrics,
 			},
 		},
 	}
