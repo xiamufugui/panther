@@ -115,7 +115,7 @@ describe('EditS3LogSource', () => {
     fireEvent.change(nameField, { target: { value: updatedLogSource.integrationLabel } });
 
     // Wait for form validation to kick in and move on to the next screen
-    await waitMs(50);
+    await waitMs(1);
     fireEvent.click(getByText('Continue'));
 
     // Initially we expect a disabled button while the template is being fetched ...
@@ -218,7 +218,7 @@ describe('EditS3LogSource', () => {
     fireEvent.change(nameField, { target: { value: updatedLogSource.integrationLabel } });
 
     // Wait for form validation to kick in and move on to the next screen
-    await waitMs(50);
+    await waitMs(1);
     fireEvent.click(getByText('Continue'));
 
     // Initially we expect a disabled button while the template is being fetched ...

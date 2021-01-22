@@ -214,7 +214,7 @@ describe('CreateS3LogSource', () => {
     fireEvent.change(getAllByLabelText('Log Types')[0], {target: {value: logSource.s3PrefixLogTypes[0].logTypes[1] } }); // prettier-ignore
     fireClickAndMouseEvents(await findByText(logSource.s3PrefixLogTypes[0].logTypes[1]));
     // Wait for form validation to kick in and move on to the next screen
-    await waitMs(50);
+    await waitMs(1);
     fireEvent.click(getByText('Continue'));
 
     // Expect to see two buttons for user to select if wants to let us managed notifications
@@ -398,7 +398,7 @@ describe('CreateS3LogSource', () => {
     fireEvent.click(await findByText(logSource.s3PrefixLogTypes[0].logTypes[0]));
 
     // Wait for form validation to kick in and move on to the next screen
-    await waitMs(50);
+    await waitMs(1);
     fireEvent.click(getByText('Continue'));
 
     // User selects to let Panther try to manage notifications
