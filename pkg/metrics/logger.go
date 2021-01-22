@@ -27,13 +27,13 @@ import (
 
 // Reference: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format_Specification.html
 //
-// The AWS embedded metric format allows us to log to CWEmbeddedMetricsManager directly, while AWS automatically
+// The AWS embedded metric format allows us to log to CloudWatch directly, while AWS automatically
 // generates appropriate metric filters based on the dimension fields that we log.
 
 // EmbeddedMetric is the value mapped to the required top level member of the root node `_aws` in
 // the AWS embedded metric format.
 type EmbeddedMetric struct {
-	// A slice of MetricDirectiveObjects used to instruct CWEmbeddedMetricsManager to extract metrics from the
+	// A slice of MetricDirectiveObjects used to instruct CloudWatch to extract metrics from the
 	// root node of the LogEvent.
 	CloudWatchMetrics []MetricDirectiveObject
 
@@ -47,9 +47,9 @@ type EmbeddedMetric struct {
 const NanosecondsPerMillisecond int64 = 1000000
 
 // MetricDirectiveObject instructs downstream services that the LogEvent contains metrics that
-// will be extracted and published to CWEmbeddedMetricsManager.
+// will be extracted and published to CloudWatch.
 type MetricDirectiveObject struct {
-	// A string representing the CWEmbeddedMetricsManager namespace for the metric.
+	// A string representing the CloudWatch namespace for the metric.
 	Namespace string
 
 	// A slice representing the collection of DimensionSets for the metric
@@ -72,7 +72,7 @@ const (
 // A DimensionSet MUST NOT contain more than 9 dimension keys.
 //
 // The target member defines a dimension that will be published as part of the metric identity.
-// Every DimensionSet used creates a new metric in CWEmbeddedMetricsManager.
+// Every DimensionSet used creates a new metric in CloudWatch.
 type DimensionSet = []string
 
 // Per the AWS specification, a single dimension set can have at most 9 keys.
@@ -145,7 +145,7 @@ func NewLogger(dimensionSets []DimensionSet) (Logger, error) {
 	}, nil
 }
 
-// Log sends a log formatted in the CWEmbeddedMetricsManager embedded metric format
+// Log sends a log formatted in the CloudWatch embedded metric format
 func (l *logger) Log(dimensions []Dimension, values ...Metric) {
 	err := l.logEmbedded(dimensions, values...)
 	if err != nil {
@@ -263,7 +263,7 @@ func NewStaticLogger(dimensionSets []DimensionSet, metrics []Metric) (*StaticLog
 	}, nil
 }
 
-// Log sends a log formatted in the CWEmbeddedMetricsManager embedded metric format
+// Log sends a log formatted in the CloudWatch embedded metric format
 func (l *StaticLogger) Log(metrics []Metric, dimensions ...Dimension) {
 	err := l.staticLogEmbedded(metrics, dimensions...)
 	if err != nil {
