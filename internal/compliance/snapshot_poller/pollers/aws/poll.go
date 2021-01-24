@@ -267,10 +267,14 @@ func multiRegionScan(
 		err = utils.Requeue(pollermodels.ScanMsg{
 			Entries: []*pollermodels.ScanEntry{
 				{
-					AWSAccountID:  scanRequest.AWSAccountID,
-					IntegrationID: scanRequest.IntegrationID,
-					Region:        region,
-					ResourceType:  scanRequest.ResourceType,
+					AWSAccountID:            scanRequest.AWSAccountID,
+					IntegrationID:           scanRequest.IntegrationID,
+					Region:                  region,
+					ResourceType:            scanRequest.ResourceType,
+					Enabled:                 scanRequest.Enabled,
+					RegionIgnoreList:        scanRequest.RegionIgnoreList,
+					ResourceRegexIgnoreList: scanRequest.ResourceRegexIgnoreList,
+					ResourceTypeIgnoreList:  scanRequest.ResourceTypeIgnoreList,
 				},
 			},
 		}, int64(pageRequeueDelayer.Intn(30)+1)) // Delay between 1 & 30 seconds to spread out region scans
