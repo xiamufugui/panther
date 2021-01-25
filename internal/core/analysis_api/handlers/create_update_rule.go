@@ -51,6 +51,13 @@ func writeRule(input *models.CreateRuleInput, create bool) *events.APIGatewayPro
 		input.DedupPeriodMinutes = defaultDedupPeriodMinutes
 	}
 
+
+	for _, logtype := range input.LogTypes {
+		if !logtypeIsValid(logtype) {
+
+		}
+	}
+
 	// Disallow saving if rule is enabled and its tests fail.
 	testsPass, err := enabledRuleTestsPass(input)
 	if err != nil {
