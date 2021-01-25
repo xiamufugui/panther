@@ -782,7 +782,7 @@ input DestinationInput {
   outputConfig: DestinationConfigInput!
   outputType: String!
   defaultForSeverity: [SeverityEnum]!
-  alertTypes: [AlertTypesEnum!]!
+  alertTypes: [AlertTypesEnum]!
 }
 
 input DestinationConfigInput {

@@ -410,7 +410,7 @@ export type DestinationInput = {
   outputConfig: DestinationConfigInput;
   outputType: Scalars['String'];
   defaultForSeverity: Array<Maybe<SeverityEnum>>;
-  alertTypes: Array<AlertTypesEnum>;
+  alertTypes: Array<Maybe<AlertTypesEnum>>;
 };
 
 export enum DestinationTypeEnum {
