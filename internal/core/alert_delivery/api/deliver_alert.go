@@ -241,7 +241,7 @@ func intersection(a []string, b []*outputModels.AlertOutput) []*outputModels.Ale
 	return res
 }
 
-// difference - Finds the difference O(M = N) of outputs: A - B
+// difference - Finds the difference O(M + N) of outputs: A - B
 func difference(a, b []*outputModels.AlertOutput) []*outputModels.AlertOutput {
 	m := make(map[string]struct{})
 
