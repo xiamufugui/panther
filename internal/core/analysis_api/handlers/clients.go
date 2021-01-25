@@ -20,6 +20,7 @@ package handlers
 
 import (
 	"fmt"
+	"context"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -34,11 +35,16 @@ import (
 	"github.com/panther-labs/panther/internal/core/analysis_api/analysis"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/panther-labs/panther/pkg/awsretry"
+
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
-	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 const systemUserID = "00000000-0000-4000-8000-000000000000"
+const maxRetries = 20 // setting Max Retries to a higher number - we'd like to retry VERY hard before failing.
+
 
 var (
 	env envConfig
@@ -51,7 +57,11 @@ var (
 
 	policyEngine analysis.PolicyEngine
 	ruleEngine   analysis.RuleEngine
-	logtypesAPI  logtypesapi.LogTypesAPILambdaClient
+
+	// logtypesAPI  logtypesapi.LogTypesAPILambdaClient
+	curctx context.Context
+	lambdaLogTypesClient *lambda.Lambda
+	logtypesAPI *logtypesapi.LogTypesAPILambdaClient
 )
 
 type envConfig struct {
@@ -71,6 +81,8 @@ type API struct{}
 func Setup() {
 	envconfig.MustProcess("", &env)
 
+	curctx = context.Background()
+
 	awsSession = session.Must(session.NewSession())
 	dynamoClient = dynamodb.New(awsSession)
 	s3Client = s3.New(awsSession)
@@ -81,62 +93,27 @@ func Setup() {
 	policyEngine = analysis.NewPolicyEngine(lambdaClient, env.PolicyEngine)
 	ruleEngine = analysis.NewRuleEngine(lambdaClient, env.RulesEngine)
 
-	logtypesAPI = logtypesapi.LogTypesAPILambdaClient{
+
+	clientsSession := awsSession.Copy(
+		request.WithRetryer(
+			aws.NewConfig().WithMaxRetries(maxRetries),
+			awsretry.NewConnectionErrRetryer(maxRetries),
+		),
+	)
+	lambdaLogTypesClient = lambda.New(clientsSession)
+	logtypesAPI = &logtypesapi.LogTypesAPILambdaClient{
 		LambdaName: logtypesapi.LambdaName,
-		LambdaAPI:  lambdaClient,
+		LambdaAPI:  lambdaLogTypesClient,
 	}
 
-	logtypes := getLogTypes()
-	fmt.Printf("\n logtypes: %v\n", logtypes)
+	// Temporary get log types for testing
+	logtypes, err := logtypesAPI.ListAvailableLogTypes(curctx)
+	if err != nil {
+		fmt.Printf(" Got error: %v\n", err)
+	}
+	if logtypes == nil {
+		fmt.Printf(" logtypes is nil...")
+	} else {
+		fmt.Printf(" LOGTYPES: %v\n", logtypes)
+	}
 }
-
-func getLogTypes() []string {
-	var listLogTypesOutput logtypesapi.AvailableLogTypes
-
-	payload := logtypesapi.LogTypesAPIPayload{
-		ListAvailableLogTypes: &struct{}{},
-	}
-	if err := genericapi.Invoke(logtypesAPI, "panther-logtypes-api", &payload, &listLogTypesOutput); err != nil {
-		fmt.Printf("Error: %v\n", err)
-		return nil
-	}
-	return listLogTypesOutput.LogTypes
-}
-
-
-
-	/*
-	// "github.com/panther-labs/panther/internal/core/logtypesapi"
-	"github.com/panther-labs/panther/pkg/genericapi"
-
-	func getLogTypes() []string {
-		var listLogTypesOutput logtypesapi.AvailableLogTypes
-		payload := logtypesapi.LogTypesAPIPayload{
-		  ListAvailableLogTypes: &struct{}{},
-		}
-		if err := genericapi.Invoke(lambdaLogTypesClient, "panther-logtypes-api", &payload, &listLogTypesOutput); err != nil {
-		  fmt.Printf("Error: %v\n", err)
-		  return nil
-		}
-		return listLogTypesOutput.LogTypes
-	}
-	fmt.Printf("\n\n Create Rule...")
-	validLogs := getLogTypes()
-	for _, intendedLogType := range input.LogTypes {
-		found := false
-		for _, existingLog := range validLogs {
-			if intendedLogType == existingLog {
-				found = true
-				break
-			}
-		}
-		if !found {
-			responseBody := fmt.Sprintf("Create rule definition contains a logtype that is invalid. logtype: %s", intendedLogType)
-			return &events.APIGatewayProxyResponse{
-				Body: responseBody,
-				StatusCode: http.StatusBadRequest,
-			}
-		}
-	}
-
-	*/
