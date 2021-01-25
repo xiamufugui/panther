@@ -185,7 +185,7 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	// Check if integration is disabled
 	if scanRequest.Enabled != nil && !*scanRequest.Enabled {
 		zap.L().Info("source integration disabled",
-			zap.String("integration id", *scanRequest.IntegrationID), zap.Time("timestamp", time.Now()))
+			zap.String("integration id", *scanRequest.IntegrationID))
 		return nil, nil
 	}
 
