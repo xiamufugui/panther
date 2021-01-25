@@ -63,6 +63,8 @@ var (
 	lambdaLogTypesClient *lambda.Lambda
 	logtypesAPI *logtypesapi.LogTypesAPILambdaClient
 
+	logtypeSetMap map[string]interface
+
 	storedlogtypes []string
 )
 
