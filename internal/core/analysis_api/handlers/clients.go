@@ -19,6 +19,8 @@ package handlers
  */
 
 import (
+	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
@@ -33,6 +35,7 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 const systemUserID = "00000000-0000-4000-8000-000000000000"
@@ -78,11 +81,62 @@ func Setup() {
 	policyEngine = analysis.NewPolicyEngine(lambdaClient, env.PolicyEngine)
 	ruleEngine = analysis.NewRuleEngine(lambdaClient, env.RulesEngine)
 
-	logtypesAPI = &logtypesapi.LogTypesAPILambdaClient{
+	logtypesAPI = logtypesapi.LogTypesAPILambdaClient{
 		LambdaName: logtypesapi.LambdaName,
 		LambdaAPI:  lambdaClient,
 	}
 
-	logtypesAPI
-
+	logtypes := getLogTypes()
+	fmt.Printf("\n logtypes: %v\n", logtypes)
 }
+
+func getLogTypes() []string {
+	var listLogTypesOutput logtypesapi.AvailableLogTypes
+
+	payload := logtypesapi.LogTypesAPIPayload{
+		ListAvailableLogTypes: &struct{}{},
+	}
+	if err := genericapi.Invoke(logtypesAPI, "panther-logtypes-api", &payload, &listLogTypesOutput); err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return nil
+	}
+	return listLogTypesOutput.LogTypes
+}
+
+
+
+	/*
+	// "github.com/panther-labs/panther/internal/core/logtypesapi"
+	"github.com/panther-labs/panther/pkg/genericapi"
+
+	func getLogTypes() []string {
+		var listLogTypesOutput logtypesapi.AvailableLogTypes
+		payload := logtypesapi.LogTypesAPIPayload{
+		  ListAvailableLogTypes: &struct{}{},
+		}
+		if err := genericapi.Invoke(lambdaLogTypesClient, "panther-logtypes-api", &payload, &listLogTypesOutput); err != nil {
+		  fmt.Printf("Error: %v\n", err)
+		  return nil
+		}
+		return listLogTypesOutput.LogTypes
+	}
+	fmt.Printf("\n\n Create Rule...")
+	validLogs := getLogTypes()
+	for _, intendedLogType := range input.LogTypes {
+		found := false
+		for _, existingLog := range validLogs {
+			if intendedLogType == existingLog {
+				found = true
+				break
+			}
+		}
+		if !found {
+			responseBody := fmt.Sprintf("Create rule definition contains a logtype that is invalid. logtype: %s", intendedLogType)
+			return &events.APIGatewayProxyResponse{
+				Body: responseBody,
+				StatusCode: http.StatusBadRequest,
+			}
+		}
+	}
+
+	*/
