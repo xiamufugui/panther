@@ -119,12 +119,26 @@ func Setup() {
 	}
 }
 
+func refreshLogTypes() {
+	// Temporary get log types for testing
+	logtypes, err := logtypesAPI.ListAvailableLogTypes(curctx)
+	if err != nil {
+		fmt.Printf(" Got error: %v\n", err)
+	} else {
+		fmt.Printf(" LOGTYPES: %v\n", logtypes)
+		storedlogtypes = logtypes.LogTypes
+		fmt.Printf("storedlogtypes: %v\n", storedlogtypes)
+	}
+}
 
 func logtypeIsValid(logtype string) bool {
 	for _, i := range storedlogtypes {
 		if i == logtype {
+			fmt.Printf("VALID: %v\n", logtype)
 			return true
 		}
+		fmt.Printf("CHECKED: %v\n", i)
 	}
+	fmt.Printf("INVALID: %v\n", logtype)
 	return false;
 }

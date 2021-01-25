@@ -19,6 +19,7 @@ package handlers
  */
 
 import (
+	"fmt"
 	"errors"
 	"net/http"
 
@@ -46,6 +47,18 @@ func (API) UpdateDataModel(input *models.UpdateDataModelInput) *events.APIGatewa
 }
 
 func writeDataModel(input *models.UpdateDataModelInput, create bool) *events.APIGatewayProxyResponse {
+
+	refreshLogTypes()
+
+	for _, logtype := range input.LogTypes {
+		if !logtypeIsValid(logtype) {
+			return &events.APIGatewayProxyResponse{
+				Body:       fmt.Sprintf("DataModel contains invalid log type: %s", logtype),
+				StatusCode: http.StatusBadRequest,
+			}
+		}
+	}
+
 	if err := validateUpdateDataModel(input); err != nil {
 		return &events.APIGatewayProxyResponse{
 			Body:       err.Error(),

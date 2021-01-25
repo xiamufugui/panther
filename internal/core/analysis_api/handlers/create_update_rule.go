@@ -19,6 +19,7 @@ package handlers
  */
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -51,10 +52,12 @@ func writeRule(input *models.CreateRuleInput, create bool) *events.APIGatewayPro
 		input.DedupPeriodMinutes = defaultDedupPeriodMinutes
 	}
 
-
 	for _, logtype := range input.LogTypes {
 		if !logtypeIsValid(logtype) {
-
+			return &events.APIGatewayProxyResponse{
+				Body:       fmt.Sprintf("Rule contains invalid log type: %s", logtype),
+				StatusCode: http.StatusBadRequest,
+			}
 		}
 	}
 
