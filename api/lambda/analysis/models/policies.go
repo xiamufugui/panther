@@ -26,7 +26,13 @@ import (
 
 type CreatePolicyInput = UpdatePolicyInput
 
-type DeletePoliciesInput = DeleteEntriesInput
+type DeletePoliciesInput struct {
+	Entries []DeleteEntry `json:"entries" validate:"min=1,max=1000,dive"`
+}
+
+type DeleteEntry struct {
+	ID string `json:"id" validate:"required,max=1000"`
+}
 
 type GetPolicyInput struct {
 	ID        string `json:"id" validate:"required,max=1000"`

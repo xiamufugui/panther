@@ -22,8 +22,6 @@ import (
 	"time"
 )
 
-type DeletePacksInput = DeleteEntriesInput
-
 type GetPackInput struct {
 	ID string `json:"id" validate:"required,max=1000,excludesall='<>&\""`
 }

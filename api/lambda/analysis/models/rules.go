@@ -26,7 +26,7 @@ import (
 
 type CreateRuleInput = UpdateRuleInput
 
-type DeleteRulesInput = DeleteEntriesInput
+type DeleteRulesInput = DeletePoliciesInput
 
 type GetRuleInput struct {
 	ID        string `json:"id" validate:"required,max=1000"`

@@ -286,6 +286,15 @@ func tableKey(policyID string) map[string]*dynamodb.AttributeValue {
 
 // Batch delete multiple entries from the Dynamo table.
 func dynamoBatchDelete(input *models.DeletePoliciesInput) error {
+	return dynamoBatchDeleteFromTable(env.Table, input)
+}
+
+// Batch delete multiple entries from the Dynamo table.
+func dynamoBatchDeletePack(input *models.DeletePacksInput) error {
+	return dynamoBatchDeleteFromTable(env.PackTable, input)
+}
+
+func dynamoBatchDeleteFromTable(table string, input *models.DeleteEntriesInput) error {
 	deleteRequests := make([]*dynamodb.WriteRequest, len(input.Entries))
 	for i, entry := range input.Entries {
 		deleteRequests[i] = &dynamodb.WriteRequest{
@@ -294,7 +303,7 @@ func dynamoBatchDelete(input *models.DeletePoliciesInput) error {
 	}
 
 	batchInput := &dynamodb.BatchWriteItemInput{
-		RequestItems: map[string][]*dynamodb.WriteRequest{env.Table: deleteRequests},
+		RequestItems: map[string][]*dynamodb.WriteRequest{table: deleteRequests},
 	}
 	if err := dynamodbbatch.BatchWriteItem(dynamoClient, maxDynamoBackoff, batchInput); err != nil {
 		zap.L().Error("dynamodbbatch.BatchWriteItem (delete) failed", zap.Error(err))
