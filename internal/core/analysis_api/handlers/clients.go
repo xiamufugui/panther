@@ -31,6 +31,8 @@ import (
 
 	"github.com/panther-labs/panther/internal/core/analysis_api/analysis"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
+
+	"github.com/panther-labs/panther/internal/core/logtypesapi"
 )
 
 const systemUserID = "00000000-0000-4000-8000-000000000000"
@@ -46,6 +48,7 @@ var (
 
 	policyEngine analysis.PolicyEngine
 	ruleEngine   analysis.RuleEngine
+	logtypesAPI  logtypesapi.LogTypesAPILambdaClient
 )
 
 type envConfig struct {
@@ -74,4 +77,12 @@ func Setup() {
 
 	policyEngine = analysis.NewPolicyEngine(lambdaClient, env.PolicyEngine)
 	ruleEngine = analysis.NewRuleEngine(lambdaClient, env.RulesEngine)
+
+	logtypesAPI = &logtypesapi.LogTypesAPILambdaClient{
+		LambdaName: logtypesapi.LambdaName,
+		LambdaAPI:  lambdaClient,
+	}
+
+	logtypesAPI
+
 }
