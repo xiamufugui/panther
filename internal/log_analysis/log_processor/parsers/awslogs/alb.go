@@ -19,6 +19,7 @@ package awslogs
  */
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -119,10 +120,9 @@ func (p *ALBParser) Parse(log string) ([]*parsers.PantherLog, error) {
 		targetIPPort = []string{record[4], "-"}
 	}
 
-	requestItems := strings.Split(record[12], " ")
-
-	if len(requestItems) != 3 {
-		return nil, errors.New("invalid record")
+	requestParams, err := p.extractRequestParams(record)
+	if err != nil {
+		return nil, err
 	}
 
 	event := &ALB{
@@ -140,9 +140,9 @@ func (p *ALBParser) Parse(log string) ([]*parsers.PantherLog, error) {
 		TargetStatusCode:       parsers.CsvStringToIntPointer(record[9]),
 		ReceivedBytes:          parsers.CsvStringToIntPointer(record[10]),
 		SentBytes:              parsers.CsvStringToIntPointer(record[11]),
-		RequestHTTPMethod:      parsers.CsvStringToPointer(requestItems[0]),
-		RequestURL:             parsers.CsvStringToPointer(requestItems[1]),
-		RequestHTTPVersion:     parsers.CsvStringToPointer(requestItems[2]),
+		RequestHTTPMethod:      parsers.CsvStringToPointer(requestParams["method"]),
+		RequestURL:             parsers.CsvStringToPointer(requestParams["url"]),
+		RequestHTTPVersion:     parsers.CsvStringToPointer(requestParams["version"]),
 		UserAgent:              parsers.CsvStringToPointer(record[13]),
 		SSLCipher:              parsers.CsvStringToPointer(record[14]),
 		SSLProtocol:            parsers.CsvStringToPointer(record[15]),
@@ -177,4 +177,35 @@ func (event *ALB) updatePantherFields(p *ALBParser) {
 	event.AppendAnyIPAddressPtr(event.TargetIP)
 	event.AppendAnyDomainNamePtrs(event.DomainName)
 	event.AppendAnyAWSARNPtrs(event.ChosenCertARN, event.TargetGroupARN)
+}
+
+func (p *ALBParser) extractRequestParams(record []string) (map[string]string, error) {
+	parts := strings.Split(record[12], " ")
+	if len(parts) < 3 {
+		return nil,
+			fmt.Errorf("expected 3 or more request parameter segments, found: %d", len(parts))
+	}
+
+	requestParams := map[string]string{}
+	// The HTTP method of the request
+	requestParams["method"] = parts[0]
+	// Version is the last element: HTTP/1.1 or HTTP/2.0
+	requestParams["version"] = parts[len(parts)-1]
+
+	if len(parts) == 3 {
+		requestParams["url"] = parts[1]
+		return requestParams, nil
+	}
+
+	// See https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html#classification-reasons
+	classificationReason := record[28]
+	spaceInURIError := classificationReason == "SpaceInUri"
+
+	if !spaceInURIError {
+		return nil, errors.New("invalid record - request parameters could not be parsed")
+	}
+
+	// Reconstruct the initial URL since it contains unescaped space characters
+	requestParams["url"] = strings.Join(parts[1:(len(parts)-1)], " ")
+	return requestParams, nil
 }
