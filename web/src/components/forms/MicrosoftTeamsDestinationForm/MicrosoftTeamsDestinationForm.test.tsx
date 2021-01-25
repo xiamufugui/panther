@@ -116,6 +116,7 @@ describe('MicrosoftTeamsDestinationForm', () => {
       displayName,
       outputConfig: initialValues.outputConfig,
       defaultForSeverity: [severity],
+      alertTypes: [],
     });
   });
 
@@ -141,6 +142,7 @@ describe('MicrosoftTeamsDestinationForm', () => {
       displayName: newDisplayName,
       outputConfig: initialValues.outputConfig,
       defaultForSeverity: initialValues.defaultForSeverity,
+      alertTypes: initialValues.alertTypes,
     });
   });
 });

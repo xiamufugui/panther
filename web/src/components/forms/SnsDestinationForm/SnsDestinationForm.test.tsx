@@ -115,6 +115,7 @@ describe('SnsDestinationForm', () => {
       displayName,
       outputConfig: initialValues.outputConfig,
       defaultForSeverity: [severity],
+      alertTypes: [],
     });
   });
 
@@ -140,6 +141,7 @@ describe('SnsDestinationForm', () => {
       displayName: newDisplayName,
       outputConfig: initialValues.outputConfig,
       defaultForSeverity: initialValues.defaultForSeverity,
+      alertTypes: initialValues.alertTypes,
     });
   });
 });

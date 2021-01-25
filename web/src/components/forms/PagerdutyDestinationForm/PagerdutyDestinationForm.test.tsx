@@ -116,6 +116,7 @@ describe('PagerdutyDestinationForm', () => {
       displayName,
       outputConfig: { pagerDuty: { integrationKey: pagerDutyIntegrationKey } },
       defaultForSeverity: [severity],
+      alertTypes: [],
     });
   });
 
@@ -141,6 +142,7 @@ describe('PagerdutyDestinationForm', () => {
       displayName: newDisplayName,
       outputConfig: initialValues.outputConfig,
       defaultForSeverity: initialValues.defaultForSeverity,
+      alertTypes: initialValues.alertTypes,
     });
   });
 });

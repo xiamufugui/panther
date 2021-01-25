@@ -114,6 +114,7 @@ describe('SqsDestinationForm', () => {
       displayName,
       outputConfig: initialValues.outputConfig,
       defaultForSeverity: [severity],
+      alertTypes: [],
     });
   });
 
@@ -139,6 +140,7 @@ describe('SqsDestinationForm', () => {
       displayName: newDisplayName,
       outputConfig: initialValues.outputConfig,
       defaultForSeverity: initialValues.defaultForSeverity,
+      alertTypes: initialValues.alertTypes,
     });
   });
 });

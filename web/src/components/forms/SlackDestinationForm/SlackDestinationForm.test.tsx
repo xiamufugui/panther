@@ -114,6 +114,7 @@ describe('SlackDestinationForm', () => {
       displayName,
       outputConfig: { slack: { webhookURL: validUrl } },
       defaultForSeverity: [severity],
+      alertTypes: [],
     });
   });
 
@@ -139,6 +140,7 @@ describe('SlackDestinationForm', () => {
       displayName: newDisplayName,
       outputConfig: initialValues.outputConfig,
       defaultForSeverity: initialValues.defaultForSeverity,
+      alertTypes: initialValues.alertTypes,
     });
   });
 });

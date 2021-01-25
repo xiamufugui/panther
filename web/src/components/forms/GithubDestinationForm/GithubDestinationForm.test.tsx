@@ -121,6 +121,7 @@ describe('GithubDestinationForm', () => {
       displayName,
       outputConfig: { github: githubInput },
       defaultForSeverity: [severity],
+      alertTypes: [],
     });
   });
 
@@ -150,6 +151,7 @@ describe('GithubDestinationForm', () => {
       displayName: newDisplayName,
       outputConfig: initialValues.outputConfig,
       defaultForSeverity: initialValues.defaultForSeverity,
+      alertTypes: initialValues.alertTypes,
     });
   });
 });

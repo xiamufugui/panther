@@ -190,6 +190,7 @@ describe('JiraDestinationForm', () => {
       displayName,
       outputConfig: { jira: jiraInput },
       defaultForSeverity: [severity],
+      alertTypes: [],
     });
   });
 
@@ -227,6 +228,7 @@ describe('JiraDestinationForm', () => {
       displayName: newDisplayName,
       outputConfig: initialValues.outputConfig,
       defaultForSeverity: initialValues.defaultForSeverity,
+      alertTypes: initialValues.alertTypes,
     });
   });
 });

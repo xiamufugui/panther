@@ -25,7 +25,7 @@ const emptyInitialValues = {
   outputId: null,
   displayName: '',
   defaultForSeverity: [],
-  alertTypes: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError, AlertTypesEnum.Policy],
+  alertTypes: [],
   outputConfig: {
     asana: {
       personalAccessToken: '',
@@ -139,6 +139,7 @@ describe('AsanaDestinationForm', () => {
       displayName,
       outputConfig: { asana: { personalAccessToken: token, projectGids: gids } as AsanaConfig },
       defaultForSeverity: [severity],
+      alertTypes: [],
     });
   });
 
@@ -164,6 +165,7 @@ describe('AsanaDestinationForm', () => {
       displayName: newDisplayName,
       outputConfig: initialValues.outputConfig,
       defaultForSeverity: initialValues.defaultForSeverity,
+      alertTypes: initialValues.alertTypes,
     });
   });
 });

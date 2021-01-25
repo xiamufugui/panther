@@ -127,6 +127,7 @@ describe('OpsGenieDestinationForm', () => {
       displayName,
       outputConfig: { opsgenie: { apiKey: '123', serviceRegion: OpsgenieServiceRegionEnum.Eu } },
       defaultForSeverity: [severity],
+      alertTypes: [],
     });
   });
 
@@ -153,6 +154,7 @@ describe('OpsGenieDestinationForm', () => {
       displayName: newDisplayName,
       outputConfig: initialValues.outputConfig,
       defaultForSeverity: initialValues.defaultForSeverity,
+      alertTypes: initialValues.alertTypes,
     });
   });
 });
