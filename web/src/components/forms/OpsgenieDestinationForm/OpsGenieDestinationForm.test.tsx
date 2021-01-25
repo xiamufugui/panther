@@ -87,13 +87,13 @@ describe('OpsGenieDestinationForm', () => {
     fireEvent.change(displayNameField, { target: { value: displayName } });
     fireEvent.click(criticalSeverityCheckBox);
 
-    await waitMs(50);
+    await waitMs(1);
 
     expect(submitButton).toHaveAttribute('disabled');
 
     fireEvent.change(apiKeyField, { target: { value: '123' } });
 
-    await waitMs(50);
+    await waitMs(1);
 
     expect(submitButton).not.toHaveAttribute('disabled');
   });
@@ -116,7 +116,7 @@ describe('OpsGenieDestinationForm', () => {
     fireEvent.click(euServiceRegion);
     fireEvent.click(criticalSeverityCheckBox);
 
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
 
     fireEvent.click(submitButton);
@@ -143,7 +143,7 @@ describe('OpsGenieDestinationForm', () => {
     const newDisplayName = 'New Opsgenie Name';
     fireEvent.change(displayNameField, { target: { value: newDisplayName } });
 
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
 
     fireEvent.click(submitButton);

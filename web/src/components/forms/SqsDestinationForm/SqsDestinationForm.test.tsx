@@ -79,13 +79,13 @@ describe('SqsDestinationForm', () => {
 
     fireEvent.change(displayNameField, { target: { value: displayName } });
     fireEvent.click(criticalSeverityCheckBox);
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).toHaveAttribute('disabled');
     fireEvent.change(queueUrl, { target: { value: 'notAUrl' } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).toHaveAttribute('disabled');
     fireEvent.change(queueUrl, { target: { value: validUrl } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
   });
 
@@ -104,7 +104,7 @@ describe('SqsDestinationForm', () => {
     fireEvent.change(displayNameField, { target: { value: displayName } });
     fireEvent.click(criticalSeverityCheckBox);
     fireEvent.change(queueUrl, { target: { value: validUrl } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
 
     fireEvent.click(submitButton);
@@ -129,7 +129,7 @@ describe('SqsDestinationForm', () => {
 
     const newDisplayName = 'New SQS Name';
     fireEvent.change(displayNameField, { target: { value: newDisplayName } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
 
     fireEvent.click(submitButton);

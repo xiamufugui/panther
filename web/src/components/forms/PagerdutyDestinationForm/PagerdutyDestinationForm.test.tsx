@@ -80,14 +80,14 @@ describe('PagerdutyDestinationForm', () => {
 
     fireEvent.change(displayNameField, { target: { value: displayName } });
     fireEvent.click(criticalSeverityCheckBox);
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).toHaveAttribute('disabled');
     fireEvent.change(integrationKeyField, { target: { value: '123' } });
-    await waitMs(50);
+    await waitMs(1);
     // Topic Arn has specific form
     expect(submitButton).toHaveAttribute('disabled');
     fireEvent.change(integrationKeyField, { target: { value: pagerDutyIntegrationKey } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
   });
 
@@ -106,7 +106,7 @@ describe('PagerdutyDestinationForm', () => {
     fireEvent.change(displayNameField, { target: { value: displayName } });
     fireEvent.click(criticalSeverityCheckBox);
     fireEvent.change(integrationKeyField, { target: { value: pagerDutyIntegrationKey } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
 
     fireEvent.click(submitButton);
@@ -131,7 +131,7 @@ describe('PagerdutyDestinationForm', () => {
 
     const newDisplayName = 'New Pagerduty Name';
     fireEvent.change(displayNameField, { target: { value: newDisplayName } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
 
     fireEvent.click(submitButton);
