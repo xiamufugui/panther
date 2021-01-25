@@ -289,12 +289,7 @@ func dynamoBatchDelete(input *models.DeletePoliciesInput) error {
 	return dynamoBatchDeleteFromTable(env.Table, input)
 }
 
-// Batch delete multiple entries from the Dynamo table.
-func dynamoBatchDeletePack(input *models.DeletePacksInput) error {
-	return dynamoBatchDeleteFromTable(env.PackTable, input)
-}
-
-func dynamoBatchDeleteFromTable(table string, input *models.DeleteEntriesInput) error {
+func dynamoBatchDeleteFromTable(table string, input *models.DeletePoliciesInput) error {
 	deleteRequests := make([]*dynamodb.WriteRequest, len(input.Entries))
 	for i, entry := range input.Entries {
 		deleteRequests[i] = &dynamodb.WriteRequest{
