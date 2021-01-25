@@ -172,7 +172,7 @@ func extractZipFileBytes(content []byte) (map[string]*packTableItem, map[string]
 	detections := make(map[string]*tableItem)
 	detectionBodies := make(map[string]string) // map base file name to contents
 
-	// Process the zip file and extract each pack file
+	// Process the zip file and extract each file
 	for _, zipFile := range zipReader.File {
 		if strings.HasSuffix(zipFile.Name, "/") {
 			continue // skip directories (we will see their nested files next)

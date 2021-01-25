@@ -288,8 +288,7 @@ func setupUpdatePackToVersion(input *models.PatchPackInput, oldPack *packTableIt
 		}
 		return pack, nil
 	}
-	// This is a deprecated / delete pack - it got to this point in error
-	zap.L().Error("Trying to update a pack that does not exist in this version",
+	zap.L().Error("Trying to update pack to a version where it does not exist",
 		zap.String("pack", input.ID),
 		zap.String("version", version.Name))
 	return nil, nil

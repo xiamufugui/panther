@@ -100,9 +100,8 @@ type packTableItem struct {
 	LowerDisplayName string `json:"lowerDisplayName,omitempty"`
 	LowerID          string `json:"lowerId,omitempty"`
 
-	Enabled         bool   `json:"enabled"`
-	UpdateAvailable bool   `json:"updateAvailable"`
-	VersionID       string `json:"versionId,omitempty"`
+	Enabled         bool `json:"enabled"`
+	UpdateAvailable bool `json:"updateAvailable"`
 }
 
 // Add extra internal filtering fields before serializing to Dynamo
