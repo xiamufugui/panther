@@ -47,18 +47,17 @@ func (API) UpdateRule(input *models.UpdateRuleInput) *events.APIGatewayProxyResp
 
 // Shared by CreateRule and UpdateRule
 func writeRule(input *models.CreateRuleInput, create bool) *events.APIGatewayProxyResponse {
+
+	if err := validateLogtypeSet(input.LogTypes); err != nil {
+		return &events.APIGatewayProxyResponse{
+			Body:       fmt.Sprintf("Rule contains invalid log type: %s", err.Error()),
+			StatusCode: http.StatusBadRequest,
+		}
+	}
+
 	// in case it is not set, put a default. Minimum value for DedupPeriodMinutes is 15, so 0 means it's not set
 	if input.DedupPeriodMinutes == 0 {
 		input.DedupPeriodMinutes = defaultDedupPeriodMinutes
-	}
-
-	for _, logtype := range input.LogTypes {
-		if !logtypeIsValid(logtype) {
-			return &events.APIGatewayProxyResponse{
-				Body:       fmt.Sprintf("Rule contains invalid log type: %s", logtype),
-				StatusCode: http.StatusBadRequest,
-			}
-		}
 	}
 
 	// Disallow saving if rule is enabled and its tests fail.

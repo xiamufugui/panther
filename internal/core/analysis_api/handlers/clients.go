@@ -19,8 +19,8 @@ package handlers
  */
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -45,7 +45,6 @@ import (
 const systemUserID = "00000000-0000-4000-8000-000000000000"
 const maxRetries = 20 // setting Max Retries to a higher number - we'd like to retry VERY hard before failing.
 
-
 var (
 	env envConfig
 
@@ -59,14 +58,16 @@ var (
 	ruleEngine   analysis.RuleEngine
 
 	// logtypesAPI  logtypesapi.LogTypesAPILambdaClient
-	curctx context.Context
+	curctx               context.Context
 	lambdaLogTypesClient *lambda.Lambda
-	logtypesAPI *logtypesapi.LogTypesAPILambdaClient
+	logtypesAPI          *logtypesapi.LogTypesAPILambdaClient
 
-	logtypeSetMap map[string]interface
+	logtypeSetMap map[string]interface{}
 
 	storedlogtypes []string
 )
+
+// var ValidResourceTypes = map[string]struct{}{
 
 type envConfig struct {
 	Bucket               string `required:"true" split_words:"true"`
@@ -97,7 +98,6 @@ func Setup() {
 	policyEngine = analysis.NewPolicyEngine(lambdaClient, env.PolicyEngine)
 	ruleEngine = analysis.NewRuleEngine(lambdaClient, env.RulesEngine)
 
-
 	clientsSession := awsSession.Copy(
 		request.WithRetryer(
 			aws.NewConfig().WithMaxRetries(maxRetries),
@@ -110,15 +110,7 @@ func Setup() {
 		LambdaAPI:  lambdaLogTypesClient,
 	}
 
-	// Temporary get log types for testing
-	logtypes, err := logtypesAPI.ListAvailableLogTypes(curctx)
-	if err != nil {
-		fmt.Printf(" Got error: %v\n", err)
-	} else {
-		fmt.Printf(" LOGTYPES: %v\n", logtypes)
-		storedlogtypes = logtypes.LogTypes
-		fmt.Printf("storedlogtypes: %v\n", storedlogtypes)
-	}
+	refreshLogTypes()
 }
 
 func refreshLogTypes() {
@@ -127,20 +119,24 @@ func refreshLogTypes() {
 	if err != nil {
 		fmt.Printf(" Got error: %v\n", err)
 	} else {
-		fmt.Printf(" LOGTYPES: %v\n", logtypes)
-		storedlogtypes = logtypes.LogTypes
-		fmt.Printf("storedlogtypes: %v\n", storedlogtypes)
+		logtypeSetMap = make(map[string]interface{})
+		for _, logtype := range logtypes.LogTypes {
+			logtypeSetMap[logtype] = nil
+		}
 	}
 }
 
-func logtypeIsValid(logtype string) bool {
-	for _, i := range storedlogtypes {
-		if i == logtype {
-			fmt.Printf("VALID: %v\n", logtype)
-			return true
+func logtypeIsValid(logtype string) (found bool) {
+	_, found = logtypeSetMap[logtype]
+	return
+}
+
+func validateLogtypeSet(logtypes []string) (err error) {
+	refreshLogTypes()
+	for _, logtype := range logtypes {
+		if !logtypeIsValid(logtype) {
+			return fmt.Errorf("%s", logtype)
 		}
-		fmt.Printf("CHECKED: %v\n", i)
 	}
-	fmt.Printf("INVALID: %v\n", logtype)
-	return false;
+	return
 }
