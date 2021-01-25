@@ -174,9 +174,15 @@ func extractZipFileBytes(content []byte) (map[string]*packTableItem, map[string]
 
 	// Process the zip file and extract each pack file
 	for _, zipFile := range zipReader.File {
+		if strings.HasSuffix(zipFile.Name, "/") {
+			continue // skip directories (we will see their nested files next)
+		}
 		unzippedBytes, err := readZipFile(zipFile)
 		if err != nil {
 			return nil, nil, fmt.Errorf("file extraction failed: %s: %s", zipFile.Name, err)
+		}
+		if strings.Contains(zipFile.Name, "__pycache__") {
+			continue
 		}
 		// the pack directory
 		if strings.Contains(zipFile.Name, "packs/") {
