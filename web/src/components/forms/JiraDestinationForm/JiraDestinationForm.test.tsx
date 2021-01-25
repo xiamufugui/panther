@@ -18,13 +18,14 @@
 
 import React from 'react';
 import { render, fireEvent, waitFor, waitMs, faker, buildJiraConfigInput } from 'test-utils';
-import { SeverityEnum } from 'Generated/schema';
+import { AlertTypesEnum, SeverityEnum } from 'Generated/schema';
 import JiraDestinationForm from './index';
 
 const emptyInitialValues = {
   outputId: null,
   displayName: '',
   defaultForSeverity: [],
+  alertTypes: [],
   outputConfig: {
     jira: {
       orgDomain: '',
@@ -57,6 +58,7 @@ const initialValues = {
     },
   },
   defaultForSeverity: [severity],
+  alertTypes: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError, AlertTypesEnum.Policy],
 };
 
 describe('JiraDestinationForm', () => {

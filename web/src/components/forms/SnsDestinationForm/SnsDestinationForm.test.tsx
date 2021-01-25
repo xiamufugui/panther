@@ -18,13 +18,14 @@
 
 import React from 'react';
 import { render, fireEvent, waitFor, waitMs } from 'test-utils';
-import { SeverityEnum } from 'Generated/schema';
+import { AlertTypesEnum, SeverityEnum } from 'Generated/schema';
 import SnsDestinationForm from './index';
 
 const emptyInitialValues = {
   outputId: null,
   displayName: '',
   defaultForSeverity: [],
+  alertTypes: [],
   outputConfig: {
     sns: {
       topicArn: '',
@@ -45,6 +46,7 @@ const initialValues = {
     },
   },
   defaultForSeverity: [severity],
+  alertTypes: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError, AlertTypesEnum.Policy],
 };
 
 describe('SnsDestinationForm', () => {

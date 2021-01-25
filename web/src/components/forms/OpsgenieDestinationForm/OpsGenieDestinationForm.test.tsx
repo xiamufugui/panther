@@ -18,13 +18,14 @@
 
 import React from 'react';
 import { render, fireEvent, waitFor, waitMs } from 'test-utils';
-import { OpsgenieServiceRegionEnum, SeverityEnum } from 'Generated/schema';
+import { AlertTypesEnum, OpsgenieServiceRegionEnum, SeverityEnum } from 'Generated/schema';
 import OpsgenieDestinationForm from './index';
 
 const emptyInitialValues = {
   outputId: null,
   displayName: '',
   defaultForSeverity: [],
+  alertTypes: [],
   outputConfig: {
     opsgenie: {
       apiKey: '',
@@ -47,6 +48,7 @@ const initialValues = {
   },
 
   defaultForSeverity: [severity],
+  alertTypes: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError, AlertTypesEnum.Policy],
 };
 
 describe('OpsGenieDestinationForm', () => {

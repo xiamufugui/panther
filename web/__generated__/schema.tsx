@@ -371,6 +371,7 @@ export type Destination = {
   outputConfig: DestinationConfig;
   verificationStatus?: Maybe<Scalars['String']>;
   defaultForSeverity: Array<Maybe<SeverityEnum>>;
+  alertTypes: Array<AlertTypesEnum>;
 };
 
 export type DestinationConfig = {
@@ -406,6 +407,7 @@ export type DestinationInput = {
   outputConfig: DestinationConfigInput;
   outputType: Scalars['String'];
   defaultForSeverity: Array<Maybe<SeverityEnum>>;
+  alertTypes: Array<AlertTypesEnum>;
 };
 
 export enum DestinationTypeEnum {
@@ -2328,6 +2330,7 @@ export type DestinationResolvers<
     ParentType,
     ContextType
   >;
+  alertTypes?: Resolver<Array<ResolversTypes['AlertTypesEnum']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 

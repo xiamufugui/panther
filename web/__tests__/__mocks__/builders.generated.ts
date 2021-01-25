@@ -636,6 +636,7 @@ export const buildDestination = (overrides: Partial<Destination> = {}): Destinat
       'verificationStatus' in overrides ? overrides.verificationStatus : 'Licensed',
     defaultForSeverity:
       'defaultForSeverity' in overrides ? overrides.defaultForSeverity : [SeverityEnum.Critical],
+    alertTypes: 'alertTypes' in overrides ? overrides.alertTypes : [AlertTypesEnum.Policy],
   };
 };
 
@@ -687,6 +688,7 @@ export const buildDestinationInput = (
     outputType: 'outputType' in overrides ? overrides.outputType : 'New Hampshire',
     defaultForSeverity:
       'defaultForSeverity' in overrides ? overrides.defaultForSeverity : [SeverityEnum.Critical],
+    alertTypes: 'alertTypes' in overrides ? overrides.alertTypes : [AlertTypesEnum.Policy],
   };
 };
 
