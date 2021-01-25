@@ -49,7 +49,7 @@ type writeResult struct {
 
 // BulkUpload uploads multiple analysis items from a zipfile.
 func (API) BulkUpload(input *models.BulkUploadInput) *events.APIGatewayProxyResponse {
-	_, policies, err := extractZipFile(input)
+	policies, err := extractZipFile(input)
 	if err != nil {
 		return &events.APIGatewayProxyResponse{
 			Body:       err.Error(),
@@ -152,13 +152,14 @@ func (API) BulkUpload(input *models.BulkUploadInput) *events.APIGatewayProxyResp
 	return gatewayapi.MarshalResponse(&counts, http.StatusOK)
 }
 
-func extractZipFile(input *models.BulkUploadInput) (map[string]*packTableItem, map[string]*tableItem, error) {
+func extractZipFile(input *models.BulkUploadInput) (map[string]*tableItem, error) {
 	// Base64-decode
 	content, err := base64.StdEncoding.DecodeString(input.Data)
 	if err != nil {
-		return nil, nil, fmt.Errorf("base64 decoding failed: %s", err)
+		return nil, fmt.Errorf("base64 decoding failed: %s", err)
 	}
-	return extractZipFileBytes(content)
+	_, detections, err := extractZipFileBytes(content)
+	return detections, err
 }
 
 func extractZipFileBytes(content []byte) (map[string]*packTableItem, map[string]*tableItem, error) {
@@ -229,6 +230,11 @@ func extractZipFileBytes(content []byte) (map[string]*packTableItem, map[string]
 					if err != nil {
 						return nil, nil, err
 					}
+				}
+				// ensure only one data model is enabled per LogType (ResourceType)
+				err = validateUploadedDataModel(analysisItem)
+				if err != nil {
+					return nil, nil, err
 				}
 			}
 
