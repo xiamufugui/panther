@@ -50,19 +50,6 @@ func TestAddOutputNoName(t *testing.T) {
 	assert.Equal(t, expectedMsg("AddOutputInput", "DisplayName", "min"), err.Error())
 }
 
-func TestAddOutputNoAlertType(t *testing.T) {
-	validator, err := Validator()
-	require.NoError(t, err)
-	err = validator.Struct(&models.AddOutputInput{
-		UserID:       aws.String("3601990c-b566-404b-b367-3c6eacd6fe60"),
-		DisplayName:  aws.String("mychannel"),
-		AlertTypes:   []string{},
-		OutputConfig: &models.OutputConfig{Slack: &models.SlackConfig{WebhookURL: "https://hooks.slack.com"}},
-	})
-	require.Error(t, err)
-	assert.Equal(t, expectedMsg("AddOutputInput", "AlertTypes", "min"), err.Error())
-}
-
 func TestAddOutputValid(t *testing.T) {
 	validator, err := Validator()
 	require.NoError(t, err)

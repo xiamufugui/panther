@@ -47,7 +47,7 @@ type AddOutputInput struct {
 	DisplayName        *string       `json:"displayName" validate:"required,min=1,excludesall='<>&\""`
 	OutputConfig       *OutputConfig `json:"outputConfig" validate:"required"`
 	DefaultForSeverity []*string     `json:"defaultForSeverity"`
-	AlertTypes         []string      `json:"alertTypes" validate:"required,min=1,dive,oneof=RULE RULE_ERROR POLICY"`
+	AlertTypes         []string      `json:"alertTypes" validate:"omitempty,dive,oneof=RULE RULE_ERROR POLICY"`
 }
 
 // AddOutputOutput returns a randomly generated UUID for the output.
@@ -89,7 +89,7 @@ type UpdateOutputInput struct {
 	OutputID           *string       `json:"outputId" validate:"required,uuid4"`
 	OutputConfig       *OutputConfig `json:"outputConfig"`
 	DefaultForSeverity []*string     `json:"defaultForSeverity"`
-	AlertTypes         []string      `json:"alertTypes" validate:"omitempty,min=1,dive,oneof=RULE RULE_ERROR POLICY"`
+	AlertTypes         []string      `json:"alertTypes" validate:"omitempty,dive,oneof=RULE RULE_ERROR POLICY"`
 }
 
 // UpdateOutputOutput returns the new updated output
