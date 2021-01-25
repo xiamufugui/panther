@@ -99,6 +99,18 @@ func (c *CWEmbeddedMetricsManager) Run(ctx context.Context, interval time.Durati
 // It will writer the metrics in the Embedded Metric Format
 // https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format_Specification.html
 func (c *CWEmbeddedMetricsManager) Sync() error {
+	data, ok := c.sync()
+	if !ok {
+		return nil
+	}
+	_, err := c.writer.Write(data)
+	return err
+}
+
+// Syncs metrics to the underlying system
+// It will writer the metrics in the Embedded Metric Format
+// https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format_Specification.html
+func (c *CWEmbeddedMetricsManager) sync() ([]byte, bool) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
@@ -116,9 +128,12 @@ func (c *CWEmbeddedMetricsManager) Sync() error {
 		c.stream.WriteMore()
 
 		// Write dimension values
-		for i := 0; i+1 < len(dms); i = i + 2 {
-			c.stream.WriteObjectField(dms[i])
-			c.stream.WriteVal(dms[i+1])
+		dims := dms
+		var labelName, labelValue string
+		for len(dims) >= 2 {
+			labelName, labelValue, dims = dims[0], dims[1], dims[2:]
+			c.stream.WriteObjectField(labelName)
+			c.stream.WriteVal(labelValue)
 			c.stream.WriteMore()
 		}
 
@@ -131,7 +146,7 @@ func (c *CWEmbeddedMetricsManager) Sync() error {
 	// If there are no metrics to be reported
 	// Don't log anything
 	if len(metrics) == 0 {
-		return nil
+		return nil, false
 	}
 
 	const namespace = "Panther"
@@ -150,10 +165,9 @@ func (c *CWEmbeddedMetricsManager) Sync() error {
 	c.stream.WriteObjectField(rootElement)
 	c.stream.WriteVal(embeddedMetric)
 	c.stream.WriteObjectEnd()
-	// nolint: errcheck
-	c.writer.Write(append(c.stream.Buffer(), '\n'))
+	c.stream.WriteRaw("\n")
 
-	return nil
+	return c.stream.Buffer(), true
 }
 
 func sum(a []float64) float64 {

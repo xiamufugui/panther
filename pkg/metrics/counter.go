@@ -34,10 +34,10 @@ type DimensionsCounter struct {
 }
 
 // With implements metrics.Counter.
-func (d *DimensionsCounter) With(dimensionValues ...string) Counter {
+func (d *DimensionsCounter) With(dvs ...string) Counter {
 	return &DimensionsCounter{
 		name: d.name,
-		dvs:  d.dvs.With(dimensionValues...),
+		dvs:  d.dvs.With(dvs...),
 		obs:  d.obs,
 	}
 }
@@ -53,11 +53,11 @@ func (d *DimensionsCounter) Add(delta float64) {
 type DimensionValues []string
 
 // With validates the input, and returns a new aggregate labelValues.
-func (lvs DimensionValues) With(dimensionValues ...string) DimensionValues {
-	if len(dimensionValues)%2 != 0 {
-		dimensionValues = append(dimensionValues, "unknown")
+func (lvs DimensionValues) With(dvs ...string) DimensionValues {
+	if len(dvs)%2 != 0 {
+		dvs = append(dvs, "unknown")
 	}
-	return append(lvs, dimensionValues...)
+	return append(lvs, dvs...)
 }
 
 // NewSpace returns an N-dimensional vector space.
@@ -75,25 +75,25 @@ type Space struct {
 
 // Observe locates the time series identified by the name and label values in
 // the vector space, and appends the value to the list of observations.
-func (s *Space) Observe(name string, lvs DimensionValues, value float64) {
-	s.nodeFor(name).observe(lvs, value)
+func (s *Space) Observe(name string, dvs DimensionValues, value float64) {
+	s.nodeFor(name).observe(dvs, value)
 }
 
 // Add locates the time series identified by the name and label values in
 // the vector space, and appends the delta to the last value in the list of
 // observations.
-func (s *Space) Add(name string, lvs DimensionValues, delta float64) {
-	s.nodeFor(name).add(lvs, delta)
+func (s *Space) Add(name string, dvs DimensionValues, delta float64) {
+	s.nodeFor(name).add(dvs, delta)
 }
 
 // Walk traverses the vector space and invokes fn for each non-empty time series
 // which is encountered. Return false to abort the traversal.
-func (s *Space) Walk(fn func(name string, lvs DimensionValues, observations []float64) bool) {
+func (s *Space) Walk(fn func(name string, dvs DimensionValues, observations []float64) bool) {
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
 	for name, node := range s.nodes {
 		name := name
-		f := func(lvs DimensionValues, observations []float64) bool { return fn(name, lvs, observations) }
+		f := func(dvs DimensionValues, observations []float64) bool { return fn(name, dvs, observations) }
 		if !node.walk(DimensionValues{}, f) {
 			return
 		}
@@ -135,17 +135,17 @@ type node struct {
 
 type pair struct{ label, value string }
 
-func (n *node) observe(lvs DimensionValues, value float64) {
+func (n *node) observe(dvs DimensionValues, value float64) {
 	n.mtx.Lock()
 	defer n.mtx.Unlock()
-	if len(lvs) <= 0 {
+	if len(dvs) <= 0 {
 		n.observations = append(n.observations, value)
 		return
 	}
-	if len(lvs) < 2 {
+	if len(dvs) < 2 {
 		panic("too few metrics.DimensionValues; programmer error!")
 	}
-	head, tail := pair{lvs[0], lvs[1]}, lvs[2:]
+	head, tail := pair{dvs[0], dvs[1]}, dvs[2:]
 	if n.children == nil {
 		n.children = map[pair]*node{}
 	}
@@ -157,10 +157,10 @@ func (n *node) observe(lvs DimensionValues, value float64) {
 	child.observe(tail, value)
 }
 
-func (n *node) add(lvs DimensionValues, delta float64) {
+func (n *node) add(dvs DimensionValues, delta float64) {
 	n.mtx.Lock()
 	defer n.mtx.Unlock()
-	if len(lvs) <= 0 {
+	if len(dvs) <= 0 {
 		var value float64
 		if len(n.observations) > 0 {
 			value = last(n.observations) + delta
@@ -170,10 +170,10 @@ func (n *node) add(lvs DimensionValues, delta float64) {
 		n.observations = append(n.observations, value)
 		return
 	}
-	if len(lvs) < 2 {
+	if len(dvs) < 2 {
 		panic("too few DimensionValues; programmer error!")
 	}
-	head, tail := pair{lvs[0], lvs[1]}, lvs[2:]
+	head, tail := pair{dvs[0], dvs[1]}, dvs[2:]
 	if n.children == nil {
 		n.children = map[pair]*node{}
 	}
@@ -185,14 +185,14 @@ func (n *node) add(lvs DimensionValues, delta float64) {
 	child.add(tail, delta)
 }
 
-func (n *node) walk(lvs DimensionValues, fn func(DimensionValues, []float64) bool) bool {
+func (n *node) walk(dvs DimensionValues, fn func(DimensionValues, []float64) bool) bool {
 	n.mtx.RLock()
 	defer n.mtx.RUnlock()
-	if len(n.observations) > 0 && !fn(lvs, n.observations) {
+	if len(n.observations) > 0 && !fn(dvs, n.observations) {
 		return false
 	}
 	for p, child := range n.children {
-		if !child.walk(append(lvs, p.label, p.value), fn) {
+		if !child.walk(append(dvs, p.label, p.value), fn) {
 			return false
 		}
 	}

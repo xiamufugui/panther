@@ -51,5 +51,5 @@ func TestNewCounter(t *testing.T) {
 	counter.With("dimension2", "dimensionValue2").Add(2)
 	assert.NoError(t, cm.Sync())
 	// nolint: lll
-	assert.Equal(t, `{"test":1,"dimension1":"dimensionValue1","test":2,"dimension2":"dimensionValue2","_aws":{"CloudWatchMetrics":[{"Namespace":"Panther","Dimensions":[["dimension1"],["dimension2"]],"Metrics":[{"Name":"test","Unit":"Count"},{"Name":"test","Unit":"Count"}]}],"Timestamp":1000}}`+"\n", buf.String())
+	assert.JSONEq(t, `{"test":1,"dimension1":"dimensionValue1","test":2,"dimension2":"dimensionValue2","_aws":{"CloudWatchMetrics":[{"Namespace":"Panther","Dimensions":[["dimension1"],["dimension2"]],"Metrics":[{"Name":"test","Unit":"Count"},{"Name":"test","Unit":"Count"}]}],"Timestamp":1000}}`+"\n", buf.String())
 }

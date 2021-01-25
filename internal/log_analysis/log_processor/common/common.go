@@ -99,11 +99,12 @@ type DataStream struct {
 }
 
 const (
+	SubsystemLogProcessor       = "LogProcessor"
 	MetricLogProcessorGetObject = "GetObject"
 )
 
 func setupMetrics() {
 	CWMetrics = metrics.NewCWEmbeddedMetrics(os.Stdout)
 	GetObject = CWMetrics.NewCounter(MetricLogProcessorGetObject).
-		With(metrics.SubsystemDimension, metrics.SubsystemLogProcessing)
+		With(metrics.SubsystemDimension, SubsystemLogProcessor)
 }

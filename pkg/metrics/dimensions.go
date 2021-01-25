@@ -21,11 +21,7 @@ package metrics
 const (
 
 	// SubsystemDimension dimension
-	SubsystemDimension     = "Subsystem"
-	SubsystemDestinations  = "Destinations"
-	SubsystemLogProcessing = "LogProcessing"
-	SubsystemDetections    = "Detections"
-	SubsystemDatalake      = "Datalake"
+	SubsystemDimension = "Subsystem"
 
 	// StatusDimension dimension
 	StatusDimension = "Status"
@@ -36,6 +32,6 @@ const (
 	// StatusDimension indicating some general error with the subsystem
 	StatusErr = "Err"
 
-	// IDDimension dimensions
-	IDDimension = "ID"
+	// SourceIDDimension dimensions
+	SourceIDDimension = "ID"
 )
