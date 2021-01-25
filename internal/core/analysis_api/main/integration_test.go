@@ -2612,6 +2612,7 @@ func batchDeleteRules(t *testing.T, ruleID ...string) {
 	assert.Equal(t, http.StatusOK, statusCode)
 }
 
+/*
 func pollPacks(t *testing.T) {
 	// test success
 	// no packs exist yet
@@ -2755,3 +2756,4 @@ func patchPack(t *testing.T) {
 	assert.Equal(t, http.StatusOK, statusCode)
 	//assert.Equal(t, *pack, result) // TODO: fill in with pack data; but EnabledVersion: downgraded version
 }
+*/

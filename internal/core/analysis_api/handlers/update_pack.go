@@ -129,7 +129,7 @@ func updatePackDetections(userID string, pack *packTableItem, release models.Ver
 		return err
 	}
 	for _, newDetectionItem := range newDetectionItems {
-		_, err = writeItem(newDetectionItem, userID, aws.Bool(true))
+		_, err = writeItem(newDetectionItem, userID, nil)
 		if err != nil {
 			// TODO: should we try to rollback the other updated detections?
 			return err
@@ -250,6 +250,10 @@ func setupUpdatePacksVersions(newVersion models.Version, oldPacks []*packTableIt
 }
 
 func updatePackToVersion(input *models.PatchPackInput, item *packTableItem) error {
+	// check that the new version is in the list of available versions
+	if !containsRelease(item.AvailableVersions, input.EnabledVersion) {
+		return fmt.Errorf("attempting to enable a version (%s) that does not exist for pack (%s)", input.EnabledVersion.Name, item.ID)
+	}
 	newPack, err := setupUpdatePackToVersion(input, item)
 	if err != nil {
 		zap.L().Error("Error setting up pack version fields",
@@ -285,7 +289,7 @@ func setupUpdatePackToVersion(input *models.PatchPackInput, oldPack *packTableIt
 		return pack, nil
 	}
 	// This is a deprecated / delete pack - it got to this point in error
-	zap.L().Error("Trying to update a deprecated pack",
+	zap.L().Error("Trying to update a pack that does not exist in this version",
 		zap.String("pack", input.ID),
 		zap.String("version", version.Name))
 	return nil, nil
