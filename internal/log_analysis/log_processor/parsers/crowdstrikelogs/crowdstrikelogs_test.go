@@ -93,8 +93,7 @@ func TestUnknownEventParser(t *testing.T) {
 		"aid": "0659cf9079964e887615b6e4da7b0545",
 		"p_any_ip_addresses": ["71.198.164.96"],
 		"p_log_type": "Crowdstrike.Unknown",
-		"p_event_time": "%s",
-		"p_any_trace_ids": ["0659cf9079964e887615b6e4da7b0545"]
+		"p_event_time": "%s"
 		}`,
 		ts.UTC().Format(time.RFC3339Nano),
 	)

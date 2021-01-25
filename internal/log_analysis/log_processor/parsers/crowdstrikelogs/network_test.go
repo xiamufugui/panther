@@ -77,8 +77,7 @@ func TestNetworkListenParser(t *testing.T) {
 		"cid": "0cfb1a68ef6b49fdb0d2b12725057057",
 		"p_any_ip_addresses": ["0.0.0.0","37.228.245.186"],
 		"p_event_time": "%s",
-		"p_log_type": "%s",
-		"p_any_trace_ids": ["5be0664506294ed0427671ed0563f1f8"]
+		"p_log_type": "%s"
 	}`,
 		ts.UTC().Format(time.RFC3339Nano),
 		TypeNetworkListen,
@@ -136,8 +135,7 @@ func TestNetworkConnectParser(t *testing.T) {
 		"cid": "0cfb1a68ef6b49fdb0d2b12725057057",
 		"p_any_ip_addresses": ["0.0.0.0","127.0.0.1","71.198.164.96"],
 		"p_event_time": "%s",
-		"p_log_type": "%s",
-		"p_any_trace_ids": ["0659cf9079964e887615b6e4da7b0545"]
+		"p_log_type": "%s"
 	}`,
 		ts.UTC().Format(time.RFC3339Nano),
 		TypeNetworkConnect,

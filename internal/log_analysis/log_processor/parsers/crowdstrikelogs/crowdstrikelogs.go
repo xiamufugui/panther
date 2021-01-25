@@ -97,7 +97,7 @@ func getEventSimpleName(typ reflect.Type) ([]string, error) {
 // nolint:lll
 type BaseEvent struct {
 	Name           null.String `json:"name" validate:"required" description:"The event name"`
-	AID            null.String `json:"aid" panther:"trace_id" description:"The sensor ID. This value is unique to each installation of a Falcon sensor. When a sensor is updated or reinstalled, the host gets a new aid. In those situations, a single host could have multiple aid values over time."`
+	AID            null.String `json:"aid" description:"The sensor ID. This value is unique to each installation of a Falcon sensor. When a sensor is updated or reinstalled, the host gets a new aid. In those situations, a single host could have multiple aid values over time."`
 	AIP            null.String `json:"aip" panther:"ip" description:"The sensor’s IP, as seen from the CrowdStrike cloud. This is typically the public IP of the sensor. This helps determine the location of a computer, depending on your network." `
 	CID            null.String `json:"cid" description:"CID"`
 	ID             null.String `json:"id" description:"ID"`

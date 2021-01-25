@@ -49,30 +49,30 @@ type UserIdentity struct {
 	// Mac Only
 	AuthenticationUUID         pantherlog.String `json:"AuthenticationUuid"`
 	AuthenticationUUIDAsString pantherlog.String `json:"AuthenticationUuidAsString"`
-	UID                        pantherlog.Uint32 `json:"UID" description:"The User ID."`
+	UID                        pantherlog.Int64  `json:"UID" description:"The User ID."`
 
 	// Windows only
-	UserName              pantherlog.String `json:"UserName"`
+	UserName              pantherlog.String `json:"UserName" panther:"username"`
 	UserCanonical         pantherlog.String `json:"UserCanonical"`
-	LogonID               pantherlog.Uint64 `json:"LogonId"`
+	LogonID               pantherlog.String `json:"LogonId"`
 	LogonDomain           pantherlog.String `json:"LogonDomain"`
 	AuthenticationPackage pantherlog.String `json:"AuthenticationPackage"`
-	LogonType             pantherlog.Uint32 `json:"LogonType" description:"Values: INTERACTIVE (2), NETWORK (3), BATCH (4), SERVICE (5), PROXY (6), UNLOCK (7), NETWORK_CLEARTEXT (8), CACHED_UNLOCK (13), NEW_CREDENTIALS (9), REMOTE_INTERACTIVE (10), CACHED_INTERACTIVE (11), CACHED_REMOTE_INTERACTIVE (12)"`
+	LogonType             pantherlog.Int32  `json:"LogonType" description:"Values: INTERACTIVE (2), NETWORK (3), BATCH (4), SERVICE (5), PROXY (6), UNLOCK (7), NETWORK_CLEARTEXT (8), CACHED_UNLOCK (13), NEW_CREDENTIALS (9), REMOTE_INTERACTIVE (10), CACHED_INTERACTIVE (11), CACHED_REMOTE_INTERACTIVE (12)"`
 	LogonTime             pantherlog.Time   `json:"LogonTime" tcodec:"unix"`
 	LogonServer           pantherlog.String `json:"LogonServer"`
-	UserFlags             pantherlog.Uint32 `json:"UserFlags" description:"Values: LOGON_OPTIMIZED (0x4000), LOGON_WINLOGON (0x8000), LOGON_PKINIT (0x10000), LOGON_NOT_OPTIMIZED (0x20000)"`
+	UserFlags             pantherlog.Int64  `json:"UserFlags" description:"Values: LOGON_OPTIMIZED (0x4000), LOGON_WINLOGON (0x8000), LOGON_PKINIT (0x10000), LOGON_NOT_OPTIMIZED (0x20000)"`
 	PasswordLastSet       pantherlog.Time   `json:"PasswordLastSet" tcodec:"unix"`
-	RemoteAccount         pantherlog.Uint32 `json:"RemoteAccount"`
-	UserIsAdmin           pantherlog.Uint32 `json:"UserIsAdmin"`
-	SessionID             pantherlog.Uint32 `json:"SessionId"`
-	UserLogonFlags        pantherlog.Uint32 `json:"UserLogonFlags" description:"Values: LOGON_IS_SYNTHETIC (0x00000001), USER_IS_ADMIN (0x00000002), USER_IS_LOCAL (0x00000004), USER_IS_BUILT_IN (0x00000008), USER_IDENTITY_MISSING (0x00000010)"`
+	RemoteAccount         pantherlog.Int32  `json:"RemoteAccount"`
+	UserIsAdmin           pantherlog.Int32  `json:"UserIsAdmin"`
+	SessionID             pantherlog.String `json:"SessionId" panther:"trace_id"`
+	UserLogonFlags        pantherlog.Int32  `json:"UserLogonFlags" description:"Values: LOGON_IS_SYNTHETIC (0x00000001), USER_IS_ADMIN (0x00000002), USER_IS_LOCAL (0x00000004), USER_IS_BUILT_IN (0x00000008), USER_IDENTITY_MISSING (0x00000010)"`
 }
 
 // nolint:lll
 type GroupIdentity struct {
 	ContextEvent
 	EventSimpleName            pantherlog.String `json:"event_simpleName" validate:"required,eq=GroupIdentity" description:"Event Name"`
-	GID                        pantherlog.Uint32 `json:"GID" validate:"required" description:"The user Group ID."`
+	GID                        pantherlog.Int64  `json:"GID" validate:"required" description:"The user Group ID."`
 	AuthenticationUUID         pantherlog.String `json:"AuthenticationUuid" validate:"required"`
 	AuthenticationUUIDAsString pantherlog.String `json:"AuthenticationUuidAsString" validate:"required"`
 	CommonIdentityFields
@@ -80,7 +80,7 @@ type GroupIdentity struct {
 
 // nolint:lll
 type CommonIdentityFields struct {
-	AuthenticationID pantherlog.Uint64 `json:"AuthenticationId" validate:"required" description:"Values: INVALID_LUID (0), NETWORK_SERVICE (996), LOCAL_SERVICE (997), SYSTEM (999), RESERVED_LUID_MAX (1000)"`
+	AuthenticationID pantherlog.Int32  `json:"AuthenticationId" validate:"required" description:"Values: INVALID_LUID (0), NETWORK_SERVICE (996), LOCAL_SERVICE (997), SYSTEM (999), RESERVED_LUID_MAX (1000)"`
 	UserPrincipal    pantherlog.String `json:"UserPrincipal" validate:"required"`
-	UserSid          pantherlog.String `json:"UserSid" panther:"trace_id" validate:"required" description:"The User Security Identifier (UserSID) of the user who executed the command. A UserSID uniquely identifies a user in a system."`
+	UserSid          pantherlog.String `json:"UserSid" validate:"required" description:"The User Security Identifier (UserSID) of the user who executed the command. A UserSID uniquely identifies a user in a system."`
 }
