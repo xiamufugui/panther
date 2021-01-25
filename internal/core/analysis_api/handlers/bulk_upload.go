@@ -49,7 +49,7 @@ type writeResult struct {
 
 // BulkUpload uploads multiple analysis items from a zipfile.
 func (API) BulkUpload(input *models.BulkUploadInput) *events.APIGatewayProxyResponse {
-	policies, err := extractZipFile(input)
+	_, policies, err := extractZipFile(input)
 	if err != nil {
 		return &events.APIGatewayProxyResponse{
 			Body:       err.Error(),
@@ -152,113 +152,121 @@ func (API) BulkUpload(input *models.BulkUploadInput) *events.APIGatewayProxyResp
 	return gatewayapi.MarshalResponse(&counts, http.StatusOK)
 }
 
-func extractZipFile(input *models.BulkUploadInput) (map[string]*tableItem, error) {
+func extractZipFile(input *models.BulkUploadInput) (map[string]*packTableItem, map[string]*tableItem, error) {
 	// Base64-decode
 	content, err := base64.StdEncoding.DecodeString(input.Data)
 	if err != nil {
-		return nil, fmt.Errorf("base64 decoding failed: %s", err)
+		return nil, nil, fmt.Errorf("base64 decoding failed: %s", err)
 	}
 	return extractZipFileBytes(content)
 }
 
-func extractZipFileBytes(content []byte) (map[string]*tableItem, error) {
-	// Unzip in memory (the max request size is only 6 MB, so this should easily fit)
+func extractZipFileBytes(content []byte) (map[string]*packTableItem, map[string]*tableItem, error) {
+	// Unzip in memory
 	zipReader, err := zip.NewReader(bytes.NewReader(content), int64(len(content)))
 	if err != nil {
-		return nil, fmt.Errorf("zipReader failed: %s", err)
+		return nil, nil, fmt.Errorf("zipReader failed: %s", err)
 	}
+	packs := make(map[string]*packTableItem)
+	detections := make(map[string]*tableItem)
+	detectionBodies := make(map[string]string) // map base file name to contents
 
-	policyBodies := make(map[string]string) // map base file name to contents
-	result := make(map[string]*tableItem)
-
-	// Process each file
+	// Process the zip file and extract each pack file
 	for _, zipFile := range zipReader.File {
-		if strings.HasSuffix(zipFile.Name, "/") {
-			continue // skip directories (we will see their nested files next)
-		}
-
 		unzippedBytes, err := readZipFile(zipFile)
 		if err != nil {
-			return nil, fmt.Errorf("file extraction failed: %s: %s", zipFile.Name, err)
+			return nil, nil, fmt.Errorf("file extraction failed: %s: %s", zipFile.Name, err)
 		}
+		// the pack directory
+		if strings.Contains(zipFile.Name, "packs/") {
+			var config analysis.PackConfig
 
-		if strings.Contains(zipFile.Name, "__pycache__") {
-			continue
-		}
+			switch strings.ToLower(filepath.Ext(zipFile.Name)) {
+			case ".yml", ".yaml":
+				err = yaml.Unmarshal(unzippedBytes, &config)
+			default:
+				zap.L().Debug("skipped unsupported file", zap.String("fileName", zipFile.Name))
+				continue
+			}
 
-		var config analysis.Config
+			if err != nil {
+				return nil, nil, err
+			}
 
-		switch strings.ToLower(filepath.Ext(zipFile.Name)) {
-		case ".py":
-			// Store the Python body to be referenced later
-			policyBodies[filepath.Base(zipFile.Name)] = string(unzippedBytes)
-			continue
-		case ".json":
-			err = jsoniter.Unmarshal(unzippedBytes, &config)
-		case ".yml", ".yaml":
-			err = yaml.Unmarshal(unzippedBytes, &config)
-		default:
-			zap.L().Debug("skipped unsupported file", zap.String("fileName", zipFile.Name))
-		}
+			// Map the Config struct fields over to the fields we need to store in Dynamo
+			analysisPackItem := packTableItemFromConfig(config)
+			if _, exists := packs[analysisPackItem.ID]; exists {
+				return nil, nil, fmt.Errorf("multiple pack specs with ID %s", analysisPackItem.ID)
+			}
+			packs[analysisPackItem.ID] = analysisPackItem
+		} else {
+			var config analysis.Config
 
-		if err != nil {
-			return nil, err
-		}
+			switch strings.ToLower(filepath.Ext(zipFile.Name)) {
+			case ".py":
+				// Store the Python body to be referenced later
+				detectionBodies[filepath.Base(zipFile.Name)] = string(unzippedBytes)
+				continue
+			case ".json":
+				err = jsoniter.Unmarshal(unzippedBytes, &config)
+			case ".yml", ".yaml":
+				err = yaml.Unmarshal(unzippedBytes, &config)
+			default:
+				zap.L().Debug("skipped unsupported file", zap.String("fileName", zipFile.Name))
+			}
 
-		// Map the Config struct fields over to the fields we need to store in Dynamo
-		analysisItem := tableItemFromConfig(config)
+			if err != nil {
+				return nil, nil, err
+			}
 
-		if analysisItem.Type == models.TypeDataModel {
-			// ensure Mappings are nil rather than an empty slice
-			if len(config.Mappings) > 0 {
+			// Map the Config struct fields over to the fields we need to store in Dynamo
+			analysisItem := tableItemFromConfig(config)
+			if analysisItem.Type == models.TypeDataModel && len(config.Mappings) > 0 {
+				// ensure Mappings are nil rather than an empty slice
 				analysisItem.Mappings = make([]models.DataModelMapping, len(config.Mappings))
 				for i, mapping := range config.Mappings {
 					analysisItem.Mappings[i], err = buildMapping(mapping)
 					if err != nil {
-						return nil, err
+						return nil, nil, err
 					}
 				}
 			}
-			// ensure only one data model is enabled per LogType (ResourceType)
-			err = validateUploadedDataModel(analysisItem)
-			if err != nil {
-				return nil, err
-			}
-		}
 
-		for i, test := range config.Tests {
-			// A test can specify a resource and a resource type or a log and a log type.
-			// By convention, log and log type are used for rules and resource and resource type are used for policies.
-			if test.Resource == nil {
-				analysisItem.Tests[i], err = buildRuleTest(test)
-			} else {
-				analysisItem.Tests[i], err = buildPolicyTest(test)
+			for i, test := range config.Tests {
+				// A test can specify a resource and a resource type or a log and a log type.
+				// By convention, log and log type are used for rules and resource and resource type are used for policies.
+				if test.Resource == nil {
+					analysisItem.Tests[i], err = buildRuleTest(test)
+				} else {
+					analysisItem.Tests[i], err = buildPolicyTest(test)
+				}
+				if err != nil {
+					return nil, nil, err
+				}
 			}
-			if err != nil {
-				return nil, err
-			}
-		}
 
-		if _, exists := result[analysisItem.ID]; exists {
-			return nil, fmt.Errorf("multiple analysis specs with ID %s", analysisItem.ID)
+			if _, exists := detections[analysisItem.ID]; exists {
+				return nil, nil, fmt.Errorf("multiple analysis specs with ID %s", analysisItem.ID)
+			}
+			detections[analysisItem.ID] = analysisItem
 		}
-		result[analysisItem.ID] = analysisItem
 	}
 
-	// Finish each policy by adding its body and then validate it
-	for _, policy := range result {
-		if body, ok := policyBodies[policy.Body]; ok {
-			policy.Body = body
-			if err := validateUploadedPolicy(policy); err != nil {
-				return nil, err
+	// add python bodies
+	// Finish each detection by adding its body and then validate it
+	for _, detection := range detections {
+		if body, ok := detectionBodies[detection.Body]; ok {
+			detection.Body = body
+			if err := validateUploadedPolicy(detection); err != nil {
+				return nil, nil, err
 			}
-		} else if policy.Type != models.TypeDataModel && policy.Type != models.TypePack {
+		} else if detection.Type != models.TypeDataModel {
 			// it is ok for DataModels to be missing python body
-			return nil, fmt.Errorf("policy %s is missing a body", policy.ID)
+			return nil, nil, fmt.Errorf("policy %s is missing a body", detection.ID)
 		}
 	}
 
-	return result, nil
+	return packs, detections, err
 }
 
 func tableItemFromConfig(config analysis.Config) *tableItem {
@@ -324,6 +332,21 @@ func tableItemFromConfig(config analysis.Config) *tableItem {
 		}
 	}
 
+	return &item
+}
+
+func packTableItemFromConfig(config analysis.PackConfig) *packTableItem {
+	item := packTableItem{
+		Description: config.Description,
+		DisplayName: config.DisplayName,
+		ID:          config.PackID,
+		Type:        models.DetectionType(strings.ToUpper(config.AnalysisType)),
+	}
+	var detectionPattern models.DetectionPattern
+	if config.DetectionPattern.IDs != nil {
+		detectionPattern.IDs = config.DetectionPattern.IDs
+	}
+	item.DetectionPattern = detectionPattern
 	return &item
 }
 

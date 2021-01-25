@@ -19,8 +19,6 @@ package handlers
  */
 
 import (
-	"archive/zip"
-	"bytes"
 	"context"
 	"crypto/sha512"
 	"crypto/tls"
@@ -29,7 +27,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -37,11 +34,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/kms"
 	"github.com/google/go-github/github"
 	"github.com/hashicorp/go-version"
-	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
-	"gopkg.in/yaml.v2"
 
-	"github.com/panther-labs/panther/api/lambda/analysis"
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/pkg/awsutils"
 )
@@ -149,7 +143,7 @@ func downloadValidatePackData(version models.Version) error {
 	if err != nil {
 		return err
 	}
-	packCache, detectionCache, err = extractPackZipFileBytes(sourceData)
+	packCache, detectionCache, err = extractZipFileBytes(sourceData)
 	if err != nil {
 		zap.L().Error("error extracting pack data", zap.Error(err))
 		return err
@@ -157,114 +151,6 @@ func downloadValidatePackData(version models.Version) error {
 	cacheLastUpdated = time.Now()
 	cacheVersion = version
 	return nil
-}
-
-func extractPackZipFileBytes(content []byte) (map[string]*packTableItem, map[string]*tableItem, error) {
-	// Unzip in memory
-	zipReader, err := zip.NewReader(bytes.NewReader(content), int64(len(content)))
-	if err != nil {
-		return nil, nil, fmt.Errorf("zipReader failed: %s", err)
-	}
-	packs := make(map[string]*packTableItem)
-	detections := make(map[string]*tableItem)
-	detectionBodies := make(map[string]string) // map base file name to contents
-
-	// Process the zip file and extract each pack file
-	for _, zipFile := range zipReader.File {
-		unzippedBytes, err := readZipFile(zipFile)
-		if err != nil {
-			return nil, nil, fmt.Errorf("file extraction failed: %s: %s", zipFile.Name, err)
-		}
-		// the pack directory
-		if strings.Contains(zipFile.Name, "packs/") {
-			var config analysis.PackConfig
-
-			switch strings.ToLower(filepath.Ext(zipFile.Name)) {
-			case ".yml", ".yaml":
-				err = yaml.Unmarshal(unzippedBytes, &config)
-			default:
-				zap.L().Debug("skipped unsupported file", zap.String("fileName", zipFile.Name))
-				continue
-			}
-
-			if err != nil {
-				return nil, nil, err
-			}
-
-			// Map the Config struct fields over to the fields we need to store in Dynamo
-			analysisPackItem := packTableItemFromConfig(config)
-			if _, exists := packs[analysisPackItem.ID]; exists {
-				return nil, nil, fmt.Errorf("multiple pack specs with ID %s", analysisPackItem.ID)
-			}
-			packs[analysisPackItem.ID] = analysisPackItem
-		} else {
-			var config analysis.Config
-
-			switch strings.ToLower(filepath.Ext(zipFile.Name)) {
-			case ".py":
-				// Store the Python body to be referenced later
-				detectionBodies[filepath.Base(zipFile.Name)] = string(unzippedBytes)
-				continue
-			case ".json":
-				err = jsoniter.Unmarshal(unzippedBytes, &config)
-			case ".yml", ".yaml":
-				err = yaml.Unmarshal(unzippedBytes, &config)
-			default:
-				zap.L().Debug("skipped unsupported file", zap.String("fileName", zipFile.Name))
-			}
-
-			if err != nil {
-				return nil, nil, err
-			}
-
-			// Map the Config struct fields over to the fields we need to store in Dynamo
-			analysisItem := tableItemFromConfig(config)
-			if analysisItem.Type == models.TypeDataModel && len(config.Mappings) > 0 {
-				// ensure Mappings are nil rather than an empty slice
-				analysisItem.Mappings = make([]models.DataModelMapping, len(config.Mappings))
-				for i, mapping := range config.Mappings {
-					analysisItem.Mappings[i], err = buildMapping(mapping)
-					if err != nil {
-						return nil, nil, err
-					}
-				}
-			}
-
-			for i, test := range config.Tests {
-				// A test can specify a resource and a resource type or a log and a log type.
-				// By convention, log and log type are used for rules and resource and resource type are used for policies.
-				if test.Resource == nil {
-					analysisItem.Tests[i], err = buildRuleTest(test)
-				} else {
-					analysisItem.Tests[i], err = buildPolicyTest(test)
-				}
-				if err != nil {
-					return nil, nil, err
-				}
-			}
-
-			if _, exists := detections[analysisItem.ID]; exists {
-				return nil, nil, fmt.Errorf("multiple analysis specs with ID %s", analysisItem.ID)
-			}
-			detections[analysisItem.ID] = analysisItem
-		}
-	}
-
-	// add python bodies
-	// Finish each detection by adding its body and then validate it
-	for _, detection := range detections {
-		if body, ok := detectionBodies[detection.Body]; ok {
-			detection.Body = body
-			if err := validateUploadedPolicy(detection); err != nil {
-				return nil, nil, err
-			}
-		} else if detection.Type != models.TypeDataModel {
-			// it is ok for DataModels to be missing python body
-			return nil, nil, fmt.Errorf("policy %s is missing a body", detection.ID)
-		}
-	}
-
-	return packs, detections, err
 }
 
 func listAvailableGithubReleases() ([]models.Version, error) {
@@ -335,19 +221,4 @@ func validateSignature(rawData []byte, signature []byte) error {
 		return nil
 	}
 	return errors.New("error validating signature")
-}
-
-func packTableItemFromConfig(config analysis.PackConfig) *packTableItem {
-	item := packTableItem{
-		Description: config.Description,
-		DisplayName: config.DisplayName,
-		ID:          config.PackID,
-		Type:        models.DetectionType(strings.ToUpper(config.AnalysisType)),
-	}
-	var detectionPattern models.DetectionPattern
-	if config.DetectionPattern.IDs != nil {
-		detectionPattern.IDs = config.DetectionPattern.IDs
-	}
-	item.DetectionPattern = detectionPattern
-	return &item
 }
