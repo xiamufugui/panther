@@ -48,7 +48,9 @@ type CWEmbeddedMetricsManager struct {
 	stream *jsoniter.Stream
 	// Function that return the current time in milliseconds
 	// Can be overwritten in unit tests
-	timeFunc func() int64
+	timeFunc      func() int64
+	metricsBuf    []Metric
+	dimensionsBuf [][]string
 }
 
 // New returns a CWEmbeddedMetricsManager object that may be used to create metrics.
@@ -111,15 +113,16 @@ func (c *CWEmbeddedMetricsManager) Sync() error {
 // It will writer the metrics in the Embedded Metric Format
 // https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format_Specification.html
 func (c *CWEmbeddedMetricsManager) sync() ([]byte, error) {
-	var metrics []Metric
-	var dimensions [][]string
-
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
 	// Clear jsoniter stream buffer
 	c.stream.Reset(nil)
 	c.stream.Error = nil
 
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
+	// Reusing slices to avoid extra allocations
+	c.metricsBuf = c.metricsBuf[:0]
+	c.dimensionsBuf = c.dimensionsBuf[:0]
+
 	c.stream.WriteObjectStart()
 
 	c.counters.Reset().Walk(func(name string, dms DimensionValues, values []float64) bool {
@@ -138,15 +141,15 @@ func (c *CWEmbeddedMetricsManager) sync() ([]byte, error) {
 			c.stream.WriteMore()
 		}
 
-		metrics = append(metrics, Metric{Name: name, Unit: "Count"})
-		dimensions = append(dimensions, dimensionNames(dms...))
+		c.metricsBuf = append(c.metricsBuf, Metric{Name: name, Unit: "Count"})
+		c.dimensionsBuf = append(c.dimensionsBuf, dimensionNames(dms...))
 
 		return true
 	})
 
 	// If there are no metrics to be reported
 	// Don't log anything
-	if len(metrics) == 0 {
+	if len(c.metricsBuf) == 0 {
 		return nil, nil
 	}
 
@@ -156,8 +159,8 @@ func (c *CWEmbeddedMetricsManager) sync() ([]byte, error) {
 		CloudWatchMetrics: []MetricDirectiveObject{
 			{
 				Namespace:  namespace,
-				Dimensions: dimensions,
-				Metrics:    metrics,
+				Dimensions: c.dimensionsBuf,
+				Metrics:    c.metricsBuf,
 			},
 		},
 	}
