@@ -99,26 +99,27 @@ func (c *CWEmbeddedMetricsManager) Run(ctx context.Context, interval time.Durati
 // It will writer the metrics in the Embedded Metric Format
 // https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format_Specification.html
 func (c *CWEmbeddedMetricsManager) Sync() error {
-	data, ok := c.sync()
-	if !ok {
-		return nil
+	data, err := c.sync()
+	if err != nil {
+		return err
 	}
-	_, err := c.writer.Write(data)
+	_, err = c.writer.Write(data)
 	return err
 }
 
 // Syncs metrics to the underlying system
 // It will writer the metrics in the Embedded Metric Format
 // https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format_Specification.html
-func (c *CWEmbeddedMetricsManager) sync() ([]byte, bool) {
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
-
+func (c *CWEmbeddedMetricsManager) sync() ([]byte, error) {
 	var metrics []Metric
 	var dimensions [][]string
 
 	// Clear jsoniter stream buffer
 	c.stream.Reset(nil)
+	c.stream.Error = nil
+
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
 	c.stream.WriteObjectStart()
 
 	c.counters.Reset().Walk(func(name string, dms DimensionValues, values []float64) bool {
@@ -146,7 +147,7 @@ func (c *CWEmbeddedMetricsManager) sync() ([]byte, bool) {
 	// If there are no metrics to be reported
 	// Don't log anything
 	if len(metrics) == 0 {
-		return nil, false
+		return nil, nil
 	}
 
 	const namespace = "Panther"
@@ -167,7 +168,7 @@ func (c *CWEmbeddedMetricsManager) sync() ([]byte, bool) {
 	c.stream.WriteObjectEnd()
 	c.stream.WriteRaw("\n")
 
-	return c.stream.Buffer(), true
+	return c.stream.Buffer(), c.stream.Error
 }
 
 func sum(a []float64) float64 {
