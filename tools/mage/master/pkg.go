@@ -137,7 +137,7 @@ func (p packager) template(path string) (string, error) {
 
 // Each of the build/pkg workers runs this loop, processing one CloudFormation resource at a time.
 // TODO - consider triggering the go + docker build from here rather than walking source tree
-func (p packager) resourceWorker(path string, id int, resources chan cfnResource, results chan cfnResource) {
+func (p packager) resourceWorker(path string, id int, resources <-chan cfnResource, results chan<- cfnResource) {
 	for r := range resources {
 		rType := r.fields["Type"].(string)
 
