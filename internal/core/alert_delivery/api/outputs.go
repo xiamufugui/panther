@@ -132,6 +132,9 @@ func getOutputsBySeverity(alert *deliveryModels.Alert, outputs []*outputModels.A
 	return alertOutputs
 }
 
+// filterOutputsByAlertType - returns a list of outputs that match the type specified in the alert.
+// Note: the output.AlertTypes field will always contain a list of at least 1 type as it is backfilled in
+// the outputs API.
 func filterOutputsByAlertType(alert *deliveryModels.Alert, outputs []*outputModels.AlertOutput) []*outputModels.AlertOutput {
 	alertOutputs := []*outputModels.AlertOutput{}
 	for _, output := range outputs {

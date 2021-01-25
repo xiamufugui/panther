@@ -109,10 +109,14 @@ func redactOutput(outputConfig *models.OutputConfig) {
 	}
 }
 
+// configureOutputFallbacks - function used to ensure backwards compatibility by backfilling previously missing fields
 func configureOutputFallbacks(alertOutput *models.AlertOutput) {
+	// Backfill an empty list to contain all the supported types.
 	if len(alertOutput.AlertTypes) == 0 {
 		alertOutput.AlertTypes = []string{deliveryModels.RuleType, deliveryModels.RuleErrorType, deliveryModels.PolicyType}
 	}
+
+	// Backfill an empty Opsgenie service region
 	if alertOutput.OutputConfig.Opsgenie != nil {
 		if alertOutput.OutputConfig.Opsgenie.ServiceRegion == "" {
 			alertOutput.OutputConfig.Opsgenie.ServiceRegion = outputs.OpsgenieServiceRegionUS
