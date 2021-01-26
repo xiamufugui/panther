@@ -1810,7 +1810,6 @@ func bulkUploadSuccess(t *testing.T) {
 	assert.Equal(t, *dataModelFromBulkYML, getDataModel)
 }
 
-
 //
 func bulkUploadInvalidPolicyResourceTypesFail(t *testing.T) {
 	t.Parallel()

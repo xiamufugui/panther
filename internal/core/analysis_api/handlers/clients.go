@@ -40,7 +40,6 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 
 	// Imports a hardcoded map[string]struct{} Where keys are the set of valid resource types.
-
 	resourceTypesProvider "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 )
 
@@ -111,7 +110,6 @@ func Setup() {
 
 	refreshLogTypes()
 }
-
 
 /*
 // This is about to get replaced

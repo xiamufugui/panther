@@ -1,5 +1,23 @@
 package aws
 
+/**
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 // Exported set of ResourceTypes. This export was initially created to provide a hardcoded set of
 // valid resource types to the analysis api so we could validate resource types on create/update
 //
@@ -15,33 +33,33 @@ package aws
 // • web/src/constants.ts
 //
 var ResourceTypes = map[string]struct{}{
-  AcmCertificateSchema: struct{}{},
-  CloudFormationStackSchema: struct{}{},
-  CloudTrailSchema: struct{}{},
-  CloudWatchLogGroupSchema: struct{}{},
-  ConfigServiceSchema: struct{}{},
-  DynamoDBTableSchema: struct{}{},
-  Ec2AmiSchema: struct{}{},
-  Ec2InstanceSchema: struct{}{},
-  Ec2NetworkAclSchema: struct{}{},
-  Ec2SecurityGroupSchema: struct{}{},
-  Ec2VolumeSchema: struct{}{},
-  Ec2VpcSchema: struct{}{},
-  EcsClusterSchema: struct{}{},
-  EksClusterSchema: struct{}{},
-  Elbv2LoadBalancerSchema: struct{}{},
-  GuardDutySchema: struct{}{},
-  IAMGroupSchema: struct{}{},
-  IAMPolicySchema: struct{}{},
-  IAMRoleSchema: struct{}{},
-  IAMRootUserSchema: struct{}{},
-  IAMUserSchema: struct{}{},
-  KmsKeySchema: struct{}{},
-  LambdaFunctionSchema: struct{}{},
-  PasswordPolicySchema: struct{}{},
-  RDSInstanceSchema: struct{}{},
-  RedshiftClusterSchema: struct{}{},
-  S3BucketSchema: struct{}{},
-  WafRegionalWebAclSchema: struct{}{},
-  WafWebAclSchema: struct{}{},
+	AcmCertificateSchema:      {},
+	CloudFormationStackSchema: {},
+	CloudTrailSchema:          {},
+	CloudWatchLogGroupSchema:  {},
+	ConfigServiceSchema:       {},
+	DynamoDBTableSchema:       {},
+	Ec2AmiSchema:              {},
+	Ec2InstanceSchema:         {},
+	Ec2NetworkAclSchema:       {},
+	Ec2SecurityGroupSchema:    {},
+	Ec2VolumeSchema:           {},
+	Ec2VpcSchema:              {},
+	EcsClusterSchema:          {},
+	EksClusterSchema:          {},
+	Elbv2LoadBalancerSchema:   {},
+	GuardDutySchema:           {},
+	IAMGroupSchema:            {},
+	IAMPolicySchema:           {},
+	IAMRoleSchema:             {},
+	IAMRootUserSchema:         {},
+	IAMUserSchema:             {},
+	KmsKeySchema:              {},
+	LambdaFunctionSchema:      {},
+	PasswordPolicySchema:      {},
+	RDSInstanceSchema:         {},
+	RedshiftClusterSchema:     {},
+	S3BucketSchema:            {},
+	WafRegionalWebAclSchema:   {},
+	WafWebAclSchema:           {},
 }
