@@ -188,8 +188,7 @@ func TestHTTPSNoTarget(t *testing.T) {
 	//nolint:lll
 	log := `https 2018-08-26T14:17:23.186641Z app/web/09603e7dbbd08802 138.246.253.5:57185 - -1 -1 -1 400 - 25 150` +
 		` "HEAD https://web-1241004567.us-east-1.elb.amazonaws.com:443/ HTTP/1.1" "-" ECDHE-RSA-AES128-GCM-SHA256` +
-		` TLSv1.2 - "-" "-" "arn:aws:acm:us-east-1:111111111111:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c" - 2018-08-26T14:17:23.186641Z "-" "-" "-" "-" "-"
-`
+		` TLSv1.2 - "-" "-" "arn:aws:acm:us-east-1:111111111111:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c" - 2018-08-26T14:17:23.186641Z "-" "-" "-" "-" "-"`
 
 	expectedTime := time.Unix(1535293043, 186641000).UTC()
 
@@ -279,6 +278,17 @@ func TestHTTPSpaceInURI(t *testing.T) {
 	expectedEvent.AppendAnyIPAddress("10.0.0.1")
 
 	checkALBLog(t, log, expectedEvent)
+}
+
+func TestHTTPInvalidRequestParameters(t *testing.T) {
+	log := `http 2018-08-26T14:17:23.186641Z app/web/abcdef123 10.0.0.1:11223 - -1 -1 -1 301 ` +
+		`- 234 391 "GET http://example.com:80/hello" "Hello world" - - - ` +
+		`"Root=1-123456-abcdef1234567" "-" "-" 0 2018-08-26T14:17:23.186641Z "redirect" ` +
+		`"https://example.com/hello world" "-" "-" "-" "-" "-"`
+
+	parser := (&ALBParser{}).New()
+	_, err := parser.Parse(log)
+	require.EqualError(t, err, "expected 3 or more request parameter segments, found: 2")
 }
 
 func TestAlbLogType(t *testing.T) {
