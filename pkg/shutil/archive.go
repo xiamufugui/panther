@@ -57,6 +57,7 @@ func ZipDirectory(root, savefile string, preserveModTime bool) error {
 		if err != nil {
 			return err
 		}
+		defer file.Close()
 		header, err := zip.FileInfoHeader(info)
 		if err != nil {
 			return err
@@ -64,8 +65,6 @@ func ZipDirectory(root, savefile string, preserveModTime bool) error {
 
 		if !preserveModTime {
 			header.Modified = time.Time{}
-			header.ModifiedDate = 0
-			header.ModifiedTime = 0
 		}
 		header.Name, err = filepath.Rel(root, path)
 		if err != nil {

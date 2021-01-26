@@ -45,6 +45,9 @@ type packager struct {
 	// S3 bucket for uploading lambda zipfiles
 	bucket string
 
+	// Pip libraries to pip install for the shared python layer
+	pipLibs []string
+
 	// Max number of worker build/pkg routines running for each template.
 	//
 	// Because nested templates trigger recursive packaging, the _total_ number of workers
@@ -146,8 +149,8 @@ func (p packager) resourceWorker(logPrefix string, resources <-chan cfnResource,
 			results <- p.appsyncSchema(logPrefix, r)
 		case "AWS::CloudFormation::Stack":
 			results <- p.nestedTemplate(logPrefix, r)
-		//case "AWS::Lambda::LayerVersion":
-		//	break
+		case "AWS::Lambda::LayerVersion":
+			results <- p.pythonLayer(logPrefix, r)
 		case "AWS::Serverless::Function":
 			results <- p.lambdaFunction(logPrefix, r)
 		default:
@@ -201,6 +204,47 @@ func (p packager) nestedTemplate(logPrefix string, r cfnResource) cfnResource {
 
 	properties["TemplateURL"] = fmt.Sprintf(
 		"https://s3.%s.amazonaws.com/%s/%s", p.region, p.bucket, s3Key)
+	return r
+}
+
+// Build the shared pip layer (there is only LayerVersion resource today)
+//
+//   Content: ../out/layer.zip
+//
+// will be replaced with
+//
+//   Content:
+//     S3Bucket: panther-dev-...
+//     S3Key: abcd...
+func (p packager) pythonLayer(logPrefix string, r cfnResource) cfnResource {
+	properties := r.fields["Properties"].(map[string]interface{})
+	content, ok := properties["Content"].(string)
+	if !ok {
+		return r // Content is already an object (referencing S3)
+	}
+
+	// We only have one pre-built layer today, and that's not likely to change anytime soon.
+	if r.logicalID != "PythonLayer" {
+		r.err = fmt.Errorf("unexpected LayerVersion %s: wanted only bootstrap_gateway/PythonLayer",
+			r.logicalID)
+		return r
+	}
+
+	p.log.Debugf("%s: packaging AWS::Lambda::LayerVersion %s", logPrefix, r.logicalID)
+
+	if err := build.Layer(p.log, p.pipLibs); err != nil {
+		r.err = err
+		return r
+	}
+
+	// Upload layer zipfile to S3
+	s3Key, _, err := deploy.UploadAsset(p.log, filepath.Join("deployments", content), p.bucket)
+	if err != nil {
+		r.err = err
+		return r
+	}
+
+	properties["Content"] = map[string]string{"S3Bucket": p.bucket, "S3Key": s3Key}
 	return r
 }
 
