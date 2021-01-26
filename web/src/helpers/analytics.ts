@@ -51,6 +51,7 @@ export enum PageViewEnum {
   ComplianceOverview = 'Compliance Overview',
   ListRules = 'List Rules',
   ListAlerts = 'List Alerts',
+  ListDetections = 'List Detections',
   ListLogSources = 'List Log Sources',
   ListDataModels = 'List Data Models',
   Home = 'Home',

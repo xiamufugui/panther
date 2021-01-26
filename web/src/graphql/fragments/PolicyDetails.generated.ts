@@ -27,7 +27,7 @@ export type PolicyDetails = Pick<
   'autoRemediationId' | 'autoRemediationParameters' | 'suppressions' | 'body'
 > & {
   tests?: Types.Maybe<
-    Array<Types.Maybe<Pick<Types.DetectionTestDefinition, 'expectedResult' | 'name' | 'resource'>>>
+    Array<Pick<Types.DetectionTestDefinition, 'expectedResult' | 'name' | 'resource'>>
   >;
 } & PolicySummary;
 

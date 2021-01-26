@@ -16,46 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as Types from '../../../__generated__/schema';
-
-import { GraphQLError } from 'graphql';
-import gql from 'graphql-tag';
-
-export type RuleSummary = Pick<
-  Types.Rule,
-  | 'id'
-  | 'description'
-  | 'displayName'
-  | 'logTypes'
-  | 'threshold'
-  | 'outputIds'
-  | 'runbook'
-  | 'reference'
-  | 'severity'
-  | 'tags'
-  | 'dedupPeriodMinutes'
-  | 'createdAt'
-  | 'lastModified'
-  | 'enabled'
-  | 'analysisType'
->;
-
-export const RuleSummary = gql`
-  fragment RuleSummary on Rule {
-    id
-    description
-    displayName
-    logTypes
-    threshold
-    outputIds
-    runbook
-    reference
-    severity
-    tags
-    dedupPeriodMinutes
-    createdAt
-    lastModified
-    enabled
-    analysisType
-  }
-`;
+export { default } from './Skeleton';

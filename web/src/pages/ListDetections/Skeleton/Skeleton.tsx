@@ -16,46 +16,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as Types from '../../../__generated__/schema';
+import React from 'react';
+import TablePlaceholder from 'Components/TablePlaceholder';
+import { Card, FadeIn } from 'pouncejs';
 
-import { GraphQLError } from 'graphql';
-import gql from 'graphql-tag';
+const ListDetectionsPageSkeleton: React.FC = () => {
+  return (
+    <FadeIn from="bottom">
+      <TablePlaceholder rowCount={1} rowHeight={15} />
+      <Card p={6} mt={5}>
+        <TablePlaceholder />
+      </Card>
+    </FadeIn>
+  );
+};
 
-export type RuleSummary = Pick<
-  Types.Rule,
-  | 'id'
-  | 'description'
-  | 'displayName'
-  | 'logTypes'
-  | 'threshold'
-  | 'outputIds'
-  | 'runbook'
-  | 'reference'
-  | 'severity'
-  | 'tags'
-  | 'dedupPeriodMinutes'
-  | 'createdAt'
-  | 'lastModified'
-  | 'enabled'
-  | 'analysisType'
->;
-
-export const RuleSummary = gql`
-  fragment RuleSummary on Rule {
-    id
-    description
-    displayName
-    logTypes
-    threshold
-    outputIds
-    runbook
-    reference
-    severity
-    tags
-    dedupPeriodMinutes
-    createdAt
-    lastModified
-    enabled
-    analysisType
-  }
-`;
+export default ListDetectionsPageSkeleton;

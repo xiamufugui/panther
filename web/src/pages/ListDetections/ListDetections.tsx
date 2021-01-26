@@ -1,0 +1,121 @@
+/**
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import React from 'react';
+import { Alert, Box, Card, Flex } from 'pouncejs';
+import { extractErrorMessage } from 'Helpers/utils';
+import { DetectionTypeEnum, ListDetectionsInput } from 'Generated/schema';
+import { TableControlsPagination } from 'Components/utils/TableControls';
+import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
+import isEmpty from 'lodash/isEmpty';
+import ErrorBoundary from 'Components/ErrorBoundary';
+import NoResultsFound from 'Components/NoResultsFound';
+import withSEO from 'Hoc/withSEO';
+import useTrackPageView from 'Hooks/useTrackPageView';
+import { PageViewEnum } from 'Helpers/analytics';
+import Panel from 'Components/Panel';
+import RuleCard from 'Components/cards/RuleCard';
+import { RuleSummary } from 'Source/graphql/fragments/RuleSummary.generated';
+import ListDetectionsPageSkeleton from './Skeleton';
+import ListDetectionsPageEmptyDataFallback from './EmptyDataFallback';
+import ListDetectionsBreadcrumbFilters from './ListDetectionsBreadcrumbFilters';
+import ListDetectionsFilters from './ListDetectionsFilters';
+import { useListDetections } from './graphql/listDetections.generated';
+
+const ListDetections = () => {
+  useTrackPageView(PageViewEnum.ListDetections);
+  const { requestParams, updatePagingParams } = useRequestParamsWithPagination<
+    ListDetectionsInput
+  >();
+
+  const { loading, error, data } = useListDetections({
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      input: requestParams,
+    },
+  });
+
+  if (loading && !data) {
+    return <ListDetectionsPageSkeleton />;
+  }
+
+  if (error) {
+    return (
+      <Box mb={6}>
+        <Alert
+          variant="error"
+          title="Couldn't load your rules"
+          description={
+            extractErrorMessage(error) ||
+            'There was an error when performing your request, please contact support@runpanther.io'
+          }
+        />
+      </Box>
+    );
+  }
+
+  // Get query results while protecting against exceptions
+  const detectionItems = data.detections.detections;
+  const pagingData = data.detections.paging;
+
+  if (!detectionItems.length && isEmpty(requestParams)) {
+    return <ListDetectionsPageEmptyDataFallback />;
+  }
+
+  //  Check how many active filters exist by checking how many columns keys exist in the URL
+  return (
+    <React.Fragment>
+      <ListDetectionsBreadcrumbFilters />
+      <ErrorBoundary>
+        <Panel title="Rules" actions={<ListDetectionsFilters />}>
+          <Card as="section" position="relative">
+            <Box position="relative">
+              <Flex direction="column" spacing={2}>
+                {detectionItems.length ? (
+                  detectionItems.map(detection => {
+                    switch (detection.analysisType) {
+                      case DetectionTypeEnum.Rule:
+                        return <RuleCard rule={detection as RuleSummary} key={detection.id} />;
+                      case DetectionTypeEnum.Policy:
+                        return null;
+                      default:
+                        return null;
+                    }
+                  })
+                ) : (
+                  <Box my={8}>
+                    <NoResultsFound />
+                  </Box>
+                )}
+              </Flex>
+            </Box>
+          </Card>
+        </Panel>
+      </ErrorBoundary>
+      <Box my={5}>
+        <TableControlsPagination
+          page={pagingData.thisPage}
+          totalPages={pagingData.totalPages}
+          onPageChange={updatePagingParams}
+        />
+      </Box>
+    </React.Fragment>
+  );
+};
+
+export default withSEO({ title: 'Rules' })(ListDetections);

@@ -46,9 +46,7 @@ export type UpdatePolicy = {
     | 'tags'
   > & {
     tests?: Types.Maybe<
-      Array<
-        Types.Maybe<Pick<Types.DetectionTestDefinition, 'expectedResult' | 'name' | 'resource'>>
-      >
+      Array<Pick<Types.DetectionTestDefinition, 'expectedResult' | 'name' | 'resource'>>
     >;
   };
 };
