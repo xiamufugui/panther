@@ -22,6 +22,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
@@ -33,13 +35,9 @@ import (
 	"github.com/kelseyhightower/envconfig"
 
 	"github.com/panther-labs/panther/internal/core/analysis_api/analysis"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/panther-labs/panther/pkg/awsretry"
-
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
+	"github.com/panther-labs/panther/pkg/awsretry"
+	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 const systemUserID = "00000000-0000-4000-8000-000000000000"
