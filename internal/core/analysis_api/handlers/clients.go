@@ -19,6 +19,9 @@ package handlers
  */
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
@@ -31,9 +34,16 @@ import (
 
 	"github.com/panther-labs/panther/internal/core/analysis_api/analysis"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/panther-labs/panther/pkg/awsretry"
+
+	"github.com/panther-labs/panther/internal/core/logtypesapi"
 )
 
 const systemUserID = "00000000-0000-4000-8000-000000000000"
+const maxRetries = 20 // setting Max Retries to a higher number - we'd like to retry VERY hard before failing.
 
 var (
 	env envConfig
@@ -46,7 +56,16 @@ var (
 
 	policyEngine analysis.PolicyEngine
 	ruleEngine   analysis.RuleEngine
+
+	// logtypesAPI  logtypesapi.LogTypesAPILambdaClient
+	curctx               context.Context
+	lambdaLogTypesClient *lambda.Lambda
+	logtypesAPI          *logtypesapi.LogTypesAPILambdaClient
+
+	logtypeSetMap map[string]interface{}
 )
+
+// var ValidResourceTypes = map[string]struct{}{
 
 type envConfig struct {
 	Bucket               string `required:"true" split_words:"true"`
@@ -65,6 +84,8 @@ type API struct{}
 func Setup() {
 	envconfig.MustProcess("", &env)
 
+	curctx = context.Background()
+
 	awsSession = session.Must(session.NewSession())
 	dynamoClient = dynamodb.New(awsSession)
 	s3Client = s3.New(awsSession)
@@ -74,4 +95,46 @@ func Setup() {
 
 	policyEngine = analysis.NewPolicyEngine(lambdaClient, env.PolicyEngine)
 	ruleEngine = analysis.NewRuleEngine(lambdaClient, env.RulesEngine)
+
+	clientsSession := awsSession.Copy(
+		request.WithRetryer(
+			aws.NewConfig().WithMaxRetries(maxRetries),
+			awsretry.NewConnectionErrRetryer(maxRetries),
+		),
+	)
+	lambdaLogTypesClient = lambda.New(clientsSession)
+	logtypesAPI = &logtypesapi.LogTypesAPILambdaClient{
+		LambdaName: logtypesapi.LambdaName,
+		LambdaAPI:  lambdaLogTypesClient,
+	}
+
+	refreshLogTypes()
+}
+
+func refreshLogTypes() {
+	// Temporary get log types for testing
+	logtypes, err := logtypesAPI.ListAvailableLogTypes(curctx)
+	if err != nil {
+		fmt.Printf(" Got error: %v\n", err)
+	} else {
+		logtypeSetMap = make(map[string]interface{})
+		for _, logtype := range logtypes.LogTypes {
+			logtypeSetMap[logtype] = nil
+		}
+	}
+}
+
+func logtypeIsValid(logtype string) (found bool) {
+	_, found = logtypeSetMap[logtype]
+	return
+}
+
+func validateLogtypeSet(logtypes []string) (err error) {
+	refreshLogTypes()
+	for _, logtype := range logtypes {
+		if !logtypeIsValid(logtype) {
+			return fmt.Errorf("%s", logtype)
+		}
+	}
+	return
 }
