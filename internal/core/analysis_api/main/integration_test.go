@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
@@ -2640,4 +2641,29 @@ func batchDeleteRules(t *testing.T, ruleID ...string) {
 	statusCode, err := apiClient.Invoke(&input, nil)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, statusCode)
+}
+
+// Utility Methods:
+
+// Bulk Data upload helper Zips files in the fsSourcePath to ./<basename(fsSourcePath)>.zip
+// then attempts to upload them to the analysis service
+// BulkZipUploadHelper returns an error because some tests are intended to fail. Acceptable Errors
+// are never expected when managing the files so the test will fail if the error originates from
+// anything besides invoking the service client upload invokation.
+func BulkZipUploadHelper(t *testing.T, fsSourcePath string) (*models.BulkUploadOutput, int, error) {
+	srcPathBaseName := filepath.Base(fsSourcePath)            // Get the base name
+	fsDstName := srcPathBaseName + ".zip"                     // Add the zip extension
+	err := shutil.ZipDirectory(fsSourcePath, fsDstName, true) // Zip the contents source -> dst
+	require.NoError(t, err)
+	zipFile, err := os.Open(fsDstName)
+	require.NoError(t, err)
+	content, err := ioutil.ReadAll(bufio.NewReader(zipFile))
+	require.NoError(t, err)
+	encoded := base64.StdEncoding.EncodeToString(content)
+	// Invoke bulk upload content
+	uploadContent := &models.BulkUploadInput{Data: encoded, UserID: userID}
+	input := models.LambdaInput{BulkUpload: uploadContent}
+	var output models.BulkUploadOutput
+	statusCode, err := apiClient.Invoke(&input, &output)
+	return &output, statusCode, err
 }
