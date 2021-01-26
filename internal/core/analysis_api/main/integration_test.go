@@ -26,11 +26,10 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
-
-	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -45,19 +44,20 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/shutil"
 	"github.com/panther-labs/panther/pkg/testutils"
+	// Getting Test Output:
 )
 
 const (
-	tableName           = "panther-analysis"
+	tableName = "panther-analysis"
 
 	// This is a comment
-	analysesRoot        = "./test_analyses"
+	analysesRoot        = "./bulk_test_resources/test_analyses"
 	analysesZipLocation = "./bulk_upload.zip"
 
-
-
-// 	bulkTestDataDirPath = "./bulk_test_files"
-//	bulkInvalidRule = "./rule_invalid_logtypes.zip"
+	bulkTestDataDirPath         = "./bulk_test_resources"
+	bulkInvalidRuleLogTypeDir   = "rule_invalid_logtype"
+	bulkInvalidDatamodelTypeDir = "datamodel_invalid_logtype"
+	bulkValidDir                = "test_analyses"
 )
 
 var (
@@ -132,12 +132,14 @@ var (
 			},
 		},
 	}
+
+	// was Box.Events
 	dataModelTwo = &models.DataModel{
 		Body:        "def get_source_ip(event): return 'source_ip'\n",
 		Description: "Example LogType Schema",
 		Enabled:     true,
 		ID:          "SecondDataModelTypeAnalysis",
-		LogTypes:    []string{"Box.Events"},
+		LogTypes:    []string{"Box.Event"},
 		Mappings: []models.DataModelMapping{
 			{
 				Name: "source_ip",
@@ -145,12 +147,14 @@ var (
 			},
 		},
 	}
+
+	// Was Box.Events
 	dataModelDisabled = &models.DataModel{
 		Body:        "def get_source_ip(event): return 'source_ip'\n",
 		Description: "Example LogType Schema",
 		Enabled:     false,
 		ID:          "ThirdDataModelTypeAnalysis",
-		LogTypes:    []string{"Box.Events"},
+		LogTypes:    []string{"Box.Event"},
 		Mappings: []models.DataModelMapping{
 			{
 				Name: "source_ip",
@@ -162,7 +166,7 @@ var (
 	dataModelFromBulkYML = &models.DataModel{
 		Enabled:  true,
 		ID:       "Some.Events.DataModel",
-		LogTypes: []string{"Some.Events"},
+		LogTypes: []string{"Fastly.Access"},
 		Mappings: []models.DataModelMapping{
 			{
 				Name: "source_ip",
@@ -273,6 +277,12 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("BulkUploadInvalid", bulkUploadInvalid)
 		t.Run("BulkUploadSuccess", bulkUploadSuccess)
 	})
+
+	t.Run("BulkUploadInvalid", func(t *testing.T) {
+		t.Run("BulkUploadInvalidRuleLogtypeFail", bulkUploadInvalidRuleLogtypeFail)
+		t.Run("BulkUploadInvalidDatamodelLogtypeFail", bulkUploadInvalidDatamodelLogtypeFail)
+	})
+
 	if t.Failed() {
 		return
 	}
@@ -315,6 +325,7 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("DeleteDataModels", deleteDataModels)
 		t.Run("DeleteGlobals", deleteGlobals)
 	})
+
 }
 
 func testPolicyPass(t *testing.T) {
@@ -1130,13 +1141,13 @@ func testFailCreateRuleInvalidLogType(t *testing.T) {
 			Body:               rule.Body,
 			DedupPeriodMinutes: rule.DedupPeriodMinutes,
 			Description:        "--INVALID-LOGTYPES-RULE--",
-			DisplayName: 				"--INVALID-LOGTYPES-RULE--",
+			DisplayName:        "--INVALID-LOGTYPES-RULE--",
 			Enabled:            rule.Enabled,
 			ID:                 "AWS.CloudTrail.ConsoleLoginInvalidRule",
-			LogTypes: 					logTypes,
-			OutputIDs: 					[]string{},
+			LogTypes:           logTypes,
+			OutputIDs:          []string{},
 			Severity:           rule.Severity,
-			Tags: 							tags,
+			Tags:               tags,
 			Threshold:          rule.Threshold,
 			UserID:             "test-panther-user",
 		},
@@ -1218,7 +1229,7 @@ func createDataModel(t *testing.T) {
 
 // Verify Fail on create data model where data model LogTypes contains an invalid log type.
 func testFailCreateDataModelInvalidLogType(t *testing.T) {
- 	invalidDataModel := &models.CreateDataModelInput{
+	invalidDataModel := &models.CreateDataModelInput{
 		Body:        "def get_source_ip(event): return 'source_ip'\n",
 		Description: "A Data Model with an invalid log type for testing",
 		DisplayName: "INVALIDDATAMODEL",
@@ -1599,6 +1610,25 @@ func suppressSuccess(t *testing.T) {
 	assert.Equal(t, []string{"and-another", "new-suppression", "panther.*"}, result.Suppressions)
 }
 
+// Zips all the files in the source directory path to the fsSourcePath (with .zip extension) and
+// executes a bulk upload
+func BulkZipUploadHelper(t *testing.T, fsSourcePath, fsDstName string) (*models.BulkUploadOutput, int, error) {
+	require.NoError(t, shutil.ZipDirectory(fsSourcePath, fsDstName, true))
+	zipFile, err := os.Open(fsDstName)
+	require.NoError(t, err)
+	content, err := ioutil.ReadAll(bufio.NewReader(zipFile))
+	require.NoError(t, err)
+
+	encoded := base64.StdEncoding.EncodeToString(content)
+	input := models.LambdaInput{
+		BulkUpload: &models.BulkUploadInput{Data: encoded, UserID: userID},
+	}
+	var result models.BulkUploadOutput
+	// statusCode, err := apiClient.Invoke(&input, &result)
+	statusCode, err := apiClient.Invoke(&input, &result)
+	return &result, statusCode, err
+}
+
 func bulkUploadInvalid(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{
@@ -1611,7 +1641,30 @@ func bulkUploadInvalid(t *testing.T) {
 
 func bulkUploadSuccess(t *testing.T) {
 	t.Parallel()
-	require.NoError(t, shutil.ZipDirectory(analysesRoot, analysesZipLocation, true))
+
+	expected := models.BulkUploadOutput{
+		ModifiedPolicies: 1,
+		NewPolicies:      2,
+		TotalPolicies:    3,
+
+		ModifiedRules: 0,
+		NewRules:      1,
+		TotalRules:    1,
+
+		ModifiedGlobals: 0,
+		NewGlobals:      0,
+		TotalGlobals:    0,
+
+		ModifiedDataModels: 0,
+		NewDataModels:      1,
+		TotalDataModels:    1,
+	}
+	rootPath := analysesRoot
+	dstPath := analysesZipLocation
+	cloudpath := path.Join(analysesRoot, "policy_aws_cloudtrail_log_validation_enabled.py")
+
+	// Get the zip file contents
+	require.NoError(t, shutil.ZipDirectory(rootPath, dstPath, true))
 	zipFile, err := os.Open(analysesZipLocation)
 	require.NoError(t, err)
 	content, err := ioutil.ReadAll(bufio.NewReader(zipFile))
@@ -1626,55 +1679,47 @@ func bulkUploadSuccess(t *testing.T) {
 	}
 	var result models.BulkUploadOutput
 	statusCode, err := apiClient.Invoke(&input, &result)
+
+	// Check the response
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, statusCode)
-
-	expected := models.BulkUploadOutput{
-		ModifiedPolicies: 1,
-		NewPolicies:      2,
-		TotalPolicies:    3,
-
-		ModifiedRules: 0,
-		NewRules:      1,
-		TotalRules:    1,
-
-		ModifiedGlobals: 0,
-		NewGlobals:      0,
-		TotalGlobals:    0,
-
-		ModifiedDataModels: 0,
-		NewDataModels:      1,
-		TotalDataModels:    1,
-	}
 	require.Equal(t, expected, result)
 
 	// Verify the existing policy was updated - the created fields were unchanged
 	input = models.LambdaInput{
 		GetPolicy: &models.GetPolicyInput{ID: policy.ID},
 	}
+
+	// Get the policy by the policy id
 	var getResult models.Policy
 	_, err = apiClient.Invoke(&input, &getResult)
 	require.NoError(t, err)
 
 	assert.True(t, getResult.LastModified.After(policy.LastModified))
-	assert.NotEqual(t, getResult.VersionID, policy.VersionID)
 	assert.NotEmpty(t, getResult.VersionID)
+	assert.NotEqual(t, getResult.VersionID, policy.VersionID)
 
+	// Build the model we will compare against our retrievedPolicy
 	expectedPolicy := *policy
+
 	expectedPolicy.AutoRemediationID = "fix-it"
 	expectedPolicy.AutoRemediationParameters = map[string]string{"hello": "goodbye"}
-	expectedPolicy.CreatedAt = getResult.CreatedAt
-	expectedPolicy.CreatedBy = getResult.CreatedBy
 	expectedPolicy.Description = "Matches every resource\n"
-	expectedPolicy.LastModifiedBy = getResult.LastModifiedBy
-	expectedPolicy.LastModified = getResult.LastModified
 	expectedPolicy.OutputIDs = []string{}
 	expectedPolicy.ResourceTypes = []string{"AWS.S3.Bucket"}
 	expectedPolicy.Suppressions = []string{"panther.*"}
 	expectedPolicy.Tags = []string{}
-	expectedPolicy.Tests = expectedPolicy.Tests[:1]
 	expectedPolicy.Tests[0].Resource = `{"Bucket":"empty"}`
+
+	expectedPolicy.CreatedAt = getResult.CreatedAt
+	expectedPolicy.CreatedBy = getResult.CreatedBy
+	expectedPolicy.LastModifiedBy = getResult.LastModifiedBy
+	expectedPolicy.LastModified = getResult.LastModified
 	expectedPolicy.VersionID = getResult.VersionID
+
+	expectedPolicy.Tests = expectedPolicy.Tests[:1]
+
+	// Check the expected policy against the retrieved policy
 	assert.Equal(t, expectedPolicy, getResult)
 
 	// Now reset global policy so subsequent tests have a reference
@@ -1683,13 +1728,14 @@ func bulkUploadSuccess(t *testing.T) {
 	// Verify newly created policy #1
 	input.GetPolicy.ID = policyFromBulk.ID
 	_, err = apiClient.Invoke(&input, &policyFromBulk)
-	require.NoError(t, err)
 
+	require.NoError(t, err)
 	assert.NotZero(t, policyFromBulk.CreatedAt)
 	assert.NotZero(t, policyFromBulk.LastModified)
 
-	cloudtrailBody, err := ioutil.ReadFile(path.Join(analysesRoot, "policy_aws_cloudtrail_log_validation_enabled.py"))
+	cloudtrailBody, err := ioutil.ReadFile(cloudpath)
 	require.NoError(t, err)
+
 	assert.Equal(t, policyFromBulk.Body, string(cloudtrailBody))
 	assert.Len(t, policyFromBulk.Tests, 2)
 
@@ -1751,157 +1797,39 @@ func bulkUploadSuccess(t *testing.T) {
 	dataModelFromBulkYML.LastModifiedBy = getDataModel.LastModifiedBy
 	dataModelFromBulkYML.VersionID = getDataModel.VersionID
 	assert.Equal(t, *dataModelFromBulkYML, getDataModel)
+
 }
 
 // validate fail of bulk upload where upload zip contains a rule with an invalid log type
-func bulkUploadInvalidRuleLogTypeFail(t *testing.T) {
+func bulkUploadInvalidRuleLogtypeFail(t *testing.T) {
 	t.Parallel()
+	// zipFsSourcePath is the path where the zip contents are located. All files will be zipped
+	zipFsSourcePath := filepath.Join(bulkTestDataDirPath, bulkInvalidRuleLogTypeDir)
+	fsDestinationName := bulkInvalidRuleLogTypeDir + ".zip"
 
-	//
- 	dataSrcPath := analysesRoot
+	// Zip all the files in source path to destination path and
+	result, _, err := BulkZipUploadHelper(t, zipFsSourcePath, fsDestinationName)
+	require.Error(t, err)
 
-	// dataLocationPath := nil
+	// This is an empty BulkUpload Output
+	expected := models.BulkUploadOutput{}
+	require.Equal(t, expected, *result)
+}
 
-	require.NoError(t, shutil.ZipDirectory(analysesRoot, analysesZipLocation, true))
-	zipFile, err := os.Open(analysesZipInvalidRuleLocation)
-	require.NoError(t, err)
-	content, err := ioutil.ReadAll(bufio.NewReader(zipFile))
-	require.NoError(t, err)
+// validate fail of bulk upload where upload zip contains a rule with an invalid log type
+func bulkUploadInvalidDatamodelLogtypeFail(t *testing.T) {
+	t.Parallel()
+	// zipFsSourcePath is the path where the zip contents are located. All files will be zipped
+	ruleInvalidLTZipPath := filepath.Join(bulkTestDataDirPath, bulkInvalidDatamodelTypeDir)
+	ruleInvalidDestinationName := bulkInvalidDatamodelTypeDir + ".zip"
 
-	// cleaning up added Rule
-	defer batchDeleteRules(t, "Rule.Always.True")
+	// Zip all the files in source path to destination path and
+	result, _, err := BulkZipUploadHelper(t, ruleInvalidLTZipPath, ruleInvalidDestinationName)
+	require.Error(t, err) // Invalid rule logtypes test. Expect an error
 
-	encoded := base64.StdEncoding.EncodeToString(content)
-	input := models.LambdaInput{
-		BulkUpload: &models.BulkUploadInput{Data: encoded, UserID: userID},
-	}
-	var result models.BulkUploadOutput
-	statusCode, err := apiClient.Invoke(&input, &result)
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusOK, statusCode)
-
-	expected := models.BulkUploadOutput{
-		ModifiedPolicies: 1,
-		NewPolicies:      2,
-		TotalPolicies:    3,
-
-		ModifiedRules: 0,
-		NewRules:      1,
-		TotalRules:    1,
-
-		ModifiedGlobals: 0,
-		NewGlobals:      0,
-		TotalGlobals:    0,
-
-		ModifiedDataModels: 0,
-		NewDataModels:      1,
-		TotalDataModels:    1,
-	}
-	require.Equal(t, expected, result)
-
-	// Verify the existing policy was updated - the created fields were unchanged
-	input = models.LambdaInput{
-		GetPolicy: &models.GetPolicyInput{ID: policy.ID},
-	}
-	var getResult models.Policy
-	_, err = apiClient.Invoke(&input, &getResult)
-	require.NoError(t, err)
-
-	assert.True(t, getResult.LastModified.After(policy.LastModified))
-	assert.NotEqual(t, getResult.VersionID, policy.VersionID)
-	assert.NotEmpty(t, getResult.VersionID)
-
-	expectedPolicy := *policy
-	expectedPolicy.AutoRemediationID = "fix-it"
-	expectedPolicy.AutoRemediationParameters = map[string]string{"hello": "goodbye"}
-	expectedPolicy.CreatedAt = getResult.CreatedAt
-	expectedPolicy.CreatedBy = getResult.CreatedBy
-	expectedPolicy.Description = "Matches every resource\n"
-	expectedPolicy.LastModifiedBy = getResult.LastModifiedBy
-	expectedPolicy.LastModified = getResult.LastModified
-	expectedPolicy.OutputIDs = []string{}
-	expectedPolicy.ResourceTypes = []string{"AWS.S3.Bucket"}
-	expectedPolicy.Suppressions = []string{"panther.*"}
-	expectedPolicy.Tags = []string{}
-	expectedPolicy.Tests = expectedPolicy.Tests[:1]
-	expectedPolicy.Tests[0].Resource = `{"Bucket":"empty"}`
-	expectedPolicy.VersionID = getResult.VersionID
-	assert.Equal(t, expectedPolicy, getResult)
-
-	// Now reset global policy so subsequent tests have a reference
-	policy = &getResult
-
-	// Verify newly created policy #1
-	input.GetPolicy.ID = policyFromBulk.ID
-	_, err = apiClient.Invoke(&input, &policyFromBulk)
-	require.NoError(t, err)
-
-	assert.NotZero(t, policyFromBulk.CreatedAt)
-	assert.NotZero(t, policyFromBulk.LastModified)
-
-	cloudtrailBody, err := ioutil.ReadFile(path.Join(analysesRoot, "policy_aws_cloudtrail_log_validation_enabled.py"))
-	require.NoError(t, err)
-	assert.Equal(t, policyFromBulk.Body, string(cloudtrailBody))
-	assert.Len(t, policyFromBulk.Tests, 2)
-
-	// Verify newly created policy #2
-	input.GetPolicy.ID = policyFromBulkJSON.ID
-	_, err = apiClient.Invoke(&input, &policyFromBulkJSON)
-	require.NoError(t, err)
-	assert.Equal(t, "Matches every resource", policyFromBulkJSON.Description)
-	assert.Equal(t, "Test:Policy:JSON", policyFromBulkJSON.ID)
-
-	// Verify newly created Rule
-	expectedNewRule := models.Rule{
-		DedupPeriodMinutes: 480,
-		Description:        "Test rule",
-		DisplayName:        "Rule Always True display name",
-		Enabled:            true,
-		ID:                 "Rule.Always.True",
-		LogTypes:           []string{"CiscoUmbrella.DNS"},
-		OutputIDs:          []string{},
-		Reports:            map[string][]string{},
-		Runbook:            "Test runbook",
-		Severity:           compliancemodels.SeverityLow,
-		Tags:               []string{"DNS"},
-		Tests:              []models.UnitTest{},
-		Threshold:          42,
-	}
-
-	input = models.LambdaInput{
-		GetRule: &models.GetRuleInput{ID: expectedNewRule.ID},
-	}
-	var getRule models.Rule
-	_, err = apiClient.Invoke(&input, &getRule)
-	require.NoError(t, err)
-
-	// Setting the below to the value received
-	// since we have no control over them
-	expectedNewRule.CreatedAt = getRule.CreatedAt
-	expectedNewRule.CreatedBy = getRule.CreatedBy
-	expectedNewRule.LastModified = getRule.LastModified
-	expectedNewRule.LastModifiedBy = getRule.LastModifiedBy
-	expectedNewRule.VersionID = getRule.VersionID
-	expectedNewRule.Body = getRule.Body
-	assert.Equal(t, expectedNewRule, getRule)
-	// Checking if the body contains the provide `rule` function (the body contains licence information that we are not interested in)
-	assert.Contains(t, getRule.Body, "def rule(event):\n    return True\n")
-
-	// Verify newly created DataModel
-	input = models.LambdaInput{
-		GetDataModel: &models.GetDataModelInput{ID: dataModelFromBulkYML.ID},
-	}
-	var getDataModel models.DataModel
-	_, err = apiClient.Invoke(&input, &getDataModel)
-	require.NoError(t, err)
-
-	// setting updated values
-	dataModelFromBulkYML.CreatedAt = getDataModel.CreatedAt
-	dataModelFromBulkYML.CreatedBy = getDataModel.CreatedBy
-	dataModelFromBulkYML.LastModified = getDataModel.LastModified
-	dataModelFromBulkYML.LastModifiedBy = getDataModel.LastModifiedBy
-	dataModelFromBulkYML.VersionID = getDataModel.VersionID
-	assert.Equal(t, *dataModelFromBulkYML, getDataModel)
+	// Empty BulkUpload Output. All fields initialized to zero value
+	expected := models.BulkUploadOutput{}
+	require.Equal(t, expected, *result)
 }
 
 func listPolicies(t *testing.T) {

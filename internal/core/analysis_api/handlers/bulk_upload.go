@@ -216,7 +216,7 @@ func extractZipFile(input *models.BulkUploadInput) (map[string]*tableItem, error
 					}
 				}
 			}
-			// ensure only one data model is enabled per LogType (ResourceType)
+			// ensure only one data model is enabled per LogType (ResourceType) and log type is valid log type
 			err = validateUploadedDataModel(analysisItem)
 			if err != nil {
 				return nil, err
@@ -291,7 +291,6 @@ func tableItemFromConfig(config analysis.Config) *tableItem {
 		} else {
 			item.DedupPeriodMinutes = config.DedupPeriodMinutes
 		}
-
 		// If there is no value set, default to 1
 		if config.Threshold == 0 {
 			item.Threshold = defaultRuleThreshold
@@ -374,6 +373,13 @@ func validateUploadedDataModel(item *tableItem) error {
 	if len(item.ResourceTypes) > 1 {
 		return errors.New("only one LogType may be specified per DataModel")
 	}
+
+	// We could call the refresh before we traverse the set of new rules. The code you see here
+	// refeshes the log types on each validateLogtypeSet call...
+	if err := validateLogtypeSet(item.ResourceTypes); err != nil {
+		return fmt.Errorf("DataModel contains invalid log type: %s", err.Error())
+	}
+
 	isEnabled, err := isSingleDataModelEnabled(item.ID, item.Enabled, item.ResourceTypes)
 	if err != nil {
 		return err
@@ -388,11 +394,20 @@ func validateUploadedDataModel(item *tableItem) error {
 func validateUploadedPolicy(item *tableItem) error {
 	switch item.Type {
 	case models.TypeGlobal:
+		if len(item.ResourceTypes) > 1 {
+			return errors.New("only one LogType may be specified per DataModel")
+		}
 		item.Severity = compliancemodels.SeverityInfo
 	case models.TypeDataModel:
 		item.Severity = compliancemodels.SeverityInfo
-	case models.TypePolicy, models.TypeRule:
+	case models.TypePolicy:
 		break
+	case models.TypeRule:
+		// We could call the refresh before we traverse the set of new rules. The code you see here
+		// refeshes the log types on each validateLogtypeSet call...
+		if err := validateLogtypeSet(item.ResourceTypes); err != nil {
+			return fmt.Errorf("Rule contains invalid log type: %s", err.Error())
+		}
 	default:
 		return fmt.Errorf("policy ID %s is invalid: unknown analysis type %s", item.ID, item.Type)
 	}

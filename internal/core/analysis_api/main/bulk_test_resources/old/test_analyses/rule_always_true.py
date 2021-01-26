@@ -14,14 +14,5 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-AnalysisType: DataModel
-Name: My Data Model
-LogTypes:
-  - Some.Events
-DataModelID: Some.Events.DataModel
-Enabled: true
-Mappings:
-  - Name: source_ip
-    Path: ipAddress
-  - Name: dest_ip
-    Path: destAddress
+def rule(event):
+    return True
