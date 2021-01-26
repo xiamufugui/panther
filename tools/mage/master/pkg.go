@@ -258,9 +258,9 @@ func (p packager) lambdaFunction(logPrefix string, r cfnResource) cfnResource {
 
 	p.log.Debugf("%s: packaging AWS::Serverless::Function %s", logPrefix, r.logicalID)
 
-	runtime := properties["Runtime"].(string)
-	switch runtime {
-	case "go1.x":
+	// Build/find the directory which needs to be zipped
+	var zipDir string
+	if properties["Runtime"].(string) == "go1.x" {
 		// compile Go binary
 		bin, err := build.LambdaPackage(filepath.Join("deployments", codeURI))
 		if err != nil {
@@ -268,27 +268,27 @@ func (p packager) lambdaFunction(logPrefix string, r cfnResource) cfnResource {
 			return r
 		}
 
-		// Create zipfile with only the binary as the content.
 		// bin path looks like "out/bin/core/custom_resources/main"
-		binDir := filepath.Dir(bin)
-		zipPath := filepath.Join("out", "lambda", filepath.Base(filepath.Dir(binDir))+".zip")
-		if err = shutil.ZipDirectory(binDir, zipPath, false); err != nil {
-			r.err = err
-			return r
-		}
-
-		// Upload lambda deployment pkg to S3
-		s3Key, _, err := deploy.UploadAsset(p.log, zipPath, p.bucket)
-		if err != nil {
-			r.err = err
-			return r
-		}
-
-		properties["CodeUri"] = fmt.Sprintf("s3://%s/%s", p.bucket, s3Key)
-
-	default:
-		r.err = fmt.Errorf("unsupported lambda runtime %s; update mage pkg code", runtime)
+		zipDir = filepath.Dir(bin)
+	} else {
+		// python functions zip the entire codeURI directory
+		zipDir = filepath.Join("deployments", codeURI)
 	}
 
+	fnName := properties["FunctionName"].(string)
+	zipPath := filepath.Join("out", "lambda", fnName+".zip")
+	if err := shutil.ZipDirectory(zipDir, zipPath, false); err != nil {
+		r.err = err
+		return r
+	}
+
+	// Upload lambda deployment pkg to S3
+	s3Key, _, err := deploy.UploadAsset(p.log, zipPath, p.bucket)
+	if err != nil {
+		r.err = err
+		return r
+	}
+
+	properties["CodeUri"] = fmt.Sprintf("s3://%s/%s", p.bucket, s3Key)
 	return r
 }
