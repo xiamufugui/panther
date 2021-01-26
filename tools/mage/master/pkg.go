@@ -28,6 +28,8 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v2"
 
+	"github.com/panther-labs/panther/pkg/shutil"
+	"github.com/panther-labs/panther/tools/mage/build"
 	"github.com/panther-labs/panther/tools/mage/deploy"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
@@ -63,7 +65,6 @@ type cfnResource struct {
 	err error
 }
 
-// TODO - expose a 'mage pkg' command?
 // Recursively package assets in a CFN template, uploading local filepaths to S3.
 //
 // This offers essentially the same functionality as 'sam package' or 'aws cloudformation package',
@@ -99,7 +100,7 @@ func (p packager) template(path string) (string, error) {
 		workers = len(resources)
 	}
 	for w := 1; w <= workers; w++ {
-		go p.resourceWorker(path, w, jobs, results)
+		go p.resourceWorker(fmt.Sprintf("[%d] %s", w, path), jobs, results)
 	}
 
 	// Queue a job for each resource in the template
@@ -136,58 +137,114 @@ func (p packager) template(path string) (string, error) {
 }
 
 // Each of the build/pkg workers runs this loop, processing one CloudFormation resource at a time.
-// TODO - consider triggering the go + docker build from here rather than walking source tree
-func (p packager) resourceWorker(path string, id int, resources <-chan cfnResource, results chan<- cfnResource) {
+func (p packager) resourceWorker(logPrefix string, resources <-chan cfnResource, results chan<- cfnResource) {
 	for r := range resources {
 		rType := r.fields["Type"].(string)
 
 		switch rType {
 		case "AWS::AppSync::GraphQLSchema":
-			properties := r.fields["Properties"].(map[string]interface{})
-			schemaPath := properties["DefinitionS3Location"].(string)
-			if strings.HasPrefix(schemaPath, "s3://") {
-				break // already an S3 path
-			}
-
-			// Upload schema to S3
-			s3Key, _, err := deploy.UploadAsset(p.log, filepath.Join("deployments", schemaPath), p.bucket)
-			if err != nil {
-				r.err = err
-				break
-			}
-			properties["DefinitionS3Location"] = fmt.Sprintf("s3://%s/%s", p.bucket, s3Key)
-
+			results <- p.appsyncSchema(logPrefix, r)
 		case "AWS::CloudFormation::Stack":
-			properties := r.fields["Properties"].(map[string]interface{})
-			nestedPath := properties["TemplateURL"].(string)
-			if strings.HasPrefix(nestedPath, "https://") {
-				break // template URL is already an S3 path
-			}
-
-			// Recursively package the nested stack
-			p.log.Debugf("[%d] %s: packaging %s %s", id, path, rType, r.logicalID)
-			pkgPath, err := p.template(filepath.Join("deployments", nestedPath))
-			if err != nil {
-				r.err = err
-				break
-			}
-
-			// Upload packaged template to S3
-			s3Key, _, err := deploy.UploadAsset(p.log, pkgPath, p.bucket)
-			if err != nil {
-				r.err = err
-				break
-			}
-			properties["TemplateURL"] = fmt.Sprintf(
-				"https://s3.%s.amazonaws.com/%s/%s", p.region, p.bucket, s3Key)
-
-		case "AWS::Lambda::LayerVersion":
-			break // TODO
-
+			results <- p.nestedTemplate(logPrefix, r)
+		//case "AWS::Lambda::LayerVersion":
+		//	break
 		case "AWS::Serverless::Function":
-			break // TODO
+			results <- p.lambdaFunction(logPrefix, r)
+		default:
+			results <- r
+		}
+	}
+}
+
+// Upload AppSync GraphQL schema to S3 - returns resource with modified DefinitionS3Location property
+func (p packager) appsyncSchema(logPrefix string, r cfnResource) cfnResource {
+	properties := r.fields["Properties"].(map[string]interface{})
+	schemaPath := properties["DefinitionS3Location"].(string)
+	if strings.HasPrefix(schemaPath, "s3://") {
+		return r // already an S3 path
+	}
+
+	// Upload schema to S3
+	p.log.Debugf("%s: packaging AWS::Appsync::GraphQLSchema %s", logPrefix, r.logicalID)
+	s3Key, _, err := deploy.UploadAsset(p.log, filepath.Join("deployments", schemaPath), p.bucket)
+	if err != nil {
+		r.err = err
+		return r
+	}
+
+	properties["DefinitionS3Location"] = fmt.Sprintf("s3://%s/%s", p.bucket, s3Key)
+	return r
+}
+
+// Upload nested CFN template to S3 - returns resource with modified TemplateURL property
+func (p packager) nestedTemplate(logPrefix string, r cfnResource) cfnResource {
+	properties := r.fields["Properties"].(map[string]interface{})
+	nestedPath := properties["TemplateURL"].(string)
+	if strings.HasPrefix(nestedPath, "https://") {
+		return r // template URL is already an S3 path
+	}
+
+	// Recursively package the nested stack
+	p.log.Debugf("%s: packaging AWS::CloudFormation::Stack %s", logPrefix, r.logicalID)
+	pkgPath, err := p.template(filepath.Join("deployments", nestedPath))
+	if err != nil {
+		r.err = err
+		return r
+	}
+
+	// Upload packaged template to S3
+	s3Key, _, err := deploy.UploadAsset(p.log, pkgPath, p.bucket)
+	if err != nil {
+		r.err = err
+		return r
+	}
+
+	properties["TemplateURL"] = fmt.Sprintf(
+		"https://s3.%s.amazonaws.com/%s/%s", p.region, p.bucket, s3Key)
+	return r
+}
+
+// Compile lambda zipfile and upload to S3 - returns resource with modified CodeUri property
+func (p packager) lambdaFunction(logPrefix string, r cfnResource) cfnResource {
+	properties := r.fields["Properties"].(map[string]interface{})
+	codeURI := properties["CodeUri"].(string)
+	if strings.HasPrefix(codeURI, "s3://") {
+		return r // codeURI is already an S3 path
+	}
+
+	p.log.Debugf("%s: packaging AWS::Serverless::Function %s", logPrefix, r.logicalID)
+
+	runtime := properties["Runtime"].(string)
+	switch runtime {
+	case "go1.x":
+		// compile Go binary
+		bin, err := build.LambdaPackage(filepath.Join("deployments", codeURI))
+		if err != nil {
+			r.err = err
+			return r
 		}
 
-		results <- r
+		// Create zipfile with only the binary as the content.
+		// bin path looks like "out/bin/core/custom_resources/main"
+		binDir := filepath.Dir(bin)
+		zipPath := filepath.Join("out", "lambda", filepath.Base(filepath.Dir(binDir))+".zip")
+		if err = shutil.ZipDirectory(binDir, zipPath, false); err != nil {
+			r.err = err
+			return r
+		}
+
+		// Upload lambda deployment pkg to S3
+		s3Key, _, err := deploy.UploadAsset(p.log, zipPath, p.bucket)
+		if err != nil {
+			r.err = err
+			return r
+		}
+
+		properties["CodeUri"] = fmt.Sprintf("s3://%s/%s", p.bucket, s3Key)
+
+	default:
+		r.err = fmt.Errorf("unsupported lambda runtime %s; update mage pkg code", runtime)
 	}
+
+	return r
 }

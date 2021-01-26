@@ -57,7 +57,7 @@ func Deploy() error {
 		return err
 	}
 
-	log.Infof("deploying %s %s (%s) to %s (%s) as stack '%s'", rootTemplate,
+	log.Infof("deploying %s %s (%s) to account %s (%s) as stack '%s'", rootTemplate,
 		util.Semver(), util.CommitSha(), clients.AccountID(), clients.Region(), config.RootStackName)
 
 	pkg := packager{log: log, region: clients.Region(), bucket: outputs["SourceBucket"], numWorkers: 4}
