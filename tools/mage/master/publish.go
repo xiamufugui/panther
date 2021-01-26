@@ -160,7 +160,17 @@ func publishToRegion(log *zap.SugaredLogger, region, dockerImageID string) error
 		return err
 	}
 
-	if _, err := util.UploadFileToS3(log, s3manager.NewUploader(awsSession), pkg, bucket, s3Key); err != nil {
+	f, err := os.Open(pkg)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if _, err = s3manager.NewUploader(awsSession).Upload(&s3manager.UploadInput{
+		Body:   f,
+		Bucket: &bucket,
+		Key:    &s3Key,
+	}); err != nil {
 		return fmt.Errorf("failed to upload %s : %v", s3URL, err)
 	}
 

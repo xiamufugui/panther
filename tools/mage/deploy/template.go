@@ -19,6 +19,7 @@ package deploy
  */
 
 import (
+	"bytes"
 	"crypto/sha1" // nolint: gosec
 	"fmt"
 	"strings"
@@ -27,6 +28,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/pkg/awscfn"
@@ -90,6 +92,7 @@ func Stack(
 
 // Upload a CloudFormation asset to S3 if it doesn't already exist, returning s3 object key and version
 func UploadAsset(log *zap.SugaredLogger, assetPath, bucket string) (string, string, error) {
+	// Assets can be up to 100 MB or so, should fit in memory just fine
 	contents := util.MustReadFile(assetPath)
 
 	// We are using SHA1 for caching / asset lookup, we don't need strong cryptographic guarantees
@@ -105,7 +108,11 @@ func UploadAsset(log *zap.SugaredLogger, assetPath, bucket string) (string, stri
 		log.Infof("uploading %s file %s (sha1:%s) to panther-dev S3 bucket",
 			util.ByteCountSI(int64(len(contents))), assetPath, s3Key[:10])
 
-		response, err := util.UploadFileToS3(log, clients.S3Uploader(), assetPath, bucket, s3Key)
+		response, err := clients.S3Uploader().Upload(&s3manager.UploadInput{
+			Body:   bytes.NewReader(contents),
+			Bucket: &bucket,
+			Key:    &s3Key,
+		})
 		if err != nil {
 			return "", "", fmt.Errorf("failed to upload %s: %s", assetPath, err)
 		}

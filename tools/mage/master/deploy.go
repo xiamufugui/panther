@@ -19,8 +19,11 @@ package master
  */
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
@@ -41,18 +44,19 @@ var (
 
 // Deploy the root template nesting all other stacks.
 func Deploy() error {
+	start := time.Now()
 	log := logger.Build("[master:deploy]")
 	if err := deployPreCheck(); err != nil {
 		return err
 	}
 
 	// Deploy panther-dev stack to initialize S3 bucket and ECR repo
-	outputs, err := deploy.Stack(log, devTemplate, "", devStackName, nil)
+	devOutputs, err := deploy.Stack(log, devTemplate, "", devStackName, nil)
 	if err != nil {
 		return err
 	}
 
-	config, err := buildRootConfig(log, outputs["ImageRegistryUri"])
+	config, err := buildRootConfig(log, devOutputs["ImageRegistryUri"])
 	if err != nil {
 		return err
 	}
@@ -60,27 +64,25 @@ func Deploy() error {
 	log.Infof("deploying %s %s (%s) to account %s (%s) as stack '%s'", rootTemplate,
 		util.Semver(), util.CommitSha(), clients.AccountID(), clients.Region(), config.RootStackName)
 
-	pkg := packager{log: log, region: clients.Region(), bucket: outputs["SourceBucket"], numWorkers: 4}
-	if _, err = pkg.template(rootTemplate); err != nil {
+	pkg := packager{log: log, region: clients.Region(), bucket: devOutputs["SourceBucket"], numWorkers: 4}
+	pkgPath, err := pkg.template(rootTemplate)
+	if err != nil {
 		return err
 	}
 
-	//_, err = buildAssets(log, config.PipLayer)
-	//if err != nil {
-	//	return err
-	//}
+	if err = embedVersion(pkgPath); err != nil {
+		return err
+	}
 
+	// TODO - cfn-tracking code needs better progress updates and error extraction for nested stacks
+	rootOutputs, err := deploy.Stack(log, pkgPath, "", config.RootStackName, config.ParameterOverrides)
+	if err != nil {
+		return err
+	}
+
+	log.Infof("finished in %s: Panther URL = %s",
+		time.Since(start).Round(time.Second), rootOutputs["LoadBalancerUrl"])
 	return nil
-
-	// TODO - embed version directly in final template
-	// TODO - deploy root stack
-
-	//pkg, err := pkgAssets(log, clients.ECR(), clients.Region(), bucket, registryURI, dockerImageID)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//return util.SamDeploy(stack, pkg, params...)
 }
 
 // Stop early if there is a known issue with the dev environment.
@@ -99,4 +101,17 @@ func deployPreCheck() error {
 	}
 
 	return nil
+}
+
+// Embed version information into the packaged root stack.
+// We don't want it to be a user-configurable parameter.
+func embedVersion(pkgPath string) error {
+	body, err := ioutil.ReadFile(pkgPath)
+	if err != nil {
+		return err
+	}
+
+	body = bytes.Replace(body, []byte("${{PANTHER_COMMIT}}"), []byte(`'`+util.CommitSha()+`'`), 1)
+	body = bytes.Replace(body, []byte("${{PANTHER_VERSION}}"), []byte(`'`+util.Semver()+`'`), 1)
+	return ioutil.WriteFile(pkgPath, body, 0600)
 }

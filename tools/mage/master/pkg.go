@@ -132,7 +132,7 @@ func (p packager) template(path string) (string, error) {
 		return "", err
 	}
 
-	p.log.Infof("finished packaging %s to %s", path, pkgPath)
+	p.log.Infof("packaged %s", pkgPath)
 	return pkgPath, nil
 }
 
