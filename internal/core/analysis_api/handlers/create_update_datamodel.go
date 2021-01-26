@@ -47,7 +47,6 @@ func (API) UpdateDataModel(input *models.UpdateDataModelInput) *events.APIGatewa
 }
 
 func writeDataModel(input *models.UpdateDataModelInput, create bool) *events.APIGatewayProxyResponse {
-
 	if err := validateLogtypeSet(input.LogTypes); err != nil {
 		return &events.APIGatewayProxyResponse{
 			Body:       fmt.Sprintf("DataModel contains invalid log type: %s", err.Error()),

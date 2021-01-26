@@ -47,7 +47,6 @@ func (API) UpdateRule(input *models.UpdateRuleInput) *events.APIGatewayProxyResp
 
 // Shared by CreateRule and UpdateRule
 func writeRule(input *models.CreateRuleInput, create bool) *events.APIGatewayProxyResponse {
-
 	if err := validateLogtypeSet(input.LogTypes); err != nil {
 		return &events.APIGatewayProxyResponse{
 			Body:       fmt.Sprintf("Rule contains invalid log type: %s", err.Error()),
