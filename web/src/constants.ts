@@ -68,6 +68,10 @@ export const DEFAULT_DEDUP_FUNCTION =
 export const DEFAULT_ALERT_CONTEXT_FUNCTION =
   "# def alert_context(event):\n\t#  (Optional) Return a dictionary with additional data to be included in the alert sent to the SNS/SQS/Webhook destination\n\t# return {'key':'value'}";
 
+// PSA - Backend validations are in place to verify object resource types. Validations are tested
+// against hardcoded sets of valid resource types. Modifications to this set might need to be
+// repeated in the backend sets and vice versa.
+// Those sets are currently located in the snapshot_poller service. 
 export const RESOURCE_TYPES = [
   'AWS.ACM.Certificate',
   'AWS.CloudFormation.Stack',
@@ -99,6 +103,7 @@ export const RESOURCE_TYPES = [
   'AWS.Redshift.Cluster',
   'AWS.S3.Bucket',
   'AWS.WAF.Regional.WebACL',
+
   'AWS.WAF.WebACL',
 ] as const;
 

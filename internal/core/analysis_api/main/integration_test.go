@@ -1731,6 +1731,8 @@ func bulkUploadSuccess(t *testing.T) {
 	// Now reset global policy so subsequent tests have a reference
 	policy = &getResult
 
+	// make new same type as policyFromBulk
+
 	// Verify newly created policy #1
 	input.GetPolicy.ID = policyFromBulk.ID
 	_, err = apiClient.Invoke(&input, &policyFromBulk)
@@ -1747,6 +1749,9 @@ func bulkUploadSuccess(t *testing.T) {
 
 	// Verify newly created policy #2
 	input.GetPolicy.ID = policyFromBulkJSON.ID
+
+	// policyFromBulkJSON = &models.Policy{}
+
 	_, err = apiClient.Invoke(&input, &policyFromBulkJSON)
 	require.NoError(t, err)
 	assert.Equal(t, "Matches every resource", policyFromBulkJSON.Description)
@@ -1805,6 +1810,8 @@ func bulkUploadSuccess(t *testing.T) {
 	assert.Equal(t, *dataModelFromBulkYML, getDataModel)
 }
 
+
+//
 func bulkUploadInvalidPolicyResourceTypesFail(t *testing.T) {
 	t.Parallel()
 	// zipFsSourcePath is the path where the zip contents are located. All files will be zipped

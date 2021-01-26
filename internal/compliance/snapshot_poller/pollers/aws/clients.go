@@ -77,6 +77,18 @@ var (
 
 	// This maps the name we have given to a type of resource to the corresponding AWS name for the
 	// service that the resource type is a part of.
+	//
+	// NOTE! - This hardcoded data set is found in several places in our code base.
+	// Until this data is sourced from a single location you need to check if any additions
+	// or modifications to this data need to coincide with updates in the other places where this data
+	// is hardcoded.
+	//
+	// Locations may not be in this list! right now this data is hardcoded in
+	// • internal/compliance/snapshot_poller/models/aws/ResourceTypes.go
+	// • internal/compliance/snapshot_poller/pollers/aws/poll.go
+	//
+	// • web/src/constants.ts
+	//
 	typeToIDMapping = map[string]string{
 		awsmodels.AcmCertificateSchema:      acm.ServiceName,
 		awsmodels.CloudFormationStackSchema: cloudformation.ServiceName,

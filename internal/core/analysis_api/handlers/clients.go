@@ -38,6 +38,10 @@ import (
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
 	"github.com/panther-labs/panther/pkg/awsretry"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
+
+	// Imports a hardcoded map[string]struct{} Where keys are the set of valid resource types.
+
+	resourceTypesProvider "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 )
 
 const systemUserID = "00000000-0000-4000-8000-000000000000"
@@ -63,8 +67,7 @@ var (
 	logtypeSetMap map[string]interface{}
 )
 
-// var ValidResourceTypes = map[string]struct{}{
-
+//
 type envConfig struct {
 	Bucket               string `required:"true" split_words:"true"`
 	LayerManagerQueueURL string `required:"true" split_words:"true"`
@@ -107,6 +110,54 @@ func Setup() {
 	}
 
 	refreshLogTypes()
+}
+
+
+/*
+// This is about to get replaced
+var ValidResourceTypes = map[string]struct{}{
+	"AWS.ACM.Certificate":               {},
+	"AWS.CloudFormation.Stack":          {},
+	"AWS.CloudTrail":                    {},
+	"AWS.CloudTrail.Meta":               {},
+	"AWS.CloudWatch.LogGroup":           {},
+	"AWS.Config.Recorder":               {},
+	"AWS.Config.Recorder.Meta":          {},
+	"AWS.DynamoDB.Table":                {},
+	"AWS.EC2.AMI":                       {},
+	"AWS.EC2.Instance":                  {},
+	"AWS.EC2.NetworkACL":                {},
+	"AWS.EC2.SecurityGroup":             {},
+	"AWS.EC2.Volume":                    {},
+	"AWS.EC2.VPC":                       {},
+	"AWS.ECS.Cluster":                   {},
+	"AWS.EKS.Cluster":                   {},
+	"AWS.ELBV2.ApplicationLoadBalancer": {},
+	"AWS.GuardDuty.Detector":            {},
+	"AWS.IAM.Group":                     {},
+	"AWS.IAM.Policy":                    {},
+	"AWS.IAM.Role":                      {},
+	"AWS.IAM.RootUser":                  {},
+	"AWS.IAM.User":                      {},
+	"AWS.KMS.Key":                       {},
+	"AWS.Lambda.Function":               {},
+	"AWS.PasswordPolicy":                {},
+	"AWS.RDS.Instance":                  {},
+	"AWS.Redshift.Cluster":              {},
+	"AWS.S3.Bucket":                     {},
+	"AWS.WAF.Regional.WebACL":           {},
+	"AWS.WAF.WebACL":                    {},
+}
+*/
+
+func ValidResourceTypeSet(checkResourceTypeSet []string) error {
+	for _, writeResourceTypeEntry := range checkResourceTypeSet {
+		if _, exists := resourceTypesProvider.ResourceTypes[writeResourceTypeEntry]; !exists {
+			// Found a resource type that doesnt exist
+			return fmt.Errorf("%s", writeResourceTypeEntry)
+		}
+	}
+	return nil
 }
 
 func refreshLogTypes() {

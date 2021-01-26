@@ -31,50 +31,6 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-var ValidResourceTypes = map[string]struct{}{
-	"AWS.ACM.Certificate":               {},
-	"AWS.CloudFormation.Stack":          {},
-	"AWS.CloudTrail":                    {},
-	"AWS.CloudTrail.Meta":               {},
-	"AWS.CloudWatch.LogGroup":           {},
-	"AWS.Config.Recorder":               {},
-	"AWS.Config.Recorder.Meta":          {},
-	"AWS.DynamoDB.Table":                {},
-	"AWS.EC2.AMI":                       {},
-	"AWS.EC2.Instance":                  {},
-	"AWS.EC2.NetworkACL":                {},
-	"AWS.EC2.SecurityGroup":             {},
-	"AWS.EC2.Volume":                    {},
-	"AWS.EC2.VPC":                       {},
-	"AWS.ECS.Cluster":                   {},
-	"AWS.EKS.Cluster":                   {},
-	"AWS.ELBV2.ApplicationLoadBalancer": {},
-	"AWS.GuardDuty.Detector":            {},
-	"AWS.IAM.Group":                     {},
-	"AWS.IAM.Policy":                    {},
-	"AWS.IAM.Role":                      {},
-	"AWS.IAM.RootUser":                  {},
-	"AWS.IAM.User":                      {},
-	"AWS.KMS.Key":                       {},
-	"AWS.Lambda.Function":               {},
-	"AWS.PasswordPolicy":                {},
-	"AWS.RDS.Instance":                  {},
-	"AWS.Redshift.Cluster":              {},
-	"AWS.S3.Bucket":                     {},
-	"AWS.WAF.Regional.WebACL":           {},
-	"AWS.WAF.WebACL":                    {},
-}
-
-func ValidResourceTypeSet(checkResourceTypeSet []string) error {
-	for _, writeResourceTypeEntry := range checkResourceTypeSet {
-		if _, exists := ValidResourceTypes[writeResourceTypeEntry]; !exists {
-			// Found a resource type that doesnt exist
-			return fmt.Errorf("%s", writeResourceTypeEntry)
-		}
-	}
-	return nil
-}
-
 // CreatePolicy adds a new policy to the Dynamo table.
 func (API) CreatePolicy(input *models.CreatePolicyInput) *events.APIGatewayProxyResponse {
 	return writePolicy(input, true)
