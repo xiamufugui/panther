@@ -25,11 +25,15 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/service/ecr"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v2"
 
 	"github.com/panther-labs/panther/pkg/shutil"
 	"github.com/panther-labs/panther/tools/mage/build"
+	"github.com/panther-labs/panther/tools/mage/clients"
 	"github.com/panther-labs/panther/tools/mage/deploy"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
@@ -39,11 +43,21 @@ type packager struct {
 	// zap logger for printing progress updates
 	log *zap.SugaredLogger
 
-	// AWS region where the S3 bucket lives
+	// AWS region where assets will be uploaded (S3 bucket / ECR region)
 	region string
 
 	// S3 bucket for uploading lambda zipfiles
 	bucket string
+
+	// ECR registry URI for publishing docker images
+	ecrRegistry string
+
+	// If true, docker images in ECR will be tagged with their hash, and duplicate images
+	// will not be uploaded - this is optimized for development.
+	//
+	// If false, the docker images will be tagged with the Panther version (for releases),
+	// and it will push to ECR even if it means overwriting an image with the same tag.
+	ecrTagWithHash bool
 
 	// Pip libraries to pip install for the shared python layer
 	pipLibs []string
@@ -68,17 +82,23 @@ type cfnResource struct {
 	err error
 }
 
-// Recursively package assets in a CFN template, uploading local filepaths to S3.
+// Recursively build package assets in a CFN template to S3 and ECR
 //
-// This offers essentially the same functionality as 'sam package' or 'aws cloudformation package',
+// This offers similar functionality to 'sam package' or 'aws cloudformation package',
 // but parallelized and compiled directly into mage for faster, simpler deployments.
+//
+// The build operations (go build, docker build, pip install, etc) are pushed down to the
+// packaging handlers instead of running at the beginning of the deploy process.
+// In other words, assets are built "just-in-time" before they are uploaded.
+// This way, we get parallel builds with a good balance of network and CPU operations,
+// and we build only the exact set of assets we need for each stack.
 //
 // Supports the following resource types:
 //     AWS::AppSync::GraphQLSchema (DefinitionS3Location)
 //     AWS::CloudFormation::Stack (TemplateURL)
+//     AWS::ECS::TaskDefinition (Image)
 //     AWS::Lambda::LayerVersion (Content)
 //     AWS::Serverless::Function (CodeUri)
-//     TODO - ECS service?
 //
 // Returns the path to the packaged template (in the out/ folder)
 func (p packager) template(path string) (string, error) {
@@ -146,13 +166,17 @@ func (p packager) resourceWorker(logPrefix string, resources <-chan cfnResource,
 
 		switch rType {
 		case "AWS::AppSync::GraphQLSchema":
-			results <- p.appsyncSchema(logPrefix, r)
+			results <- p.appsyncGraphQlSchema(logPrefix, r)
 		case "AWS::CloudFormation::Stack":
-			results <- p.nestedTemplate(logPrefix, r)
+			results <- p.cloudformationStack(logPrefix, r)
+		case "AWS::ECS::TaskDefinition":
+			// We assume only one of these in Panther
+			results <- p.ecsTaskDefinition(logPrefix, r)
 		case "AWS::Lambda::LayerVersion":
-			results <- p.pythonLayer(logPrefix, r)
+			// We assume only one of these in Panther
+			results <- p.lambdaLayerVersion(logPrefix, r)
 		case "AWS::Serverless::Function":
-			results <- p.lambdaFunction(logPrefix, r)
+			results <- p.serverlessFunction(logPrefix, r)
 		default:
 			results <- r
 		}
@@ -160,7 +184,7 @@ func (p packager) resourceWorker(logPrefix string, resources <-chan cfnResource,
 }
 
 // Upload AppSync GraphQL schema to S3 - returns resource with modified DefinitionS3Location property
-func (p packager) appsyncSchema(logPrefix string, r cfnResource) cfnResource {
+func (p packager) appsyncGraphQlSchema(logPrefix string, r cfnResource) cfnResource {
 	properties := r.fields["Properties"].(map[string]interface{})
 	schemaPath := properties["DefinitionS3Location"].(string)
 	if strings.HasPrefix(schemaPath, "s3://") {
@@ -180,7 +204,7 @@ func (p packager) appsyncSchema(logPrefix string, r cfnResource) cfnResource {
 }
 
 // Upload nested CFN template to S3 - returns resource with modified TemplateURL property
-func (p packager) nestedTemplate(logPrefix string, r cfnResource) cfnResource {
+func (p packager) cloudformationStack(logPrefix string, r cfnResource) cfnResource {
 	properties := r.fields["Properties"].(map[string]interface{})
 	nestedPath := properties["TemplateURL"].(string)
 	if strings.HasPrefix(nestedPath, "https://") {
@@ -207,6 +231,59 @@ func (p packager) nestedTemplate(logPrefix string, r cfnResource) cfnResource {
 	return r
 }
 
+// Upload web docker image to ECR - returns resource with modified Image property
+func (p packager) ecsTaskDefinition(logPrefix string, r cfnResource) cfnResource {
+	properties := r.fields["Properties"].(map[string]interface{})
+	containerDefs := properties["ContainerDefinitions"].([]interface{})
+	if len(containerDefs) != 1 {
+		r.err = fmt.Errorf("expected 1 ContainerDefinition, found %d", len(containerDefs))
+	}
+
+	containerDef := containerDefs[0].(map[string]interface{})
+	dockerfile := containerDef["Image"].(string)
+	if strings.Contains(dockerfile, ".dkr.ecr.") {
+		return r // Image is already an ECR url
+	}
+
+	p.log.Debugf("%s: packaging AWS::ECS::TaskDefinition %s", logPrefix, r.logicalID)
+
+	imageID, err := deploy.DockerBuild(filepath.Join("deployments", dockerfile))
+	if err != nil {
+		r.err = err
+		return r
+	}
+
+	ecrClient := clients.ECR()
+	var tag string
+
+	if p.ecrTagWithHash {
+		// Check if this image ID already exists in ECR before uploading it
+		response, err := ecrClient.DescribeImages(&ecr.DescribeImagesInput{
+			ImageIds:       []*ecr.ImageIdentifier{{ImageTag: &imageID}},
+			RepositoryName: aws.String(strings.Split(p.ecrRegistry, "/")[1]),
+		})
+		if err == nil && len(response.ImageDetails) > 0 {
+			p.log.Debugf("%s: ecr image tag %s already exists", logPrefix, imageID)
+			containerDef["Image"] = p.ecrRegistry + ":" + imageID
+			return r
+		}
+
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == ecr.ErrCodeImageNotFoundException {
+			// image doesn't exist - continue to the docker push below
+		} else {
+			// we couldn't actually check the image status - fallback to the docker push
+			p.log.Warnf("%s: failed to check for existing ecr image: %s", logPrefix, err)
+		}
+	} else {
+		// Images will be tagged with the panther version
+		tag = util.Semver()
+	}
+
+	// Either the img does not yet exist or the caller requested release tagging - docker push to ECR
+	containerDef["Image"], r.err = deploy.DockerPush(ecrClient, p.ecrRegistry, imageID, tag)
+	return r
+}
+
 // Build the shared pip layer (there is only LayerVersion resource today)
 //
 //   Content: ../out/layer.zip
@@ -216,7 +293,7 @@ func (p packager) nestedTemplate(logPrefix string, r cfnResource) cfnResource {
 //   Content:
 //     S3Bucket: panther-dev-...
 //     S3Key: abcd...
-func (p packager) pythonLayer(logPrefix string, r cfnResource) cfnResource {
+func (p packager) lambdaLayerVersion(logPrefix string, r cfnResource) cfnResource {
 	properties := r.fields["Properties"].(map[string]interface{})
 	content, ok := properties["Content"].(string)
 	if !ok {
@@ -249,7 +326,7 @@ func (p packager) pythonLayer(logPrefix string, r cfnResource) cfnResource {
 }
 
 // Compile lambda zipfile and upload to S3 - returns resource with modified CodeUri property
-func (p packager) lambdaFunction(logPrefix string, r cfnResource) cfnResource {
+func (p packager) serverlessFunction(logPrefix string, r cfnResource) cfnResource {
 	properties := r.fields["Properties"].(map[string]interface{})
 	codeURI := properties["CodeUri"].(string)
 	if strings.HasPrefix(codeURI, "s3://") {

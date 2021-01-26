@@ -56,21 +56,22 @@ func Deploy() error {
 		return err
 	}
 
-	config, err := buildRootConfig(log, devOutputs["ImageRegistryUri"])
+	config, err := buildRootConfig(log)
 	if err != nil {
 		return err
 	}
 
-	log.Infof("deploying %s %s (%s) to account %s (%s) as stack '%s'", rootTemplate,
-		util.Semver(), util.CommitSha(), clients.AccountID(), clients.Region(), config.RootStackName)
-
 	pkg := packager{
-		log:        log,
-		region:     clients.Region(),
-		bucket:     devOutputs["SourceBucket"],
-		pipLibs:    config.PipLayer,
-		numWorkers: 4,
+		log:            log,
+		region:         clients.Region(),
+		bucket:         devOutputs["SourceBucket"],
+		ecrRegistry:    devOutputs["ImageRegistryUri"],
+		ecrTagWithHash: true,
+		pipLibs:        config.PipLayer,
+		numWorkers:     4,
 	}
+	log.Infof("packaging %s to s3 bucket %s and ecr registry %s",
+		rootTemplate, pkg.bucket, pkg.ecrRegistry)
 	pkgPath, err := pkg.template(rootTemplate)
 	if err != nil {
 		return err
@@ -81,6 +82,9 @@ func Deploy() error {
 	}
 
 	// TODO - cfn waiters need better progress updates and error extraction for nested stacks
+	// TODO - support updating nested stacks directly
+	log.Infof("deploying %s %s (%s) to account %s (%s) as stack '%s'", rootTemplate,
+		util.Semver(), util.CommitSha(), clients.AccountID(), clients.Region(), config.RootStackName)
 	rootOutputs, err := deploy.Stack(log, pkgPath, "", config.RootStackName, config.ParameterOverrides)
 	if err != nil {
 		return err

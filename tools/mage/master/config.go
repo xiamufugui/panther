@@ -55,7 +55,7 @@ func (c *RootConfig) Load() error {
 }
 
 // Generate a default root config for developers - the user will be prompted for their email.
-func (c *RootConfig) Gen(imgRegistry string) error {
+func (c *RootConfig) Gen() error {
 	c.RootStackName = defaultRootStackName
 	c.PipLayer = defaultPipLayer
 
@@ -69,7 +69,6 @@ func (c *RootConfig) Gen(imgRegistry string) error {
 		"CompanyDisplayName":         "PantherDev",
 		"FirstUserEmail":             email,
 		"FirstUserGivenName":         dev.Username,
-		"ImageRegistry":              imgRegistry,
 	}
 
 	return nil
@@ -95,7 +94,7 @@ func (c *RootConfig) Save() error {
 // because CFN doesn't allow multiple levels of stack imports. In other words, the root
 // stack must not itself be a nested stack for us to be able to import v1.15 direct-stack
 // deployments.
-func buildRootConfig(log *zap.SugaredLogger, imgRegistry string) (*RootConfig, error) {
+func buildRootConfig(log *zap.SugaredLogger) (*RootConfig, error) {
 	config := new(RootConfig)
 	if err := config.Load(); err == nil {
 		if config.RootStackName == "" {
@@ -105,7 +104,7 @@ func buildRootConfig(log *zap.SugaredLogger, imgRegistry string) (*RootConfig, e
 		return config, nil
 	} else if os.IsNotExist(err) {
 		log.Infof("%s does not exist; creating it", rootConfigPath)
-		if err = config.Gen(imgRegistry); err != nil {
+		if err = config.Gen(); err != nil {
 			return nil, err
 		}
 		return config, config.Save()

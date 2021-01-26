@@ -21,13 +21,14 @@ package deploy
 import (
 	"encoding/base64"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/joho/godotenv"
-	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 
 	"github.com/panther-labs/panther/tools/cfnstacks"
@@ -52,7 +53,7 @@ func deployFrontend(bootstrapOutputs map[string]string, settings *PantherConfig)
 		return fmt.Errorf("failed to write ENV variables to file %s: %v", awsEnvFile, err)
 	}
 
-	localImageID, err := DockerBuild()
+	localImageID, err := DockerBuild(filepath.Join("deployments", "Dockerfile"))
 	if err != nil {
 		return err
 	}
@@ -88,21 +89,30 @@ func deployFrontend(bootstrapOutputs map[string]string, settings *PantherConfig)
 	return err
 }
 
-// Returns local image ID
-func DockerBuild() (string, error) {
-	log.Info("docker build web server (deployments/Dockerfile)")
-	args := []string{"build", "--file", "deployments/Dockerfile"}
-	if !mg.Verbose() {
-		args = append(args, "--quiet")
+// Returns local image ID (truncated SHA256)
+func DockerBuild(dockerfile string) (string, error) {
+	log.Infof("docker build web server (%s)", dockerfile)
+	tmpfile, err := ioutil.TempFile("", "panther-web-image-id")
+	if err != nil {
+		return "", fmt.Errorf("failed to create temp image ID file: %s", err)
 	}
-	args = append(args, ".")
+	defer os.Remove(tmpfile.Name())
 
-	dockerBuildOutput, err := sh.Output("docker", args...)
+	// When running without the "-q" flag, docker build has no capturable stdout.
+	// Instead, we use --iidfile to write the image ID to a tmp file and read it back.
+	err = sh.Run("docker", "build",
+		"--file", dockerfile, "--iidfile", tmpfile.Name(), ".")
 	if err != nil {
 		return "", fmt.Errorf("docker build failed: %v", err)
 	}
 
-	return strings.Replace(dockerBuildOutput, "sha256:", "", 1), nil
+	// "sha256:abcdef...."
+	imageID, err := ioutil.ReadFile(tmpfile.Name())
+	if err != nil {
+		return "", fmt.Errorf("failed to open image ID file: %s", err)
+	}
+
+	return strings.TrimPrefix(string(imageID), "sha256:")[:12], nil
 }
 
 // Build a personalized docker image from source and push it to the private image repo of the user

@@ -20,6 +20,7 @@ package master
 
 import (
 	"bytes"
+	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"go.uber.org/zap"
@@ -50,7 +51,7 @@ func buildAssets(log *zap.SugaredLogger, pipLayer []string) (string, error) {
 	count++
 	go func(c chan util.TaskResult) {
 		var err error
-		imageID, err = deploy.DockerBuild()
+		imageID, err = deploy.DockerBuild(filepath.Join("deployments", "Dockerfile"))
 		c <- util.TaskResult{Summary: "docker build", Err: err}
 	}(results)
 
