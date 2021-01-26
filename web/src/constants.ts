@@ -71,7 +71,7 @@ export const DEFAULT_ALERT_CONTEXT_FUNCTION =
 // PSA - Backend validations are in place to verify object resource types. Validations are tested
 // against hardcoded sets of valid resource types. Modifications to this set might need to be
 // repeated in the backend sets and vice versa.
-// Those sets are currently located in the snapshot_poller service. 
+// Those sets are currently located in the snapshot_poller service.
 export const RESOURCE_TYPES = [
   'AWS.ACM.Certificate',
   'AWS.CloudFormation.Stack',
