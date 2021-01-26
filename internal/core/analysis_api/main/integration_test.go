@@ -1778,7 +1778,7 @@ func bulkUploadInvalidRuleLogtypeFail(t *testing.T) {
 	// zipFsSourcePath is the path where the zip contents are located. All files will be zipped
 	zipFsSourcePath := filepath.Join(bulkTestDataDirPath, bulkInvalidRuleLogTypeDir)
 
-	// Zip all the files in source path to destination path and
+	// Zip all the files in source path to destination path
 	result, _, err := BulkZipUploadHelper(t, zipFsSourcePath)
 	require.Error(t, err)
 
@@ -1793,7 +1793,7 @@ func bulkUploadInvalidDatamodelLogtypeFail(t *testing.T) {
 	// zipFsSourcePath is the path where the zip contents are located. All files will be zipped
 	ruleInvalidLTZipPath := filepath.Join(bulkTestDataDirPath, bulkInvalidDatamodelTypeDir)
 
-	// Zip all the files in source path to destination path and
+	// Zip all the files in source path to destination path
 	result, _, err := BulkZipUploadHelper(t, ruleInvalidLTZipPath)
 	require.Error(t, err) // Invalid rule logtypes test. Expect an error
 
