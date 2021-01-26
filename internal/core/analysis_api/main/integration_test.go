@@ -50,6 +50,8 @@ const (
 	tableName           = "panther-analysis"
 	analysesRoot        = "./test_analyses"
 	analysesZipLocation = "./bulk_upload.zip"
+
+	bulkTestDataDirPath = "./invalid_policy_resources"
 )
 
 var (
@@ -264,6 +266,7 @@ func TestIntegrationAPI(t *testing.T) {
 	t.Run("BulkUpload", func(t *testing.T) {
 		t.Run("BulkUploadInvalid", bulkUploadInvalid)
 		t.Run("BulkUploadSuccess", bulkUploadSuccess)
+		t.Run("BulkUploadInvalidPolicyResourceTypesFail", bulkUploadInvalidPolicyResourceTypesFail)
 	})
 	if t.Failed() {
 		return
@@ -1714,6 +1717,23 @@ func bulkUploadSuccess(t *testing.T) {
 	dataModelFromBulkYML.LastModifiedBy = getDataModel.LastModifiedBy
 	dataModelFromBulkYML.VersionID = getDataModel.VersionID
 	assert.Equal(t, *dataModelFromBulkYML, getDataModel)
+}
+
+// validate fail of bulk upload where upload zip contains a rule with an invalid log type
+func bulkUploadInvalidPolicyResourceTypesFail(t *testing.T) {
+	t.Parallel()
+	// zipFsSourcePath is the path where the zip contents are located. All files will be zipped
+	// This needs to be updated as below when merged with the log-types branch
+	// zipFsSourcePath := filepath.Join(bulkTestDataDirPath, bulkInvalidRuleLogTypeDir)
+	zipFsSourcePath := bulkTestDataDirPath
+
+	// Zip all the files in source path to destination path
+	result, _, err := BulkZipUploadHelper(t, zipFsSourcePath)
+	require.Error(t, err)
+
+	// This is an empty BulkUpload Output
+	expected := models.BulkUploadOutput{}
+	require.Equal(t, expected, *result)
 }
 
 func listPolicies(t *testing.T) {
