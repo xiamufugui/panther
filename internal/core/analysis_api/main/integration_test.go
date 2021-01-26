@@ -52,10 +52,10 @@ const (
 	analysesRoot        = "./bulk_test_resources/test_analyses"
 	analysesZipLocation = "./bulk_upload.zip"
 
-	bulkTestDataDirPath         = "./bulk_test_resources"
-	bulkInvalidRuleLogTypeDir   = "rule_invalid_logtype"
-	bulkInvalidDatamodelTypeDir = "datamodel_invalid_logtype"
-	bulkInvalidPolicyTypeDir    = "policy_invalid_resourcetype"
+	bulkTestDataDirPath              = "./bulk_test_resources"
+	bulkInvalidRuleLogTypeDir        = "rule_invalid_logtype"
+	bulkInvalidDatamodelTypeDir      = "datamodel_invalid_logtype"
+	bulkInvalidPolicyResourceTypeDir = "policy_invalid_resourcetype"
 )
 
 var (
@@ -273,10 +273,10 @@ func TestIntegrationAPI(t *testing.T) {
 	t.Run("BulkUpload", func(t *testing.T) {
 		t.Run("BulkUploadInvalid", bulkUploadInvalid)
 		t.Run("BulkUploadSuccess", bulkUploadSuccess)
-		t.Run("BulkUploadInvalidPolicyResourceTypesFail", bulkUploadInvalidPolicyResourceTypesFail)
 	})
 
 	t.Run("BulkUploadInvalid", func(t *testing.T) {
+		t.Run("BulkUploadInvalidPolicyResourceTypesFail", bulkUploadInvalidPolicyResourceTypesFail)
 		t.Run("BulkUploadInvalidRuleLogtypeFail", bulkUploadInvalidRuleLogtypeFail)
 		t.Run("BulkUploadInvalidDatamodelLogtypeFail", bulkUploadInvalidDatamodelLogtypeFail)
 	})
@@ -1808,7 +1808,7 @@ func bulkUploadSuccess(t *testing.T) {
 func bulkUploadInvalidPolicyResourceTypesFail(t *testing.T) {
 	t.Parallel()
 	// zipFsSourcePath is the path where the zip contents are located. All files will be zipped
-	zipFsSourcePath := path.Join(bulkTestDataDirPath, bulkInvalidPolicyTypeDir)
+	zipFsSourcePath := path.Join(bulkTestDataDirPath, bulkInvalidPolicyResourceTypeDir)
 
 	// Zip all the files in source path to destination path
 	result, _, err := BulkZipUploadHelper(t, zipFsSourcePath)
